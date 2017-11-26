@@ -1,0 +1,26 @@
+// Project-wide Bootstrap CSS.
+// Adapted from Bootswatch "Materia"
+
+@import "variables";
+@import "~bootstrap/scss/bootstrap";
+@import "bootswatch";
+
+// Fix the navbars ridiculous padding.
+$navbar-vertical-pad: 0.1rem;
+
+.navbar {
+  padding: $navbar-vertical-pad 1rem;
+}
+
+.btn {
+  text-transform: none;
+}
+
+// Fix spacing issues in cards for project list view.
+.card {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+// Load syntax highlighting stylesheet
+@import "github_highlightjs";
