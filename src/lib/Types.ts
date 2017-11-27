@@ -10,7 +10,7 @@ export interface IProject {
   supervisor_email: string;
   additional_staff: string[];
   description_md: string;
-  id: number;
+  id?: number;
 }
 
 export interface ISession {

@@ -1,8 +1,8 @@
 import * as _ from "lodash";
 import Vue from "vue";
 import Vuex from "vuex";
-import {ISession, IUser, UserType} from "../lib/Types";
 import Mutations from "../lib/Mutations";
+import {ISession, IUser, UserType} from "../lib/Types";
 
 Vue.use(Vuex);
 
@@ -112,7 +112,7 @@ export default new Vuex.Store({
     },
     [Mutations.RM_MARKED_PROJECT](state, payload) {
       if (state.user) {
-        _.pull(state.user.marked_projects, payload.project);
+        state.user.marked_projects = _.without(state.user.marked_projects, payload.project);
       }
     },
     [Mutations.SET_SELECTED_PROJECTS](state, payload) {

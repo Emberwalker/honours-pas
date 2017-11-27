@@ -8,14 +8,14 @@
 </template>
 
 <script lang="ts">
-  import NavHeader from './components/NavHeader.vue'
+  import NavHeader from "./components/NavHeader.vue";
 
   export default {
-    name: 'app',
     components: {
-      'nav-header': NavHeader
-    }
-  }
+      "nav-header": NavHeader,
+    },
+    name: "app",
+  };
 </script>
 
 <style lang="scss">

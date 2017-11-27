@@ -16,17 +16,10 @@
 
 <script lang="ts">
 import _ from "lodash";
-import { parseMarkdown } from "../lib/Util";
 import Vue from "vue";
+import { parseMarkdown } from "../lib/Util";
 
 export default Vue.extend({
-  name: "ProjectCard",
-  data () {
-    return {}
-  },
-  props: [
-    "project",
-  ],
   computed: {
     description(): string {
       return parseMarkdown(this.project.description_md);
@@ -36,8 +29,15 @@ export default Vue.extend({
     },
     additional_staff(): string {
       return _.join(this.project.additional_staff, ", ");
-    }
+    },
   },
+  data() {
+    return {};
+  },
+  name: "ProjectCard",
+  props: [
+    "project",
+  ],
 });
 </script>
 

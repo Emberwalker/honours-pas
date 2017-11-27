@@ -7,11 +7,11 @@
 
 <script lang="ts">
   export default {
-    name: 'NotFound',
-    data () {
-      return {}
-    }
-  }
+    name: "NotFound",
+    data() {
+      return {};
+    },
+  };
 </script>
 
 <style scoped lang="scss">

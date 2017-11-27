@@ -14,6 +14,7 @@
   "dependencies": {
     "@types/lodash": "^4.14.85",
     "bootstrap": "^4.0.0-beta.2",
+    "feather-icons": "^4.0.1",
     "highlight.js": "^9.12.0",
     "jquery": "^3.2.1",
     "lodash": "^4.17.4",

@@ -22,5 +22,10 @@ $navbar-vertical-pad: 0.1rem;
   margin-bottom: 1rem;
 }
 
+.feather-icon-svg {
+  vertical-align: text-bottom;
+  padding-right: 0.5rem;
+}
+
 // Load syntax highlighting stylesheet
 @import "github_highlightjs";

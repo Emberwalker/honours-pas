@@ -3,6 +3,7 @@ import Router from "vue-router";
 
 import Index from "../components/Index.vue";
 import Login from "../components/Login.vue";
+import NewProject from "../components/NewProject.vue";
 import NotFound from "../components/NotFound.vue";
 import ProjectList from "../components/ProjectList.vue";
 
@@ -12,11 +13,6 @@ export default new Router({
   mode: "history",
   routes: [
     {
-      component: Index,
-      name: "index",
-      path: "/",
-    },
-    {
       component: Login,
       name: "login",
       path: "/login",
@@ -24,7 +20,12 @@ export default new Router({
     {
       component: ProjectList,
       name: "project_list",
-      path: "/list",
+      path: "/",
+    },
+    {
+      component: NewProject,
+      name: "new_project",
+      path: "/new",
     },
     {
       component: NotFound,

@@ -1,5 +1,5 @@
-import * as marked from "marked";
 import hljs from "highlight.js";
+import * as marked from "marked";
 
 export function highlightingInit() {
   marked.setOptions({
