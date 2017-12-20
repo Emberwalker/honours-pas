@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Router from "vue-router";
 
-import Index from "../components/Index.vue";
+import EditProject from "../components/EditProject.vue";
 import Login from "../components/Login.vue";
 import NewProject from "../components/NewProject.vue";
 import NotFound from "../components/NotFound.vue";
@@ -26,6 +26,12 @@ export default new Router({
       component: NewProject,
       name: "new_project",
       path: "/new",
+    },
+    {
+      component: EditProject,
+      name: "edit_project",
+      path: "/edit/:id",
+      props: true,
     },
     {
       component: NotFound,

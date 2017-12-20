@@ -1,6 +1,6 @@
 <template>
 <div class="new-project">
-  <h1>New Project</h1>
+  <h1>Edit Project</h1>
   <project-editor :initial-project="project" v-on:edit-complete="editComplete"/>
 </div>
 </template>
@@ -17,26 +17,26 @@ export default Vue.extend({
     "project-editor": ProjectEditor,
   },
   data() {
+    const session = this.$store.getters.current_session;
+    let project: IProject | null = null;
+    if (session) {
+      project = _.find(session.projects, (proj) => proj.id.toString() === this.id);
+    }
     return {
-      project: {
-        additional_staff: [],
-        description_md: "",
-        name: "Untitled Project",
-        supervisor_email: this.$store.state.user.email,
-        supervisor_name: this.$store.state.user.name,
-      },
+      project,
     };
   },
   methods: {
-    editComplete(newProject: IProject) {
+    editComplete(project: IProject) {
       this.$store.commit({
-        project: newProject,
-        type: Mutations.NEW_PROJECT,
+        project: project,
+        type: Mutations.EDIT_PROJECT,
       });
       this.$router.push("/");
     },
   },
   name: "NewProject",
+  props: [ "id" ],
 });
 </script>
 

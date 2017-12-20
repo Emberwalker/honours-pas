@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import Vue from "vue";
 import Vuex from "vuex";
 import Mutations from "../lib/Mutations";
-import {ISession, IUser, UserType} from "../lib/Types";
+import {IProject, ISession, IUser, UserType} from "../lib/Types";
 
 Vue.use(Vuex);
 
@@ -107,22 +107,44 @@ export default new Vuex.Store({
   mutations: {
     [Mutations.ADD_MARKED_PROJECT](state, payload) {
       if (state.user) {
+        // TODO: Sync to server
         state.user.marked_projects = _.union([payload.project], state.user.marked_projects);
       }
     },
     [Mutations.RM_MARKED_PROJECT](state, payload) {
       if (state.user) {
+        // TODO: Sync to server
         state.user.marked_projects = _.without(state.user.marked_projects, payload.project);
       }
     },
     [Mutations.SET_SELECTED_PROJECTS](state, payload) {
       if (state.user) {
+        // TODO: Sync to server
         state.user.selected_projects = payload.projects;
       }
     },
     [Mutations.SET_USER_AND_SESSION](state, payload) {
       state.user = payload.user;
       state.session_key = payload.session_key;
+    },
+    [Mutations.NEW_PROJECT](state, payload) {
+      const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
+      // TODO: Set this ID from server response.
+      const project = payload.project;
+      let maxId = 0;
+      _.forEach(session.projects, (p: IProject) => { if (p.id! > maxId) { maxId = p.id!; } });
+      project.id = maxId + 1;
+      session.projects.push(payload.project);
+    },
+    [Mutations.EDIT_PROJECT](state, payload) {
+      const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
+      // TODO: Send to server.
+      const project = payload.project!;
+      const idx = _.findIndex(session.projects, (ent) => ent.id === project.id);
+      session.projects[idx] = project;
+    },
+    [Mutations.RM_PROJECT](state, payload) {
+      // TODO
     },
   },
   // tslint:enable:object-literal-sort-keys

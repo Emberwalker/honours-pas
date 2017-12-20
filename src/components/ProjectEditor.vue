@@ -54,7 +54,7 @@
   <div class="row">
     <div class="col">
       <h3>Description</h3>
-      <textarea @input="onUpdate" class="form-control" rows="8"/>
+      <textarea @input="onUpdate" class="form-control" rows="8">{{ project.description_md }}</textarea>
     </div>
     <div class="col-sm-4 help-col">
       <div class="card">
@@ -84,6 +84,7 @@
 </template>
 
 <script lang="ts">
+import $ from "jquery";
 import _ from "lodash";
 import Vue from "vue";
 import { parseMarkdown } from "../lib/Util";
@@ -95,10 +96,12 @@ export default Vue.extend({
   },
   computed: {},
   data() {
+    // Create a *copy* of the project so we don't accidentally overwrite state.
+    const project = $.extend({}, this.initialProject);
     return {
       additional_email: "",
       additional_name: "",
-      project: this.initialProject,
+      project,
     };
   },
   methods: {

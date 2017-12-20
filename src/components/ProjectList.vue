@@ -21,7 +21,9 @@
       <project-card v-for="project in session.projects" :project="project" :key="project.id">
         <!-- Add extra buttons for bottom of the card here. -->
         <div v-if="session.is_current">
-          <button v-if="session.is_current" type="button" class="btn btn-sm btn-primary">Edit</button>
+          <router-link v-if="session.is_current" :to="'/edit/' + project.id">
+            <button type="button" class="btn btn-sm btn-primary">Edit</button>
+          </router-link>
           <button v-if="isMarked(project)" v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
           <button v-else v-on:click="mark(project)" type="button" class="btn btn-sm btn-primary">Mark</button>
         </div>
