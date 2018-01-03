@@ -29,7 +29,7 @@ export default Vue.extend({
   methods: {
     editComplete(project: IProject) {
       this.$store.commit({
-        project: project,
+        project,
         type: Mutations.EDIT_PROJECT,
       });
       this.$router.push("/");

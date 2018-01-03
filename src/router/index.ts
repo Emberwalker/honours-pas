@@ -6,6 +6,7 @@ import Login from "../components/Login.vue";
 import NewProject from "../components/NewProject.vue";
 import NotFound from "../components/NotFound.vue";
 import ProjectList from "../components/ProjectList.vue";
+import StudentPickProjects from "../components/StudentPickProjects.vue";
 
 Vue.use(Router);
 
@@ -32,6 +33,11 @@ export default new Router({
       name: "edit_project",
       path: "/edit/:id",
       props: true,
+    },
+    {
+      component: StudentPickProjects,
+      name: "pick_projects",
+      path: "/pick",
     },
     {
       component: NotFound,
