@@ -46,7 +46,7 @@
               </tbody>
             </table>
             <p>Selections: {{selectedCount}}/3</p>
-            <router-link v-if="isValid" to="/weighting/p1">
+            <router-link v-if="isValid" to="/order">
               <button type="button" class="btn btn-sm btn-success">Next</button>
             </router-link>
           </div>
@@ -60,7 +60,7 @@
   import _ from "lodash";
   import Vue from "vue";
   import Mutations from "../lib/Mutations";
-  import {IProject, IProjectSelection, ISession} from "../lib/Types";
+  import {IProject, ISession} from "../lib/Types";
   import ProjectCard from "./ProjectCard.vue";
 
   export default Vue.extend({

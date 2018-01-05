@@ -6,6 +6,7 @@ import Login from "../components/Login.vue";
 import NewProject from "../components/NewProject.vue";
 import NotFound from "../components/NotFound.vue";
 import ProjectList from "../components/ProjectList.vue";
+import StudentOrderProjects from "../components/StudentOrderProjects.vue";
 import StudentPickProjects from "../components/StudentPickProjects.vue";
 
 Vue.use(Router);
@@ -38,6 +39,11 @@ export default new Router({
       component: StudentPickProjects,
       name: "pick_projects",
       path: "/pick",
+    },
+    {
+      component: StudentOrderProjects,
+      name: "order_projects",
+      path: "/order",
     },
     {
       component: NotFound,

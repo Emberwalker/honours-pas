@@ -1,20 +1,25 @@
 import "bootstrap";
-import * as feather from "feather-icons";
 import $ from "jquery";
 import Vue from "vue";
 import App from "./App.vue";
+import Feather from "./components/Feather.vue";
 import { highlightingInit, renderCodeBlock } from "./lib/Util";
 import router from "./router";
 import store from "./stores";
 
 Vue.config.productionTip = false;
 
-Vue.component("feather", {
+/*Vue.component("feather", {
   functional: true,
   props: {
     icon: {
       required: true,
       type: String,
+    },
+    nopad: {
+      default: false,
+      required: false,
+      type: Boolean,
     },
   },
   render: (createElement, ctx) => {
@@ -27,7 +32,8 @@ Vue.component("feather", {
       },
     });
   },
-});
+});*/
+Vue.component("feather", Feather);
 
 Vue.directive("markdown", {
   componentUpdated: (el) => {
