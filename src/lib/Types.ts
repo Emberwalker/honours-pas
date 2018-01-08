@@ -26,6 +26,7 @@ export interface IUser {
   email: string;
   marked_projects: number[];
   selected_projects: IProjectSelection[];
+  selection_comment: string;
   user_type: UserType;
 }
 

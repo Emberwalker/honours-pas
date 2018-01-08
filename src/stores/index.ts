@@ -72,6 +72,7 @@ int main() {
     email: "test.user@dundee.ac.uk",
     marked_projects: [1234],
     selected_projects: [],
+    selection_comment: "",
     user_type: UserType.Staff,
   };
 
@@ -121,6 +122,12 @@ export default new Vuex.Store({
       if (state.user) {
         // TODO: Sync to server
         state.user.selected_projects = payload.projects;
+      }
+    },
+    [Mutations.SET_SELECTION_COMMENT](state, payload) {
+      if (state.user) {
+        // TODO: Sync to server
+        state.user.selection_comment = payload.comment;
       }
     },
     [Mutations.SET_USER_AND_SESSION](state, payload) {

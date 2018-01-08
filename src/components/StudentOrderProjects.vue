@@ -35,6 +35,18 @@
         </div>
       </div>
     </div>
+    <div class="row">
+      <div class="col-12">
+        <h1 class="h2 section-header">
+          Selection Comment
+        </h1>
+        <p class="h4 text-muted">
+          An optional comment for the module coordinator about your selections.
+        </p>
+        <textarea title="selection comments" v-model="comment" rows="2" class="form-control"></textarea>
+        <button type="submit" class=" submit-btn btn btn-lg btn-success" v-on:click="submit">Submit</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -66,6 +78,7 @@
       });
       selections = _.sortBy(selections, ["weight"]);
       return {
+        comment: "",
         equalFirstSecond: false,
         equalSecondThird: false,
         selections,
@@ -97,6 +110,23 @@
       toggleSecondThird() {
         this.equalSecondThird = !this.equalSecondThird;
       },
+      submit() {
+        let weight = 9;
+        this.selections[0].weight = weight;
+        if (!this.equalFirstSecond) { weight -= 4; }
+        this.selections[1].weight = weight;
+        if (!this.equalSecondThird) { weight -= 4; }
+        this.selections[2].weight = weight;
+        this.$store.commit({
+          projects: this.selections,
+          type: Mutations.SET_SELECTED_PROJECTS,
+        });
+        this.$store.commit({
+          comment: this.comment,
+          type: Mutations.SET_SELECTION_COMMENT,
+        });
+        this.$router.push("/");
+      },
       swap(fst: number) {
         // From https://stackoverflow.com/a/41857928
         this.selections.splice(fst, 2, this.selections[fst + 1], this.selections[fst]);
@@ -109,7 +139,11 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
 
-  .projlist-section {
+  .section-header {
+    margin-top: 1.5rem;
+  }
+
+  .submit-btn {
     margin-top: 1.5rem;
   }
 

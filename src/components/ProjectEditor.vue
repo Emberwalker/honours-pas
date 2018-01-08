@@ -53,8 +53,8 @@
   <!-- Description -->
   <div class="row">
     <div class="col">
-      <h3>Description</h3>
-      <textarea @input="onUpdate" class="form-control" rows="8">{{ project.description_md }}</textarea>
+      <h3 id="description_label">Description</h3>
+      <textarea title="project description" aria-labelledby="description_label" @input="onUpdate" class="form-control" rows="8">{{ project.description_md }}</textarea>
     </div>
     <div class="col-sm-4 help-col">
       <div class="card">
