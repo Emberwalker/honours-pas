@@ -1,5 +1,6 @@
 import hljs from "highlight.js";
 import * as marked from "marked";
+import Mutations from "./Mutations";
 
 export function highlightingInit() {
   marked.setOptions({
@@ -14,10 +15,17 @@ export function highlightingInit() {
 }
 
 export function parseMarkdown(md: string): string {
-  const out = marked(md);
-  return out;
+  return marked(md);
 }
 
 export function renderCodeBlock(el: Node) {
   hljs.highlightBlock(el);
+}
+
+// We don't use the type Vuex.Store because for some reason Typescript won't import it...
+export function setIsWorking(store: any, isWorking: boolean) {
+  store.commit({
+    isWorking,
+    type: Mutations.SET_IS_WORKING,
+  });
 }

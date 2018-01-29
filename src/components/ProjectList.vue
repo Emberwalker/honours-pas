@@ -3,7 +3,7 @@
   <h1 class="display-4">
     Projects List
     <button v-if="isStudent" type="button" class="btn-select-projects btn btn-lg btn-primary">Select Projects...</button>
-    <router-link v-if="!isStudent" to="/new">
+    <router-link v-else to="/new">
       <button type="button" class="btn-select-projects btn btn-lg btn-primary">New Project...</button>
     </router-link>
   </h1>
@@ -68,10 +68,17 @@ export default Vue.extend({
         return [];
       }
     },
+    isAdmin(): boolean {
+      const usr = this.$store.state.user;
+      if (usr) {
+        return usr.user_type === UserType.Administrator;
+      }
+      return false;
+    },
     isStudent(): boolean {
       const usr = this.$store.state.user;
       if (usr) {
-        return usr.type === UserType.Student;
+        return usr.user_type === UserType.Student;
       }
       return false;
     },

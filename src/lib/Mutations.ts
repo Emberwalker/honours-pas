@@ -7,6 +7,7 @@ enum Mutations {
   NEW_PROJECT = "NEW_PROJECT",
   EDIT_PROJECT = "EDIT_PROJECT",
   RM_PROJECT = "RM_PROJECT",
+  SET_IS_WORKING = "SET_IS_WORKING",
 }
 
 export default Mutations;

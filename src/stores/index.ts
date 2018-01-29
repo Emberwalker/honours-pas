@@ -19,12 +19,12 @@ if (DEMO_MODE) {
       name: "2017-2018",
       is_current: true,
       coordinator_name: "Prof. I.P. Freely",
-      coordinator_email: "i.p.freely@dundee.ac.uk",
+      coordinator_email: "i.p.freely@not.dundee.ac.uk",
       projects: [
         {
           name: "Sample Project #1",
           supervisor_name: "Prof. I.P. Freely",
-          supervisor_email: "i.p.freely@dundee.ac.uk",
+          supervisor_email: "i.p.freely@not.dundee.ac.uk",
           additional_staff: [],
           description_md: `Some sort of _description_ with other elements.
 
@@ -41,9 +41,9 @@ int main() {
         },
         {
           name: "Sample Project #2",
-          supervisor_name: "Dr. Frankenstein",
-          supervisor_email: "frankenstein@dundee.ac.uk",
-          additional_staff: ["The Monster <monster@dundee.ac.uk>"],
+          supervisor_name: "Douglas Fargo",
+          supervisor_email: "d.fargo@not.dundee.ac.uk",
+          additional_staff: ["Zane Donovan <z.donovan@not.dundee.ac.uk>"],
           description_md: "Some kind of project description again...",
           id: 1235,
         },
@@ -53,12 +53,12 @@ int main() {
       name: "2016-2017",
       is_current: false,
       coordinator_name: "Prof. I.P. Freely",
-      coordinator_email: "i.p.freely@dundee.ac.uk",
+      coordinator_email: "i.p.freely@not.dundee.ac.uk",
       projects: [
         {
           name: "Old Sample Project #1",
           supervisor_name: "Prof. I.P. Freely",
-          supervisor_email: "i.p.freely@dundee.ac.uk",
+          supervisor_email: "i.p.freely@.notdundee.ac.uk",
           additional_staff: [],
           description_md: "Some kind of older project description...",
           id: 1233,
@@ -69,7 +69,7 @@ int main() {
 
   initialUser = {
     name: "Test User",
-    email: "test.user@dundee.ac.uk",
+    email: "test.user@not.dundee.ac.uk",
     marked_projects: [1234],
     selected_projects: [],
     selection_comment: "",
@@ -91,7 +91,7 @@ export default new Vuex.Store({
         if (user.user_type === UserType.Administrator || user.user_type === UserType.Staff) {
           return state.available_sessions;
         } else {
-          return getters.current_session(state);
+          return [ getters.current_session ];
         }
       } else {
         return [];
@@ -103,6 +103,7 @@ export default new Vuex.Store({
     demo_mode: DEMO_MODE as boolean,
     session_key: initialSessionKey as string | null,
     user: initialUser as IUser | null,
+    working: false,
   },
   // tslint:disable:object-literal-sort-keys
   mutations: {
@@ -152,6 +153,9 @@ export default new Vuex.Store({
     },
     [Mutations.RM_PROJECT](state, payload) {
       // TODO
+    },
+    [Mutations.SET_IS_WORKING](state, payload) {
+      state.working = payload.isWorking;
     },
   },
   // tslint:enable:object-literal-sort-keys
