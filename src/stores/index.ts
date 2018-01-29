@@ -109,26 +109,34 @@ export default new Vuex.Store({
   mutations: {
     [Mutations.ADD_MARKED_PROJECT](state, payload) {
       if (state.user) {
+        state.working = true;
         // TODO: Sync to server
         state.user.marked_projects = _.union([payload.project], state.user.marked_projects);
+        state.working = false;
       }
     },
     [Mutations.RM_MARKED_PROJECT](state, payload) {
       if (state.user) {
+        state.working = true;
         // TODO: Sync to server
         state.user.marked_projects = _.without(state.user.marked_projects, payload.project);
+        state.working = false;
       }
     },
     [Mutations.SET_SELECTED_PROJECTS](state, payload) {
       if (state.user) {
+        state.working = true;
         // TODO: Sync to server
         state.user.selected_projects = payload.projects;
+        state.working = false;
       }
     },
     [Mutations.SET_SELECTION_COMMENT](state, payload) {
       if (state.user) {
+        state.working = true;
         // TODO: Sync to server
         state.user.selection_comment = payload.comment;
+        state.working = false;
       }
     },
     [Mutations.SET_USER_AND_SESSION](state, payload) {
@@ -136,6 +144,7 @@ export default new Vuex.Store({
       state.session_key = payload.session_key;
     },
     [Mutations.NEW_PROJECT](state, payload) {
+      state.working = true;
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
       // TODO: Set this ID from server response.
       const project = payload.project;
@@ -143,13 +152,16 @@ export default new Vuex.Store({
       _.forEach(session.projects, (p: IProject) => { if (p.id! > maxId) { maxId = p.id!; } });
       project.id = maxId + 1;
       session.projects.push(payload.project);
+      state.working = false;
     },
     [Mutations.EDIT_PROJECT](state, payload) {
+      state.working = true;
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
       // TODO: Send to server.
       const project = payload.project!;
       const idx = _.findIndex(session.projects, (ent) => ent.id === project.id);
       session.projects[idx] = project;
+      state.working = false;
     },
     [Mutations.RM_PROJECT](state, payload) {
       // TODO
