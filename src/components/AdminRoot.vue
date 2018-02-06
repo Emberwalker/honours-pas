@@ -31,6 +31,7 @@
                   </div>
                 </div>
               </div>
+              <button v-if="session.is_current" @click="generateReport(session)" type="button" class="btn btn-sm btn-primary">Generate Report</button>
               <button v-if="session.is_current" type="button" data-toggle="modal" data-target="#archiveModal" :data-session="session.name" class="float-md-right btn btn-sm btn-danger stripes-sm">Archive Session</button>
               <button v-else type="button" data-toggle="modal" data-target="#purgeModal" :data-session="session.name" class="float-md-right btn btn-sm btn-danger stripes-sm">Delete Permanently</button>
             </div>
@@ -149,6 +150,12 @@
       };
     },
     methods: {
+      generateReport(session: ISession) {
+        // TODO
+        // tslint:disable:no-console
+        console.error("Report requested; not implemented! Session:", session.name);
+        // tslint:enable:no-console
+      },
       onArchiveSubmit() {
         // TODO
         // tslint:disable:no-console
