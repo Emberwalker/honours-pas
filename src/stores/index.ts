@@ -47,6 +47,14 @@ int main() {
           description_md: "Some kind of project description again...",
           id: 1235,
         },
+        {
+          name: "Sample Project #3",
+          supervisor_name: "Douglas Fargo",
+          supervisor_email: "d.fargo@not.dundee.ac.uk",
+          additional_staff: ["Zane Donovan <z.donovan@not.dundee.ac.uk>"],
+          description_md: "Another project for demonstration purposes.",
+          id: 1236,
+        },
       ],
     },
     {
@@ -58,7 +66,7 @@ int main() {
         {
           name: "Old Sample Project #1",
           supervisor_name: "Prof. I.P. Freely",
-          supervisor_email: "i.p.freely@.notdundee.ac.uk",
+          supervisor_email: "i.p.freely@not.dundee.ac.uk",
           additional_staff: [],
           description_md: "Some kind of older project description...",
           id: 1233,

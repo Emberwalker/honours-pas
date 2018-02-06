@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Router from "vue-router";
 
+import AdminRoot from "../components/AdminRoot.vue";
 import EditProject from "../components/EditProject.vue";
 import Login from "../components/Login.vue";
 import NewProject from "../components/NewProject.vue";
@@ -44,6 +45,11 @@ export default new Router({
       component: StudentOrderProjects,
       name: "order_projects",
       path: "/order",
+    },
+    {
+      component: AdminRoot,
+      name: "admin_root",
+      path: "/admin",
     },
     {
       component: NotFound,

@@ -18,10 +18,10 @@
     <h2>Projects by Session</h2>
     <div class="projlist-section" v-for="session in sessions">
       <h3>{{ session.name }}</h3>
-      <project-card v-for="project in session.projects" :project="project" :key="project.id">
+      <project-card v-for="project in session.projects" :project="project" :key="project.id" :isCurrent="session.is_current">
         <!-- Add extra buttons for bottom of the card here. -->
         <div v-if="session.is_current">
-          <router-link v-if="session.is_current" :to="'/edit/' + project.id">
+          <router-link v-if="session.is_current && canEdit(project)" :to="'/edit/' + project.id">
             <button type="button" class="btn btn-sm btn-primary">Edit</button>
           </router-link>
           <button v-if="isMarked(project)" v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
@@ -84,6 +84,10 @@ export default Vue.extend({
     },
   },
   methods: {
+    canEdit(project: IProject): boolean {
+      if (this.isStudent) { return false; }
+      return (this.isAdmin || project.supervisor_email === this.$store.state.user.email);
+    },
     isMarked(project: IProject): boolean {
       if (!this.$store.state.user) {
         return false;

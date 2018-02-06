@@ -1,6 +1,8 @@
 <template>
   <div class="card">
-    <h3 class="card-header">{{ project.name }}</h3>
+    <h3 class="card-header text-white" :class="isCurrent ? 'bg-primary' : 'bg-warning stripes'">
+      {{ project.name }} <span v-if="!isCurrent" class="h3 archive-txt text-white float-md-right text-uppercase">Archived</span>
+    </h3>
     <div class="card-body">
       <h5 class="text-muted">Supervisor:
         <a :href="mailto">{{project.supervisor_name}}</a>
@@ -35,9 +37,17 @@ export default Vue.extend({
     return {};
   },
   name: "ProjectCard",
-  props: [
-    "project",
-  ],
+  props: {
+    isCurrent: {
+      default: true,
+      required: false,
+      type: Boolean,
+    },
+    project: {
+      required: true,
+      type: Object,
+    },
+  },
 });
 </script>
 

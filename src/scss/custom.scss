@@ -27,5 +27,30 @@ $navbar-vertical-pad: 0.1rem;
   padding-right: 0.5rem;
 }
 
+.stripes {
+  background-image: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.2) 10px,
+      rgba(0, 0, 0, 0) 10px,
+      rgba(0, 0, 0, 0) 20px
+  ) !important;
+}
+
+.stripes-sm {
+  background-image: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.1) 5px,
+      rgba(0, 0, 0, 0) 5px,
+      rgba(0, 0, 0, 0) 10px
+  ) !important;
+}
+
+// Make text show up better against e.g. warning stripes with small buttons
+.btn-sm.stripes-sm {
+  text-shadow: 0 0 0.1rem #333333;
+}
+
 // Load syntax highlighting stylesheet
 @import "github_highlightjs";

@@ -35,3 +35,9 @@ export interface IProjectSelection {
   project: number;
   weight: number;
 }
+
+export interface ISupervisorCounter {
+  name: string;
+  email: string;
+  count: number;
+}
