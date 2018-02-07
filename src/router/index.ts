@@ -2,6 +2,7 @@ import Vue from "vue";
 import Router from "vue-router";
 
 import AdminRoot from "../components/AdminRoot.vue";
+import CloneProject from "../components/CloneProject.vue";
 import EditProject from "../components/EditProject.vue";
 import Login from "../components/Login.vue";
 import NewProject from "../components/NewProject.vue";
@@ -34,6 +35,12 @@ export default new Router({
       component: EditProject,
       name: "edit_project",
       path: "/edit/:id",
+      props: true,
+    },
+    {
+      component: CloneProject,
+      name: "clone_project",
+      path: "/clone/:id",
       props: true,
     },
     {

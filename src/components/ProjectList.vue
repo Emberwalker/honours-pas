@@ -24,6 +24,9 @@
           <router-link v-if="session.is_current && canEdit(project)" :to="'/edit/' + project.id">
             <button type="button" class="btn btn-sm btn-primary">Edit</button>
           </router-link>
+          <router-link v-if="!isStudent" :to="'/clone/' + project.id">
+            <button type="button" class="btn btn-sm btn-primary">Clone</button>
+          </router-link>
           <button v-if="isMarked(project)" v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
           <button v-else v-on:click="mark(project)" type="button" class="btn btn-sm btn-primary">Mark</button>
         </div>
