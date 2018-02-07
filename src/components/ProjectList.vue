@@ -2,16 +2,25 @@
 <div id="projects-list">
   <h1 class="display-4">
     Projects List
-    <button v-if="isStudent" type="button" class="btn-select-projects btn btn-lg btn-primary">Select Projects...</button>
+    <router-link v-if="isStudent" to="/pick">
+      <button type="button" class="btn-select-projects btn btn-lg btn-primary">Select Projects...</button>
+    </router-link>
     <router-link v-else to="/new">
       <button type="button" class="btn-select-projects btn btn-lg btn-primary">New Project...</button>
     </router-link>
   </h1>
   <div class="projlist-section" v-if="hasMarked">
-    <h2>Marked Projects</h2>
+    <h2 v-if="isStudent">Marked Projects</h2>
+    <h2 v-else>Your Projects</h2>
     <project-card v-for="project in marked" :project="project" :key="project.id">
       <!-- Add extra buttons for bottom of the card here. -->
-      <button v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
+      <router-link v-if="canEdit(project)" :to="'/edit/' + project.id">
+        <button type="button" class="btn btn-sm btn-primary">Edit</button>
+      </router-link>
+      <router-link v-if="!isStudent" :to="'/clone/' + project.id">
+        <button type="button" class="btn btn-sm btn-primary">Clone</button>
+      </router-link>
+      <button v-if="isStudent" v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
     </project-card>
   </div> <!-- if hasMarked END -->
   <div class="projlist-section">
@@ -27,8 +36,10 @@
           <router-link v-if="!isStudent" :to="'/clone/' + project.id">
             <button type="button" class="btn btn-sm btn-primary">Clone</button>
           </router-link>
-          <button v-if="isMarked(project)" v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
-          <button v-else v-on:click="mark(project)" type="button" class="btn btn-sm btn-primary">Mark</button>
+          <div v-if="isStudent">
+            <button v-if="isMarked(project)" v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
+            <button v-else v-on:click="mark(project)" type="button" class="btn btn-sm btn-primary">Mark</button>
+          </div>
         </div>
       </project-card>
     </div>
@@ -56,6 +67,11 @@ export default Vue.extend({
     },
     hasMarked(): boolean {
       const usr = this.$store.state.user;
+      if (usr.user_type === UserType.Staff || usr.user_type === UserType.Administrator) {
+        const session = this.$store.getters.current_session;
+        return session !== null && session.projects.filter((it: IProject) =>
+          it.supervisor_email === usr.email).length !== 0;
+      }
       if (usr) {
         return usr.marked_projects.length !== 0;
       } else {
@@ -66,6 +82,10 @@ export default Vue.extend({
       const usr = this.$store.state.user;
       const session = this.$store.getters.current_session;
       if (usr && session) {
+        // For staff/admins, show their own projects instead
+        if (usr.user_type === UserType.Staff || usr.user_type === UserType.Administrator) {
+          return session.projects.filter((it: IProject) => it.supervisor_email === usr.email);
+        }
         return session.projects.filter((it: IProject) => _.includes(usr.marked_projects, it.id));
       } else {
         return [];

@@ -7,11 +7,8 @@
       </button>
       <div id="navbar-collapse" class="collapse navbar-collapse">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item">
-            <router-link class="nav-link" to="/pick">PickProjs</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link class="nav-link" to="/admin">Admin</router-link>
+          <li v-if="isAdmin" class="nav-item">
+            <router-link class="nav-link" to="/admin">Administration</router-link>
           </li>
         </ul>
       </div>
@@ -20,14 +17,21 @@
 </template>
 
 <script lang="ts">
-  export default {
-    name: "NavHeader",
+  import Vue from "vue";
+  import {UserType} from "../lib/Types";
+
+  export default Vue.extend({
+    computed: {
+      isAdmin(): boolean {
+        return this.$store.state.user && this.$store.state.user.user_type === UserType.Administrator;
+      },
+    },
     data() {
       return {};
     },
-  };
+    name: "NavHeader",
+  });
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
 </style>

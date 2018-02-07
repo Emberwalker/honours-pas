@@ -55,6 +55,14 @@ int main() {
           description_md: "Another project for demonstration purposes.",
           id: 1236,
         },
+        {
+          name: "Sample Project #4",
+          supervisor_name: "Zane Donovan",
+          supervisor_email: "z.donovan@not.dundee.ac.uk",
+          additional_staff: [],
+          description_md: "Yet another project for demonstration purposes.",
+          id: 1237,
+        },
       ],
     },
     {
@@ -81,7 +89,7 @@ int main() {
     marked_projects: [1234],
     selected_projects: [],
     selection_comment: "",
-    user_type: UserType.Staff,
+    user_type: UserType.Administrator,
   };
 
   initialSessionKey = "0xDEADBEEF";

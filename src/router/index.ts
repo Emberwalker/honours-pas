@@ -1,5 +1,6 @@
 import Vue from "vue";
-import Router from "vue-router";
+import Router, {NavigationGuard} from "vue-router";
+import {UserType} from "../lib/Types";
 
 import AdminRoot from "../components/AdminRoot.vue";
 import CloneProject from "../components/CloneProject.vue";
@@ -10,13 +11,37 @@ import NotFound from "../components/NotFound.vue";
 import ProjectList from "../components/ProjectList.vue";
 import StudentOrderProjects from "../components/StudentOrderProjects.vue";
 import StudentPickProjects from "../components/StudentPickProjects.vue";
+import store from "../stores";
 
 Vue.use(Router);
 
-export default new Router({
+const isNotStudentGuard: NavigationGuard = (to, from, next) => {
+  if (store.state.user !== null && store.state.user.user_type !== UserType.Student) { return next(); }
+  next("/");
+};
+
+const isStudentGuard: NavigationGuard = (to, from, next) => {
+  if (store.state.user !== null && store.state.user.user_type === UserType.Student) { return next(); }
+  next("/");
+};
+
+const isAdminGuard: NavigationGuard = (to, from, next) => {
+  if (store.state.user !== null && store.state.user.user_type === UserType.Administrator) {
+    return next();
+  }
+  next("/");
+};
+
+const router = new Router({
   mode: "history",
   routes: [
     {
+      beforeEnter: (to, from, next) => {
+        if (store.state.user !== null) {
+          return next("/");
+        }
+        next();
+      },
       component: Login,
       name: "login",
       path: "/login",
@@ -27,33 +52,39 @@ export default new Router({
       path: "/",
     },
     {
+      beforeEnter: isNotStudentGuard,
       component: NewProject,
       name: "new_project",
       path: "/new",
     },
     {
+      beforeEnter: isNotStudentGuard,
       component: EditProject,
       name: "edit_project",
       path: "/edit/:id",
       props: true,
     },
     {
+      beforeEnter: isNotStudentGuard,
       component: CloneProject,
       name: "clone_project",
       path: "/clone/:id",
       props: true,
     },
     {
+      beforeEnter: isStudentGuard,
       component: StudentPickProjects,
       name: "pick_projects",
       path: "/pick",
     },
     {
+      beforeEnter: isStudentGuard,
       component: StudentOrderProjects,
       name: "order_projects",
       path: "/order",
     },
     {
+      beforeEnter: isAdminGuard,
       component: AdminRoot,
       name: "admin_root",
       path: "/admin",
@@ -65,3 +96,12 @@ export default new Router({
     },
   ],
 });
+
+router.beforeEach((to, from, next) => {
+  if (to.path !== "/login" && store.state.user === null) {
+    return next("/login");
+  }
+  next();
+});
+
+export default router;

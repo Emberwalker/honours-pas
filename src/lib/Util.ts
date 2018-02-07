@@ -18,7 +18,7 @@ export function parseMarkdown(md: string): string {
   return marked(md);
 }
 
-export function renderCodeBlock(el: Node) {
+export function renderCodeBlock(el: any) {
   hljs.highlightBlock(el);
 }
 

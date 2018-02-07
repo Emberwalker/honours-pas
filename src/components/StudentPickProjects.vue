@@ -31,6 +31,7 @@
         <div class="card" id="selected-sidebar-card">
           <h2 class="card-header"><feather icon="user-check"/>Selections</h2>
           <div class="card-body">
+            <p class="text-muted">All projects must have different supervisors.</p>
             <table class="table" v-if="selectedCount !== 0">
               <thead>
                 <tr>
@@ -46,7 +47,8 @@
               </tbody>
             </table>
             <p>Selections: {{selectedCount}}/3</p>
-            <router-link v-if="isValid" to="/order">
+            <p v-if="duplicatedSupervisors()" class="text-danger">Two or more projects have the same supervisor.</p>
+            <router-link v-if="isValid()" to="/order">
               <button type="button" class="btn btn-sm btn-success">Next</button>
             </router-link>
           </div>
@@ -104,11 +106,13 @@
         });
         return projs;
       },
-      isValid(): boolean {
-        return this.$store.state.user.selected_projects.length === 3;
-      },
     },
     methods: {
+      duplicatedSupervisors(): boolean {
+        const sels = this.selected;
+        const uniq = _.uniqBy(sels, "supervisor_email");
+        return uniq.length !== sels.length;
+      },
       isMarked(project: IProject): boolean {
         if (!this.$store.state.user) {
           return false;
@@ -117,6 +121,11 @@
       },
       isSelected(project: IProject): boolean {
         return _.some(this.$store.state.user.selected_projects, {project: project.id});
+      },
+      isValid(): boolean {
+        const sels = this.$store.state.user.selected_projects;
+        if (sels.length !== 3) { return false; }
+        return !this.duplicatedSupervisors();
       },
       mark(project: IProject) {
         this.$store.commit({

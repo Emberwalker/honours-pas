@@ -9,30 +9,6 @@ import store from "./stores";
 
 Vue.config.productionTip = false;
 
-/*Vue.component("feather", {
-  functional: true,
-  props: {
-    icon: {
-      required: true,
-      type: String,
-    },
-    nopad: {
-      default: false,
-      required: false,
-      type: Boolean,
-    },
-  },
-  render: (createElement, ctx) => {
-    return createElement("span", {
-      attrs: {
-        class: "feather-icon-svg",
-      },
-      domProps: {
-        innerHTML: feather.icons[ctx.props.icon].toSvg(),
-      },
-    });
-  },
-});*/
 Vue.component("feather", Feather);
 
 Vue.directive("markdown", {

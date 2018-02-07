@@ -10,7 +10,7 @@
       <h6 class="text-muted" v-if="project.additional_staff.length > 0">
         Additional staff: {{ additional_staff }}
       </h6>
-      <div class="description" v-html="description" v-markdown></div>
+      <div class="description" ref="description" v-html="description" v-markdown></div>
       <slot></slot>
     </div>
   </div>
@@ -19,7 +19,7 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import { parseMarkdown } from "../lib/Util";
+import { parseMarkdown, renderCodeBlock } from "../lib/Util";
 
 export default Vue.extend({
   computed: {
@@ -36,6 +36,17 @@ export default Vue.extend({
   data() {
     return {};
   },
+  methods: {
+    refreshCodeBlocks() {
+      const root = $(this.$refs.description);
+      _.each(root.find("code"), (el: any) => {
+        renderCodeBlock(el);
+      });
+    },
+  },
+  mounted() {
+    this.refreshCodeBlocks();
+  },
   name: "ProjectCard",
   props: {
     isCurrent: {
@@ -47,6 +58,9 @@ export default Vue.extend({
       required: true,
       type: Object,
     },
+  },
+  updated() {
+    this.refreshCodeBlocks();
   },
 });
 </script>
