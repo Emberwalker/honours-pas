@@ -153,19 +153,19 @@
       generateReport(session: ISession) {
         // TODO
         // tslint:disable:no-console
-        console.error("Report requested; not implemented! Session:", session.name);
+        //console.error("Report requested; not implemented! Session:", session.name);
         // tslint:enable:no-console
       },
       onArchiveSubmit() {
         // TODO
         // tslint:disable:no-console
-        console.error("Archival requested; not implemented! Session:", this.activeModalSession);
+        //console.error("Archival requested; not implemented! Session:", this.activeModalSession);
         // tslint:enable:no-console
       },
       onPurgeSubmit() {
         // TODO
         // tslint:disable:no-console
-        console.error("Purge requested; not implemented! Session:", this.activeModalSession);
+        //console.error("Purge requested; not implemented! Session:", this.activeModalSession);
         // tslint:enable:no-console
       },
     },

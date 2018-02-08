@@ -11,6 +11,7 @@ import Vue from "vue";
 import Mutations from "../lib/Mutations";
 import { IProject } from "../lib/Types";
 import ProjectEditor from "./ProjectEditor.vue";
+import Actions from "../lib/Actions";
 
 export default Vue.extend({
   components: {
@@ -29,11 +30,12 @@ export default Vue.extend({
   },
   methods: {
     editComplete(newProject: IProject) {
-      this.$store.commit({
+      this.$store.dispatch({
         project: newProject,
-        type: Mutations.NEW_PROJECT,
+        type: Actions.NEW_PROJECT,
+      }).then(() => {
+        this.$router.push("/");
       });
-      this.$router.push("/");
     },
   },
   name: "NewProject",

@@ -1,8 +1,10 @@
 import * as _ from "lodash";
 import Vue from "vue";
 import Vuex from "vuex";
+import Actions from "../lib/Actions";
 import Mutations from "../lib/Mutations";
 import {IProject, ISession, IUser, UserType} from "../lib/Types";
+// import {Promise} from "es6-promise";
 
 Vue.use(Vuex);
 
@@ -96,6 +98,17 @@ int main() {
   // tslint:enable:object-literal-sort-keys
 }
 
+const COMMIT_WORKING = {
+  isWorking: true,
+  type: Mutations.SET_IS_WORKING,
+};
+
+const COMMIT_NOT_WORKING = {
+  isWorking: false,
+  type: Mutations.SET_IS_WORKING,
+};
+
+// tslint:disable:object-literal-sort-keys
 export default new Vuex.Store({
   getters: {
     current_session: (state) => {
@@ -121,38 +134,25 @@ export default new Vuex.Store({
     user: initialUser as IUser | null,
     working: false,
   },
-  // tslint:disable:object-literal-sort-keys
   mutations: {
     [Mutations.ADD_MARKED_PROJECT](state, payload) {
       if (state.user) {
-        state.working = true;
-        // TODO: Sync to server
         state.user.marked_projects = _.union([payload.project], state.user.marked_projects);
-        state.working = false;
       }
     },
     [Mutations.RM_MARKED_PROJECT](state, payload) {
       if (state.user) {
-        state.working = true;
-        // TODO: Sync to server
         state.user.marked_projects = _.without(state.user.marked_projects, payload.project);
-        state.working = false;
       }
     },
     [Mutations.SET_SELECTED_PROJECTS](state, payload) {
       if (state.user) {
-        state.working = true;
-        // TODO: Sync to server
         state.user.selected_projects = payload.projects;
-        state.working = false;
       }
     },
     [Mutations.SET_SELECTION_COMMENT](state, payload) {
       if (state.user) {
-        state.working = true;
-        // TODO: Sync to server
         state.user.selection_comment = payload.comment;
-        state.working = false;
       }
     },
     [Mutations.SET_USER_AND_SESSION](state, payload) {
@@ -160,33 +160,29 @@ export default new Vuex.Store({
       state.session_key = payload.session_key;
     },
     [Mutations.NEW_PROJECT](state, payload) {
-      state.working = true;
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
-      // TODO: Set this ID from server response.
       const project = payload.project;
-      let maxId = 0;
-      _.forEach(session.projects, (p: IProject) => { if (p.id! > maxId) { maxId = p.id!; } });
-      project.id = maxId + 1;
+      // If demo mode, generate a local ID
+      if (state.demo_mode) {
+        let maxId = 0;
+        _.forEach(session.projects, (p: IProject) => { if (p.id! > maxId) { maxId = p.id!; } });
+        project.id = maxId + 1;
+      }
       session.projects.push(payload.project);
-      state.working = false;
     },
     [Mutations.EDIT_PROJECT](state, payload) {
-      state.working = true;
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
       // TODO: Send to server.
       const project = payload.project!;
       const idx = _.findIndex(session.projects, (ent) => ent.id === project.id);
       session.projects[idx] = project;
-      state.working = false;
     },
     [Mutations.RM_PROJECT](state, payload) {
-      state.working = true;
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
       // TODO: Send to server.
       session.projects = _.filter(session.projects, (p: IProject) => {
         return p.id !== payload.project;
       });
-      state.working = false;
     },
     [Mutations.ARCHIVE_SESSION](state, payload) {
       // TODO
@@ -198,5 +194,41 @@ export default new Vuex.Store({
       state.working = payload.isWorking;
     },
   },
-  // tslint:enable:object-literal-sort-keys
+  actions: {
+    [Actions.ADD_MARKED_PROJECT](ctx, payload) {
+      // TODO
+    },
+    [Actions.RM_MARKED_PROJECT](ctx, payload) {
+      // TODO
+    },
+    [Actions.SET_SELECTED_PROJECTS](ctx, payload) {
+      // TODO
+    },
+    [Actions.SET_SELECTION_COMMENT](ctx, payload) {
+      // TODO
+    },
+    async [Actions.NEW_PROJECT](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await new Promise((resolve) => _.delay(resolve, 2000));
+      ctx.commit({
+        type: Mutations.NEW_PROJECT,
+        project: payload.project,
+      });
+      ctx.commit(COMMIT_NOT_WORKING);
+    },
+    [Actions.EDIT_PROJECT](ctx, payload) {
+      // TODO
+    },
+    [Actions.RM_PROJECT](ctx, payload) {
+      // TODO
+    },
+    [Actions.ARCHIVE_SESSION](ctx, payload) {
+      // TODO
+    },
+    [Actions.PURGE_SESSION](ctx, payload) {
+      // TODO
+    },
+  },
 });
+// tslint:enable:object-literal-sort-keys

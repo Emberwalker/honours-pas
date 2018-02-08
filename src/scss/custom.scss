@@ -52,5 +52,14 @@ $navbar-vertical-pad: 0.1rem;
   text-shadow: 0 0 0.1rem #333333;
 }
 
+// Disable modal curves
+.modal-content {
+  border-radius: 0;
+}
+
+.modal-header {
+  border-radius: 0;
+}
+
 // Load syntax highlighting stylesheet
 @import "github_highlightjs";

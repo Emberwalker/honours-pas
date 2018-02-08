@@ -154,7 +154,7 @@ export default Vue.extend({
     onRmSubmit() {
       if (this.rmProjectId === -1) { return; }
       const project = _.head(_.filter(this.$store.getters.current_session.projects, (p: IProject) => {
-        return p.id === this.rmProjectId
+        return p.id === this.rmProjectId;
       }));
       if (!project) { return; }
       this.$store.commit({
