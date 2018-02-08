@@ -180,6 +180,18 @@ export default new Vuex.Store({
       state.working = false;
     },
     [Mutations.RM_PROJECT](state, payload) {
+      state.working = true;
+      const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
+      // TODO: Send to server.
+      session.projects = _.filter(session.projects, (p: IProject) => {
+        return p.id !== payload.project;
+      });
+      state.working = false;
+    },
+    [Mutations.ARCHIVE_SESSION](state, payload) {
+      // TODO
+    },
+    [Mutations.PURGE_SESSION](state, payload) {
       // TODO
     },
     [Mutations.SET_IS_WORKING](state, payload) {

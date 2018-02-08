@@ -27,21 +27,47 @@
     <h2>Projects by Session</h2>
     <div class="projlist-section" v-for="session in sessions">
       <h3>{{ session.name }}</h3>
+      <p class="h5 font-weight-normal text-muted" v-if="session.projects.length === 0">No projects in this session.</p>
       <project-card v-for="project in session.projects" :project="project" :key="project.id" :isCurrent="session.is_current">
         <!-- Add extra buttons for bottom of the card here. -->
-        <div v-if="session.is_current">
-          <router-link v-if="session.is_current && canEdit(project)" :to="'/edit/' + project.id">
-            <button type="button" class="btn btn-sm btn-primary">Edit</button>
-          </router-link>
-          <router-link v-if="!isStudent" :to="'/clone/' + project.id">
-            <button type="button" class="btn btn-sm btn-primary">Clone</button>
-          </router-link>
-          <div v-if="isStudent">
-            <button v-if="isMarked(project)" v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
-            <button v-else v-on:click="mark(project)" type="button" class="btn btn-sm btn-primary">Mark</button>
-          </div>
+        <router-link v-if="session.is_current && canEdit(project)" :to="'/edit/' + project.id">
+          <button type="button" class="btn btn-sm btn-primary">Edit</button>
+        </router-link>
+        <router-link v-if="!isStudent" :to="'/clone/' + project.id">
+          <button type="button" class="btn btn-sm btn-primary">Clone</button>
+        </router-link>
+        <div v-if="isStudent && session.is_current">
+          <button v-if="isMarked(project)" v-on:click="unmark(project)" type="button" class="btn btn-sm btn-warning">Unmark</button>
+          <button v-else v-on:click="mark(project)" type="button" class="btn btn-sm btn-primary">Mark</button>
         </div>
+        <button v-if="session.is_current && isAdmin" type="button" data-toggle="modal" data-target="#rmModal" :data-project="project.id" class="float-md-right btn btn-sm btn-danger stripes-sm">Delete</button>
       </project-card>
+    </div>
+  </div>
+  <!-- Modal for delete -->
+  <div class="modal fade" ref="rmModal" id="rmModal" tabindex="-1" role="dialog" aria-labelledby="rmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white stripes">
+          <h5 class="modal-title" id="rmModalLabel">Confirm Deletion</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Cancel">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Deleting a project will invalidate any student choices dependant on this project. Affected students will be
+            emailed to remake their choices.
+          </p>
+          <span class="font-weight-bold">
+            Are you sure you wish to delete this project?
+          </span>
+        </div>
+        <div class="modal-footer rm-footer">
+          <button type="button" data-dismiss="modal" aria-label="Cancel" class="btn btn-sm btn-primary">Cancel</button>
+          <button type="button" @click="onRmSubmit" data-dismiss="modal" class="float-md-right btn btn-sm btn-danger">Delete</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -59,7 +85,9 @@ export default Vue.extend({
     "project-card": ProjectCard,
   },
   data() {
-    return {};
+    return {
+      rmProjectId: -1,
+    };
   },
   computed: {
     sessions(): ISession[] {
@@ -123,12 +151,28 @@ export default Vue.extend({
         type: Mutations.ADD_MARKED_PROJECT,
       });
     },
+    onRmSubmit() {
+      if (this.rmProjectId === -1) { return; }
+      const project = _.head(_.filter(this.$store.getters.current_session.projects, (p: IProject) => {
+        return p.id === this.rmProjectId
+      }));
+      if (!project) { return; }
+      this.$store.commit({
+        project: project.id,
+        type: Mutations.RM_PROJECT,
+      });
+    },
     unmark(project: IProject) {
       this.$store.commit({
         project: project.id,
         type: Mutations.RM_MARKED_PROJECT,
       });
     },
+  },
+  mounted() {
+    $(this.$refs.rmModal).on("show.bs.modal", (evt: any) => {
+      this.rmProjectId = $(evt.relatedTarget).data("project");
+    });
   },
   name: "ProjectList",
 });
@@ -144,6 +188,10 @@ export default Vue.extend({
 // Pad out the button for select projects a little.
 .btn-select-projects {
   margin-left: 1rem;
+}
+
+.rm-footer {
+  display: block;
 }
 
 </style>
