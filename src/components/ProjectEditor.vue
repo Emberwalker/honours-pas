@@ -12,15 +12,17 @@
       <div class="form-group row">
         <label class="col-sm-2 col-form-label" for="metadata-supervisor-name">Project supervisor</label>
         <div class="input-group col-sm-10">
-          <div class="input-group-addon">(Read-only)</div>
-          <input v-model="project.supervisor_name" type="text" class="form-control" id="metadata-supervisor-name" readonly/>
+          <div v-if="!allowAuthorChanges" class="input-group-addon">(Read-only)</div>
+          <input v-model="project.supervisor_name" type="text" class="form-control" id="metadata-supervisor-name"
+                 :readonly="!allowAuthorChanges"/>
         </div>
       </div>
       <div class="form-group row">
         <label class="col-sm-2 col-form-label" for="metadata-supervisor-email">Supervisor email</label>
         <div class="input-group col-sm-10">
-          <div class="input-group-addon">(Read-only)</div>
-          <input v-model="project.supervisor_email" type="text" class="form-control" id="metadata-supervisor-email" readonly/>
+          <div v-if="!allowAuthorChanges" class="input-group-addon">(Read-only)</div>
+          <input v-model="project.supervisor_email" type="text" class="form-control" id="metadata-supervisor-email"
+                 :readonly="!allowAuthorChanges"/>
         </div>
       </div>
       <div class="form-group row">
@@ -97,7 +99,7 @@ export default Vue.extend({
   computed: {},
   data() {
     // Create a *copy* of the project so we don't accidentally overwrite state.
-    const project = $.extend({}, this.initialProject);
+    const project = $.extend({}, this.$props.initialProject);
     return {
       additional_email: "",
       additional_name: "",
@@ -124,9 +126,16 @@ export default Vue.extend({
     },
   },
   name: "ProjectEditor",
-  props: [
-    "initialProject",
-  ],
+  props: {
+    allowAuthorChanges: {
+      default: false,
+      required: false,
+      type: Boolean,
+    },
+    initialProject: {
+      required: true,
+    },
+  },
 });
 </script>
 

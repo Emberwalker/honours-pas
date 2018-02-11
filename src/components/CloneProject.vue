@@ -1,7 +1,7 @@
 <template>
   <div class="clone-project">
     <h1>Clone Project</h1>
-    <project-editor :initial-project="project" v-on:edit-complete="editComplete"></project-editor>
+    <project-editor :initial-project="project" :allow-author-changes="isAdmin" v-on:edit-complete="editComplete"></project-editor>
   </div>
 </template>
 
@@ -15,6 +15,11 @@
   export default Vue.extend({
     components: {
       "project-editor": ProjectEditor,
+    },
+    computed: {
+      isAdmin(): boolean {
+        return this.$store.state.user && this.$store.state.user.user_type === UserType.Administrator;
+      },
     },
     data() {
       const session = this.$store.getters.current_session;

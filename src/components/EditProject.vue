@@ -1,7 +1,7 @@
 <template>
 <div class="new-project">
   <h1>Edit Project</h1>
-  <project-editor :initial-project="project" v-on:edit-complete="editComplete"/>
+  <project-editor :initial-project="project" :allow-author-changes="isAdmin" v-on:edit-complete="editComplete"/>
 </div>
 </template>
 
@@ -9,12 +9,17 @@
 import _ from "lodash";
 import Vue from "vue";
 import Mutations from "../lib/Mutations";
-import { IProject } from "../lib/Types";
+import {IProject, UserType} from "../lib/Types";
 import ProjectEditor from "./ProjectEditor.vue";
 
 export default Vue.extend({
   components: {
     "project-editor": ProjectEditor,
+  },
+  computed: {
+    isAdmin(): boolean {
+      return this.$store.state.user && this.$store.state.user.user_type === UserType.Administrator;
+    },
   },
   data() {
     const session = this.$store.getters.current_session;
