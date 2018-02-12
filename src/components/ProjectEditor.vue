@@ -63,7 +63,7 @@
     </div>
     <div class="col-sm-4 help-col">
       <div class="card">
-        <h3 class="card-header"><feather icon="edit-2"/>Formatting</h3>
+        <h3 class="card-header bg-info text-white"><feather icon="edit-2"/>Formatting</h3>
         <div class="card-body">
           <h5 class="text-muted">A Markdown Primer</h5>
           <p>Markdown is a plain text-based formatting system commonly used by developers on platforms such as GitHub.</p>

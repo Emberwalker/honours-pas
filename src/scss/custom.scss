@@ -16,10 +16,11 @@ $navbar-vertical-pad: 0.1rem;
   text-transform: none;
 }
 
-// Fix spacing issues in cards for project list view.
+// Fix spacing issues in cards for project list view and remove border curves.
 .card {
   margin-top: 1rem;
   margin-bottom: 1rem;
+  border-radius: 0;
 }
 
 .feather-icon-svg {
