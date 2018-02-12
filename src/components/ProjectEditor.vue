@@ -57,11 +57,11 @@
   </div>
   <!-- Description -->
   <div class="row">
-    <div class="col">
+    <div class="col-lg">
       <h3 id="description_label">Description</h3>
       <textarea title="project description" aria-labelledby="description_label" @input="onUpdate" class="form-control" rows="26">{{ project.description_md }}</textarea>
     </div>
-    <div class="col-sm-4 help-col">
+    <div class="col-lg-4 help-col">
       <div class="card">
         <h3 class="card-header bg-info text-white"><feather icon="edit-2"/>Formatting</h3>
         <div class="card-body">
@@ -82,7 +82,8 @@
           </ul>
           <p class="markdown-footnote">
             Note that not all features of GitHub Flavoured Markdown are supported - GitHub-specific features such as
-            SHA-1 linking are not provided. Tables, syntax highlighting and automatic linking are supported.
+            SHA-1 linking are not provided. Tables, syntax highlighting and automatic linking are supported. Raw HTML
+            is escaped.
           </p>
         </div>
       </div>
