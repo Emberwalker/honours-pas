@@ -34,4 +34,10 @@
 </script>
 
 <style scoped lang="scss">
+
+  .navbar-brand {
+    // Fix screwy padding.
+    padding-top: 0;
+  }
+
 </style>

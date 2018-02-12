@@ -35,9 +35,6 @@
         </div>
       </div>
     </div>
-    <!--<div id="app-working-overlay" v-if="isWaiting">
-      <span id="app-working-spinner"><feather spin="true" large="true" icon="refresh-cw"/></span>
-    </div> -->
   </div>
 </template>
 
