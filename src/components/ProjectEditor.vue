@@ -39,6 +39,9 @@
           <button @click="addStaffer" class="add-staff-btn btn btn-success btn-sm">Add</button>
         </div>
       </div>
+      <div class="row">
+        <p class="text-muted form-hint">For additional staff, click 'Add' to commit a new entry to the list.</p>
+      </div>
       <div v-if="project.additional_staff.length > 0" class="form-group row">
         <div class="col-sm-2"></div>
         <div class="col-sm-10">
@@ -56,14 +59,31 @@
   <div class="row">
     <div class="col">
       <h3 id="description_label">Description</h3>
-      <textarea title="project description" aria-labelledby="description_label" @input="onUpdate" class="form-control" rows="8">{{ project.description_md }}</textarea>
+      <textarea title="project description" aria-labelledby="description_label" @input="onUpdate" class="form-control" rows="26">{{ project.description_md }}</textarea>
     </div>
     <div class="col-sm-4 help-col">
       <div class="card">
         <h3 class="card-header"><feather icon="edit-2"/>Formatting</h3>
         <div class="card-body">
           <h5 class="text-muted">A Markdown Primer</h5>
-          <p>Some explanatory text here...</p>
+          <p>Markdown is a plain text-based formatting system commonly used by developers on platforms such as GitHub.</p>
+          <p>
+            Below is a list of common operations. For a more complete reference, see the
+            <a href="https://guides.github.com/features/mastering-markdown/" target="_blank">GitHub Guide 'Mastering Markdown'</a>.
+          </p>
+          <ul class="markdown-list">
+            <li><code># Text</code>: Header</li>
+            <li><code>*text*</code> or <code>_text_</code>: Italics</li>
+            <li><code>**text**</code>: Bold</li>
+            <li><code>[Link Text](http://example.com)</code>: Hyperlinks</li>
+            <li><code>`text`</code>: Inline code block</li>
+            <li><code>```java</code>: Start Java syntax code block</li>
+            <li><code>```</code>: End code block</li>
+          </ul>
+          <p class="markdown-footnote">
+            Note that not all features of GitHub Flavoured Markdown are supported - GitHub-specific features such as
+            SHA-1 linking are not provided. Tables, syntax highlighting and automatic linking are supported.
+          </p>
         </div>
       </div>
     </div>
@@ -73,6 +93,7 @@
   <div class="row">
     <div class="col">
       <h3>Preview</h3>
+      <p class="text-muted">Note that the preview may take a second to update.</p>
       <project-card :project="project"></project-card>
     </div>
   </div>
@@ -141,11 +162,31 @@ export default Vue.extend({
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
-.row {
-  margin-bottom: 1rem;
-}
+  .row {
+    margin-bottom: 1rem;
+  }
 
-.btn-right {
-  float: right;
-}
+  .btn-right {
+    float: right;
+  }
+
+  .add-staff-btn {
+    // Fix button alignment
+    top: 25%;
+  }
+
+  .form-hint {
+    margin-left: 0.9rem;
+  }
+
+  .markdown-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .markdown-footnote {
+    margin-top: 1rem;
+    margin-bottom: 0;
+  }
 </style>
