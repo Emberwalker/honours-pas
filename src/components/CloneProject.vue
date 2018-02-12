@@ -9,7 +9,7 @@
   import _ from "lodash";
   import Vue from "vue";
   import Mutations from "../lib/Mutations";
-  import {IProject, UserType} from "../lib/Types";
+  import {IProject, ISession, UserType} from "../lib/Types";
   import ProjectEditor from "./ProjectEditor.vue";
 
   export default Vue.extend({
@@ -22,17 +22,23 @@
       },
     },
     data() {
-      const session = this.$store.getters.current_session;
       const usr = this.$store.state.user;
       let project: IProject | null = null;
-      if (session) {
-        project = _.find(session.projects, (proj) => proj.id.toString() === this.id);
+      _.each(this.$store.state.available_sessions, (session: ISession) => {
+        const found = _.find(session.projects, (proj: IProject) => {
+          return proj.id!.toString() === this.id;
+        });
+        if (found) { project = found; }
+      });
+      if (!project) {
+        return { project: null };
       }
+      // Note we have to use 'project!' to work around a TS compiler issue
       project = $.extend({}, project);
-      project.id = -1;
+      project!.id = -1;
       if (usr.user_type !== UserType.Administrator) {
-        project.supervisor_name = usr.name;
-        project.supervisor_email = usr.email;
+        project!.supervisor_name = usr.name;
+        project!.supervisor_email = usr.email;
       }
       return {
         project,
