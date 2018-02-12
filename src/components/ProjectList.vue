@@ -76,7 +76,7 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import Mutations from "../lib/Mutations";
+import Actions from "../lib/Actions";
 import { IProject, ISession, UserType } from "../lib/Types";
 import ProjectCard from "./ProjectCard.vue";
 
@@ -146,9 +146,9 @@ export default Vue.extend({
       return _.includes(this.$store.state.user.marked_projects, project.id);
     },
     mark(project: IProject) {
-      this.$store.commit({
+      this.$store.dispatch({
         project: project.id,
-        type: Mutations.ADD_MARKED_PROJECT,
+        type: Actions.ADD_MARKED_PROJECT,
       });
     },
     onRmSubmit() {
@@ -157,15 +157,15 @@ export default Vue.extend({
         return p.id === this.rmProjectId;
       }));
       if (!project) { return; }
-      this.$store.commit({
+      this.$store.dispatch({
         project: project.id,
-        type: Mutations.RM_PROJECT,
+        type: Actions.RM_PROJECT,
       });
     },
     unmark(project: IProject) {
-      this.$store.commit({
+      this.$store.dispatch({
         project: project.id,
-        type: Mutations.RM_MARKED_PROJECT,
+        type: Actions.RM_MARKED_PROJECT,
       });
     },
   },

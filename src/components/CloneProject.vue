@@ -8,7 +8,7 @@
 <script lang="ts">
   import _ from "lodash";
   import Vue from "vue";
-  import Mutations from "../lib/Mutations";
+  import Actions from "../lib/Actions";
   import {IProject, ISession, UserType} from "../lib/Types";
   import ProjectEditor from "./ProjectEditor.vue";
 
@@ -46,11 +46,12 @@
     },
     methods: {
       editComplete(project: IProject) {
-        this.$store.commit({
+        this.$store.dispatch({
           project,
-          type: Mutations.NEW_PROJECT,
+          type: Actions.NEW_PROJECT,
+        }).then(() => {
+          this.$router.push("/");
         });
-        this.$router.push("/");
       },
     },
     name: "CloneProject",

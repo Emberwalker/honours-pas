@@ -21,11 +21,3 @@ export function parseMarkdown(md: string): string {
 export function renderCodeBlock(el: any) {
   hljs.highlightBlock(el);
 }
-
-// We don't use the type Vuex.Store because for some reason Typescript won't import it...
-export function setIsWorking(store: any, isWorking: boolean) {
-  store.commit({
-    isWorking,
-    type: Mutations.SET_IS_WORKING,
-  });
-}

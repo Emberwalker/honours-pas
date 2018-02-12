@@ -98,6 +98,19 @@ int main() {
   // tslint:enable:object-literal-sort-keys
 }
 
+// Private mutations (only accessible within actions)
+enum _Mutations {
+  ADD_MARKED_PROJECT = "ADD_MARKED_PROJECT",
+  RM_MARKED_PROJECT = "RM_MARKED_PROJECT",
+  SET_SELECTED_PROJECTS = "SET_SELECTED_PROJECTS",
+  SET_SELECTION_COMMENT = "SET_SELECTION_COMMAND",
+  NEW_PROJECT = "NEW_PROJECT",
+  EDIT_PROJECT = "EDIT_PROJECT",
+  RM_PROJECT = "RM_PROJECT",
+  ARCHIVE_SESSION = "ARCHIVE_SESSION",
+  PURGE_SESSION = "PURGE_SESSION",
+}
+
 const COMMIT_WORKING = {
   isWorking: true,
   type: Mutations.SET_IS_WORKING,
@@ -107,6 +120,25 @@ const COMMIT_NOT_WORKING = {
   isWorking: false,
   type: Mutations.SET_IS_WORKING,
 };
+
+export interface IReadableError {
+  src: Error | null;
+  human: string;
+}
+
+function getErrorCommit(human: string, err: Error | null): {type: string, err: IReadableError} {
+  return {
+    err: {
+      human,
+      src: err,
+    },
+    type: Mutations.SET_ERROR,
+  };
+}
+
+function sleep(ms: number): Promise<any> {
+  return new Promise((resolve) => _.delay(resolve, ms));
+}
 
 // tslint:disable:object-literal-sort-keys
 export default new Vuex.Store({
@@ -133,24 +165,25 @@ export default new Vuex.Store({
     session_key: initialSessionKey as string | null,
     user: initialUser as IUser | null,
     working: false,
+    error: null as IReadableError | null,
   },
   mutations: {
-    [Mutations.ADD_MARKED_PROJECT](state, payload) {
+    [_Mutations.ADD_MARKED_PROJECT](state, payload) {
       if (state.user) {
         state.user.marked_projects = _.union([payload.project], state.user.marked_projects);
       }
     },
-    [Mutations.RM_MARKED_PROJECT](state, payload) {
+    [_Mutations.RM_MARKED_PROJECT](state, payload) {
       if (state.user) {
         state.user.marked_projects = _.without(state.user.marked_projects, payload.project);
       }
     },
-    [Mutations.SET_SELECTED_PROJECTS](state, payload) {
+    [_Mutations.SET_SELECTED_PROJECTS](state, payload) {
       if (state.user) {
         state.user.selected_projects = payload.projects;
       }
     },
-    [Mutations.SET_SELECTION_COMMENT](state, payload) {
+    [_Mutations.SET_SELECTION_COMMENT](state, payload) {
       if (state.user) {
         state.user.selection_comment = payload.comment;
       }
@@ -159,7 +192,7 @@ export default new Vuex.Store({
       state.user = payload.user;
       state.session_key = payload.session_key;
     },
-    [Mutations.NEW_PROJECT](state, payload) {
+    [_Mutations.NEW_PROJECT](state, payload) {
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
       const project = payload.project;
       // If demo mode, generate a local ID
@@ -170,24 +203,24 @@ export default new Vuex.Store({
       }
       session.projects.push(payload.project);
     },
-    [Mutations.EDIT_PROJECT](state, payload) {
+    [_Mutations.EDIT_PROJECT](state, payload) {
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
       // TODO: Send to server.
       const project = payload.project!;
       const idx = _.findIndex(session.projects, (ent) => ent.id === project.id);
       session.projects[idx] = project;
     },
-    [Mutations.RM_PROJECT](state, payload) {
+    [_Mutations.RM_PROJECT](state, payload) {
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
       // TODO: Send to server.
       session.projects = _.filter(session.projects, (p: IProject) => {
         return p.id !== payload.project;
       });
     },
-    [Mutations.ARCHIVE_SESSION](state, payload) {
+    [_Mutations.ARCHIVE_SESSION](state, payload) {
       // TODO
     },
-    [Mutations.PURGE_SESSION](state, payload) {
+    [_Mutations.PURGE_SESSION](state, payload) {
       // TODO
     },
     [Mutations.SET_IS_WORKING](state, payload) {
@@ -195,39 +228,149 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    [Actions.ADD_MARKED_PROJECT](ctx, payload) {
-      // TODO
+    async [Actions.ADD_MARKED_PROJECT](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.ADD_MARKED_PROJECT,
+          project: payload.project,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while adding a marked project.", err));
+        throw err;
+      }
     },
-    [Actions.RM_MARKED_PROJECT](ctx, payload) {
-      // TODO
+    async [Actions.RM_MARKED_PROJECT](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.RM_MARKED_PROJECT,
+          project: payload.project,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while removing a marked project.", err));
+        throw err;
+      }
     },
-    [Actions.SET_SELECTED_PROJECTS](ctx, payload) {
-      // TODO
+    async [Actions.SET_SELECTED_PROJECTS](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.SET_SELECTED_PROJECTS,
+          projects: payload.projects,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while setting selected projects.", err));
+        throw err;
+      }
     },
-    [Actions.SET_SELECTION_COMMENT](ctx, payload) {
-      // TODO
+    async [Actions.SET_SELECTION_COMMENT](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.SET_SELECTION_COMMENT,
+          comment: payload.comment,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while setting selection comment.", err));
+        throw err;
+      }
     },
     async [Actions.NEW_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
       // TODO: Server stuff. In the meantime, fake a delay.
-      await new Promise((resolve) => _.delay(resolve, 2000));
-      ctx.commit({
-        type: Mutations.NEW_PROJECT,
-        project: payload.project,
-      });
-      ctx.commit(COMMIT_NOT_WORKING);
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.NEW_PROJECT,
+          project: payload.project,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while creating project.", err));
+        throw err;
+      }
     },
-    [Actions.EDIT_PROJECT](ctx, payload) {
-      // TODO
+    async [Actions.EDIT_PROJECT](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.EDIT_PROJECT,
+          project: payload.project,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while modifying project.", err));
+        throw err;
+      }
     },
-    [Actions.RM_PROJECT](ctx, payload) {
-      // TODO
+    async[Actions.RM_PROJECT](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.RM_PROJECT,
+          project: payload.project,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while deleting project.", err));
+        throw err;
+      }
     },
-    [Actions.ARCHIVE_SESSION](ctx, payload) {
-      // TODO
+    async [Actions.ARCHIVE_SESSION](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.ARCHIVE_SESSION,
+          session: payload.session,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while archiving session.", err));
+        throw err;
+      }
     },
-    [Actions.PURGE_SESSION](ctx, payload) {
-      // TODO
+    async [Actions.PURGE_SESSION](ctx, payload) {
+      ctx.commit(COMMIT_WORKING);
+      // TODO: Server stuff. In the meantime, fake a delay.
+      await sleep(1000);
+      try {
+        ctx.commit({
+          type: _Mutations.PURGE_SESSION,
+          session: payload.session,
+        });
+        ctx.commit(COMMIT_NOT_WORKING);
+      } catch (err) {
+        ctx.commit(COMMIT_NOT_WORKING);
+        ctx.commit(getErrorCommit("Error occurred while deleting session.", err));
+        throw err;
+      }
     },
   },
 });

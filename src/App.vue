@@ -19,6 +19,22 @@
         </div>
       </div>
     </div>
+    <div class="modal fade" ref="errorModal" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel"
+         aria-hidden="true" data-backdrop="static" data-keyboard="false">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-danger stripes text-white">
+            <h5 class="modal-title" id="errorModalLabel">Error</h5>
+          </div>
+          <div class="modal-body">
+            <div class="container">
+              <p>We're sorry, an error has occurred: {{ errorText }}</p>
+              <p>Please try refreshing the page.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <!--<div id="app-working-overlay" v-if="isWaiting">
       <span id="app-working-spinner"><feather spin="true" large="true" icon="refresh-cw"/></span>
     </div> -->
@@ -36,37 +52,37 @@
       "nav-header": NavHeader,
     },
     computed: {
+      errorText(): string {
+        const err = this.$store.state.error;
+        if (err) {
+          return err.human;
+        } else {
+          // This shouldn't be possible, if there is an error.
+          return "No descriptions available.";
+        }
+      },
+      isErrored(): boolean {
+        return this.$store.state.error !== null;
+      },
       isWaiting(): boolean {
         return this.$store.state.working;
       },
     },
     name: "app",
     watch: {
-      isWaiting(newVal: boolean) {
-        // console.log("isWaiting update:", newVal);
-        const modal: any = $(this.$refs.workingModal);
-        // We do this song and dance in case the modal is still transitioning.
+      isErrored(newVal: boolean) {
+        const modal: any = $(this.$refs.errorModal);
         if (newVal) {
-          /*const onHidden = () => {
-            modal.off("hidden.bs.modal", onHidden);
-            modal.modal("show");
-          };
-          const onShown = () => {
-            modal.off("hidden.bs.modal", onHidden);
-            modal.off("shown.bs.modal", onShown);
-          };
-          modal.on("hidden.bs.modal", onHidden);*/
           modal.modal("show");
         } else {
-          /*const onShown = () => {
-            modal.off("shown.bs.modal", onShown);
-            modal.modal("hide");
-          };
-          const onHidden = () => {
-            modal.off("shown.bs.modal", onShown);
-            modal.off("hidden.bs.modal", onHidden);
-          };
-          modal.on("shown.bs.modal", onShown);*/
+          modal.modal("hide");
+        }
+      },
+      isWaiting(newVal: boolean) {
+        const modal: any = $(this.$refs.workingModal);
+        if (newVal) {
+          modal.modal("show");
+        } else {
           modal.modal("hide");
         }
       },
@@ -81,22 +97,9 @@
     margin-top: 4rem;
   }
 
-  #app-working-overlay {
-    background: white;
-    opacity: 0.5;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-
   #app-working-spinner {
     position: relative;
-    left: 42%;
+    left: 44%;
   }
 
   .modal-body {

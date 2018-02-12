@@ -61,7 +61,7 @@
 <script lang="ts">
   import _ from "lodash";
   import Vue from "vue";
-  import Mutations from "../lib/Mutations";
+  import Actions from "../lib/Actions";
   import {IProject, ISession} from "../lib/Types";
   import ProjectCard from "./ProjectCard.vue";
 
@@ -128,9 +128,9 @@
         return !this.duplicatedSupervisors();
       },
       mark(project: IProject) {
-        this.$store.commit({
+        this.$store.dispatch({
           project: project.id,
-          type: Mutations.ADD_MARKED_PROJECT,
+          type: Actions.ADD_MARKED_PROJECT,
         });
       },
       select(project: IProject) {
@@ -145,24 +145,24 @@
           project: project.id,
           weight: 0,
         });
-        this.$store.commit({
+        this.$store.dispatch({
           projects: projs,
-          type: Mutations.SET_SELECTED_PROJECTS,
+          type: Actions.SET_SELECTED_PROJECTS,
         });
       },
       unmark(project: IProject) {
-        this.$store.commit({
+        this.$store.dispatch({
           project: project.id,
-          type: Mutations.RM_MARKED_PROJECT,
+          type: Actions.RM_MARKED_PROJECT,
         });
       },
       unselect(project: IProject) {
         let projs = this.$store.state.user.selected_projects;
         if (!projs) { return; }
         projs = _.reject(projs, {project: project.id});
-        this.$store.commit({
+        this.$store.dispatch({
           projects: projs,
-          type: Mutations.SET_SELECTED_PROJECTS,
+          type: Actions.SET_SELECTED_PROJECTS,
         });
       },
     },

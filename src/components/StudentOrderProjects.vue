@@ -54,7 +54,7 @@
   import $ from "jquery";
   import _ from "lodash";
   import Vue from "vue";
-  import Mutations from "../lib/Mutations";
+  import Actions from "../lib/Actions";
   import {IProject, IProjectSelection, ISession} from "../lib/Types";
   import Router from "../router";
   import Store from "../stores";
@@ -117,15 +117,17 @@
         this.selections[1].weight = weight;
         if (!this.equalSecondThird) { weight -= 4; }
         this.selections[2].weight = weight;
-        this.$store.commit({
+        this.$store.dispatch({
           projects: this.selections,
-          type: Mutations.SET_SELECTED_PROJECTS,
+          type: Actions.SET_SELECTED_PROJECTS,
+        }).then(() => {
+          return this.$store.dispatch({
+            comment: this.comment,
+            type: Actions.SET_SELECTION_COMMENT,
+          });
+        }).then(() => {
+          this.$router.push("/");
         });
-        this.$store.commit({
-          comment: this.comment,
-          type: Mutations.SET_SELECTION_COMMENT,
-        });
-        this.$router.push("/");
       },
       swap(fst: number) {
         // From https://stackoverflow.com/a/41857928
