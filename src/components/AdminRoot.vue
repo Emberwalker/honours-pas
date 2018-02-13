@@ -117,6 +117,7 @@
   import _ from "lodash";
   import Vue from "vue";
   import {mapState} from "vuex";
+  import Actions from "../lib/Actions";
   import {IProject, ISession, ISupervisorCounter} from "../lib/Types";
 
   export default Vue.extend({
@@ -157,16 +158,18 @@
         // tslint:enable:no-console
       },
       onArchiveSubmit() {
-        // TODO
-        // tslint:disable:no-console
-        // console.error("Archival requested; not implemented! Session:", this.activeModalSession);
-        // tslint:enable:no-console
+        if (this.activeModalSession === "") { return; }
+        this.$store.dispatch({
+          session: this.activeModalSession,
+          type: Actions.ARCHIVE_SESSION,
+        });
       },
       onPurgeSubmit() {
-        // TODO
-        // tslint:disable:no-console
-        // console.error("Purge requested; not implemented! Session:", this.activeModalSession);
-        // tslint:enable:no-console
+        if (this.activeModalSession === "") { return; }
+        this.$store.dispatch({
+          session: this.activeModalSession,
+          type: Actions.PURGE_SESSION,
+        });
       },
     },
     mounted() {

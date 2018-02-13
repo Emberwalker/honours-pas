@@ -218,10 +218,14 @@ export default new Vuex.Store({
       });
     },
     [_Mutations.ARCHIVE_SESSION](state, payload) {
-      // TODO
+      const session = _.first(state.available_sessions.filter((val) => val.name === payload.session));
+      if (!session) { return; }
+      // TODO: Send to server
+      session.is_current = false;
     },
     [_Mutations.PURGE_SESSION](state, payload) {
-      // TODO
+      // TODO: Send to server
+      state.available_sessions = _.filter(state.available_sessions, (val) => val.name !== payload.session);
     },
     [Mutations.SET_IS_WORKING](state, payload) {
       state.working = payload.isWorking;
