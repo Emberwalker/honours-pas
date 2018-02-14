@@ -27,8 +27,8 @@
     <h2>Projects by Session</h2>
     <div class="projlist-section" v-for="session in sessions">
       <h3>{{ session.name }}</h3>
-      <p class="h5 font-weight-normal text-muted" v-if="session.projects.length === 0">No projects in this session.</p>
-      <project-card v-for="project in session.projects" :project="project" :key="project.id" :isCurrent="session.is_current">
+      <p class="h5 font-weight-normal text-muted" v-if="!session || session.projects.length === 0">No projects in this session.</p>
+      <project-card v-if="session" v-for="project in session.projects" :project="project" :key="project.id" :isCurrent="session.is_current">
         <!-- Add extra buttons for bottom of the card here. -->
         <router-link v-if="session.is_current && canEdit(project)" :to="'/edit/' + project.id">
           <button type="button" class="btn btn-sm btn-primary">Edit</button>
@@ -97,7 +97,7 @@ export default Vue.extend({
       const usr = this.$store.state.user;
       if (usr.user_type === UserType.Staff || usr.user_type === UserType.Administrator) {
         const session = this.$store.getters.current_session;
-        return session !== null && session.projects.filter((it: IProject) =>
+        return session && session.projects.filter((it: IProject) =>
           it.supervisor_email === usr.email).length !== 0;
       }
       if (usr) {
