@@ -14,5 +14,5 @@
 /.idea/
 
 # PAS configs
-/config.json
+/config.toml
 /.env

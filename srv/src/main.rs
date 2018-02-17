@@ -4,7 +4,7 @@ extern crate clap;
 extern crate fern;
 #[macro_use]
 extern crate log;
-extern crate pas_backend;
+extern crate hpas;
 
 use clap::{App, Arg};
 
@@ -49,7 +49,10 @@ fn main() {
 
     info!(target: "main", "Logger configured; using log level {}", log_lvl);
 
-    pas_backend::run(conf_loc);
+    if let Err(e) = hpas::run(conf_loc) {
+        error!("Failed with error: {}", e);
+        debug!("Full error details: {:?}", e);
+    }
 }
 
 fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
