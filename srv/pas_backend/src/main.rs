@@ -32,30 +32,24 @@ fn main() {
                 .multiple(true)
                 .help("Sets verbosity. May be specified up to 4 times."),
         )
-        .arg(
-            Arg::with_name("quiet")
-                .short("q")
-                .help("Disables log output. Overrides verbosity flags."),
-        )
         .get_matches();
 
     let conf_loc = matches.value_of("config").unwrap_or(DEFAULT_CONF_LOC);
-    let mut log_lvl = match matches.occurrences_of("v") {
+    let log_lvl = match matches.occurrences_of("v") {
         0 => log::LevelFilter::Error,
         1 => log::LevelFilter::Warn,
         2 => log::LevelFilter::Info,
-        3 | _ => log::LevelFilter::Debug,
+        3 => log::LevelFilter::Debug,
+        4 | _ => log::LevelFilter::Trace,
     };
-
-    if matches.is_present("quiet") {
-        log_lvl = log::LevelFilter::Off;
-    }
 
     if let Err(err) = setup_logger(log_lvl) {
         panic!(format!("Error setting up logger: {}", err));
     }
 
-    info!("Logger configured; using log level {}", log_lvl)
+    info!(target: "main", "Logger configured; using log level {}", log_lvl);
+
+    pas_backend::run(conf_loc);
 }
 
 fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {

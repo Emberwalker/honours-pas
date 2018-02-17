@@ -12,3 +12,7 @@
 # VSCode/IDEA files
 /.vscode/
 /.idea/
+
+# PAS configs
+/config.json
+/.env
