@@ -1,0 +1,5 @@
+{
+    // Allows Rust code to be breakpointed. See:
+    // https://www.brycevandyk.com/debug-rust-on-windows-with-visual-studio-code-and-the-msvc-debugger/
+    "debug.allowBreakpointsEverywhere": true,
+}
