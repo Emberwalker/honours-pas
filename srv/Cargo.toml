@@ -15,3 +15,4 @@ clap = "2.30.0"
 log = "0.4"
 fern = "0.5"
 chrono = { version = "0.4", features = ["serde"] }
+diesel = { version = "1.1", features = ["postgres"] }
