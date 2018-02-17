@@ -1,5 +1,5 @@
 [package]
-name = "pas_backend"
+name = "hpas"
 version = "0.1.0"
 authors = ["Robert T. <arkan@drakon.io>"]
 
