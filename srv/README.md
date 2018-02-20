@@ -11,3 +11,5 @@ works fine however. For Windows 10:
     - `cargo install diesel_cli`
     - `cd /mnt/c/Users/your_user_here/path/to/honours_pas/srv`
     - Use Diesel CLI as normal.
+        - If generating the schema with `diesel print-schema`, remember to run `unix2dos` on the resulting file.
+        `unix2dos` can be installed with `sudo apt install dos2unix` (yes, the name is flipped).
