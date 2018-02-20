@@ -7,7 +7,7 @@ use toml;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    database_string: String,
+    pub database_string: String,
 }
 
 

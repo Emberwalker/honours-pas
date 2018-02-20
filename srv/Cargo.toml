@@ -17,3 +17,5 @@ fern = "~0.5"
 chrono = { version = "~0.4", features = ["serde"] }
 diesel = { version = "~1.1", features = ["postgres"] }
 diesel_migrations = "~1.1"
+r2d2 = "~0.8"
+r2d2-diesel = "~1.0"

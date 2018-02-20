@@ -15,3 +15,6 @@
 # PAS configs
 /config.toml
 /.env
+
+# Lib files for Diesel
+/*.dll
