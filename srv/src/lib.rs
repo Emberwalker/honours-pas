@@ -25,13 +25,13 @@ mod schema;
 mod migrate;
 mod db;
 mod controller;
+mod authn;
 
 #[cfg(debug_assertions)]
 fn get_rocket_config(conf: &config::Config) -> Config {
     let mut b = Config::build(Environment::Development)
         .address("127.0.0.1")
-        .port(8080)
-        .root("/api");
+        .port(8080);
     if let Some(key) = conf.get_secret_key() {
         b = b.secret_key(key);
     }
@@ -42,8 +42,7 @@ fn get_rocket_config(conf: &config::Config) -> Config {
 fn get_rocket_config(conf: &config::Config) -> Config {
     let mut b = Config::build(Environment::Production)
         .address("0.0.0.0")
-        .port(8080)
-        .root("/api");
+        .port(8080);
     if let Some(key) = conf.get_secret_key() {
         b = b.secret_key(key);
     }
@@ -62,7 +61,7 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
 
     rocket::custom(get_rocket_config(&conf), true)
         .manage(db::init_pool(&conf))
-        .mount("/v1", controller::v1::get_routes(&conf))
+        .mount("/api/v1", controller::v1::get_routes(&conf))
         .launch();
     Ok(())
 }

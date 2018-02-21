@@ -94,6 +94,7 @@ fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
             }
         })
         .level(lvl)
+        .level_for("hyper", log::LevelFilter::Warn)
         .chain(std::io::stdout())
         .apply()?;
     Ok(())

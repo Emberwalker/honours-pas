@@ -1,0 +1,3 @@
+[hpas]
+database_string="username:password@pghost/database"
+secret_key="(output of 'openssl rand -base64 32')"
