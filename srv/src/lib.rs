@@ -1,10 +1,12 @@
 #![feature(plugin)]
+#![feature(conservative_impl_trait)]
 #![plugin(rocket_codegen)]
 
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate lazy_static;
+extern crate regex;
 
 #[macro_use]
 extern crate diesel;
@@ -21,7 +23,9 @@ extern crate rocket;
 extern crate rocket_contrib;
 extern crate ring_pwhash;
 
+use std::sync::Arc;
 use rocket::config::{Config, Environment};
+use authn::AuthnBackend;
 
 mod config;
 mod schema;
@@ -53,6 +57,10 @@ fn get_rocket_config(conf: &config::Config) -> Config {
     b.finalize().expect("Config builder")
 }
 
+fn get_authn_provider(conf_loc: &str, pool: Arc<db::Pool>) -> impl AuthnBackend {
+    authn::simple::SimpleAuthnBackend::new(conf_loc, pool)
+}
+
 pub fn run(conf_loc: &str) -> Result<(), String> {
     // TODO: More nuanced config error handling (like logging what keys had to be defaulted)
     let conf = config::load_config(conf_loc).unwrap_or(config::default_config());
@@ -63,8 +71,12 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
     }
     info!("Database migrations check completed.");
 
+    let pool = Arc::new(db::init_pool(&conf));
+    let auth_provider = get_authn_provider(conf_loc, Arc::clone(&pool));
+
     rocket::custom(get_rocket_config(&conf), true)
-        .manage(db::init_pool(&conf))
+        .manage(auth_provider)
+        .manage(pool)
         .mount("/api/v1", controller::v1::get_routes(&conf))
         .launch();
     Ok(())

@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::sync::Arc;
 use diesel::pg::PgConnection;
 use r2d2;
 use r2d2_diesel::ConnectionManager;
@@ -19,7 +20,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for DatabaseConnection {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<DatabaseConnection, ()> {
-        let pool = request.guard::<State<Pool>>()?;
+        let pool = request.guard::<State<Arc<Pool>>>()?;
         match pool.get() {
             Ok(conn) => Outcome::Success(DatabaseConnection(conn)),
             Err(_) => {
