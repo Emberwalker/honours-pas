@@ -3,6 +3,8 @@
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_use]
 extern crate diesel;
@@ -17,6 +19,7 @@ extern crate toml;
 
 extern crate rocket;
 extern crate rocket_contrib;
+extern crate ring_pwhash;
 
 use rocket::config::{Config, Environment};
 
@@ -26,6 +29,7 @@ mod migrate;
 mod db;
 mod controller;
 mod authn;
+mod util;
 
 #[cfg(debug_assertions)]
 fn get_rocket_config(conf: &config::Config) -> Config {
