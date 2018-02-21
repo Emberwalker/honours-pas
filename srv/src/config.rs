@@ -10,6 +10,11 @@ pub struct Config {
     pub database_string: String,
 }
 
+impl Config {
+    pub fn get_database_str(&self) -> String {
+        format!("postgres://{}", self.database_string)
+    }
+}
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -61,6 +66,6 @@ pub fn load_config(location: &str) -> Result<Config, ConfigError> {
 
 pub fn default_config() -> Config {
     Config {
-        database_string: "postgres://postgres:banana@postgres/hpas".to_string(),
+        database_string: "postgres:banana@postgres/postgres".to_string(),
     }
 }
