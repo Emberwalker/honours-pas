@@ -1,8 +1,9 @@
 use ring_pwhash::scrypt::{ScryptParams, scrypt_check, scrypt_simple};
+use std::io::Result;
 
 lazy_static! {
     // Based on https://blog.filippo.io/the-scrypt-parameters/ for 2017
-    static ref SCRYPT_PARAMS = ScryptParams::new(32768, 8, 1);
+    static ref SCRYPT_PARAMS: ScryptParams = ScryptParams::new(15, 8, 1);
 }
 
 pub fn check_password(passwd: &str, from_db: &str) -> bool {
@@ -10,5 +11,5 @@ pub fn check_password(passwd: &str, from_db: &str) -> bool {
 }
 
 pub fn hash_password(passwd: &str) -> Result<String> {
-    scrypt_simple(passwd, SCRYPT_PARAMS)
+    scrypt_simple(passwd, &SCRYPT_PARAMS)
 }
