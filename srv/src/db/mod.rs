@@ -6,7 +6,7 @@ use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Request, State, Outcome};
 
-use super::config::Config;
+use config::Config;
 
 // The following is based on Rocket's guide on integrating DB connection pooling.
 // https://rocket.rs/guide/state/#databases

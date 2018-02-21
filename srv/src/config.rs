@@ -7,12 +7,20 @@ use toml;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    pub database_string: String,
+    database_string: String,
+    secret_key: Option<String>,
 }
 
 impl Config {
     pub fn get_database_str(&self) -> String {
         format!("postgres://{}", self.database_string)
+    }
+
+    pub fn get_secret_key(&self) -> Option<String> {
+        match self.secret_key {
+            None => None,
+            Some(ref key) => Some(key.clone()),
+        }
     }
 }
 
@@ -67,5 +75,6 @@ pub fn load_config(location: &str) -> Result<Config, ConfigError> {
 pub fn default_config() -> Config {
     Config {
         database_string: "postgres:banana@postgres/postgres".to_string(),
+        secret_key: None,
     }
 }
