@@ -4,12 +4,22 @@ extern crate clap;
 extern crate fern;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
+extern crate regex;
 extern crate hpas;
 
+use regex::Regex;
 use clap::{App, Arg};
 
 static CONF_LOC_ENV: &'static str = "HONOURS_PAS_CONF";
 static DEFAULT_CONF_LOC: &'static str = "/var/run/pas_backend.json";
+
+// From https://docs.rs/console/0.6.1/src/console/utils.rs.html#12
+lazy_static! {
+    static ref STRIP_ANSI_RE: Regex = Regex::new(
+        r"[\x1b\x9b][\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]").unwrap();
+}
 
 fn main() {
     let matches = App::new("Honours Project Allocation service backend")
@@ -58,18 +68,30 @@ fn main() {
 fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
-            out.finish(format_args!(
-                "[{}][{}][{}][{}:{}] {}",
-                chrono::Utc::now().format("%Y/%m/%d %H:%M:%S%.3f%z"),
-                record.level(),
-                record.target(),
-                record.file().unwrap_or("<unknown>"),
-                record
-                    .line()
-                    .map(|it| it.to_string())
-                    .unwrap_or("???".to_string()),
-                message
-            ))
+            if record.target().starts_with("hpas") {
+                out.finish(format_args!(
+                    "[{}][{}][{}][{}:{}] {}",
+                    chrono::Utc::now().format("%Y/%m/%d %H:%M:%S%.3f%z"),
+                    record.level(),
+                    record.target(),
+                    record.file().unwrap_or("<unknown>"),
+                    record
+                        .line()
+                        .map(|it| it.to_string())
+                        .unwrap_or("???".to_string()),
+                    message
+                ))
+            } else {
+                // We drop the file info for dependencies, since their file paths are long and absolute.
+                // Also strip any ANSI sequences, since Rocket likes to use them (which mucks up stuff after it).
+                out.finish(format_args!(
+                    "[{}][{}][{}] {}",
+                    chrono::Utc::now().format("%Y/%m/%d %H:%M:%S%.3f%z"),
+                    record.level(),
+                    record.target(),
+                    STRIP_ANSI_RE.replace_all(&format!("{}", message), "")
+                ))
+            }
         })
         .level(lvl)
         .chain(std::io::stdout())
