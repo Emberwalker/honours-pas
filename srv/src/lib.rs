@@ -76,12 +76,6 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
     let pool = Arc::new(db::init_pool(&conf));
     let auth_provider = get_authn_provider(conf_loc, Arc::clone(&pool));
 
-    info!("TEST: {:?}", db::staff::create(&db::DatabaseConnection(pool.get().unwrap()), &db::models::new::Staff {
-        email: "arkan@drakon.io",
-        full_name: "Robert T.",
-        is_admin: false,
-    }));
-
     rocket::custom(get_rocket_config(&conf), true)
         .manage(auth_provider)
         .manage(pool)
