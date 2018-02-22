@@ -11,6 +11,7 @@ extern crate regex;
 
 use regex::Regex;
 use clap::{App, Arg};
+use std::cmp;
 
 static CONF_LOC_ENV: &'static str = "HONOURS_PAS_CONF";
 static DEFAULT_CONF_LOC: &'static str = "/var/run/pas_backend.json";
@@ -94,7 +95,8 @@ fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
             }
         })
         .level(lvl)
-        .level_for("hyper", log::LevelFilter::Warn)
+        // Set Hyper to WARN or the assigned level, whichever is least verbose.
+        .level_for("hyper", cmp::min(log::LevelFilter::Warn, lvl))
         .chain(std::io::stdout())
         .apply()?;
     Ok(())
