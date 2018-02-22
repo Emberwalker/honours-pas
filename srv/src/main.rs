@@ -68,7 +68,7 @@ fn main() {
 fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
     fern::Dispatch::new()
         .format(|out, message, record| {
-            if record.target().starts_with("hpas") {
+            if record.target().starts_with("hpas") || record.target().starts_with("macro_gen") {
                 out.finish(format_args!(
                     "[{}][{}][{}][{}:{}] {}",
                     chrono::Utc::now().format("%Y/%m/%d %H:%M:%S%.3f%z"),
