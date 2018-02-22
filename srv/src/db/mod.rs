@@ -46,6 +46,12 @@ impl Deref for DatabaseConnection {
     }
 }
 
+impl DatabaseConnection {
+    pub fn raw(&self) -> &PgConnection {
+        &self.0
+    }
+}
+
 pub fn init_pool(conf: &Config) -> Pool {
     info!("Starting database connection pool.");
     let manager = ConnectionManager::<PgConnection>::new(conf.get_database_str());

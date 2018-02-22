@@ -75,16 +75,6 @@ impl<'a> AuthnBackend for SimpleAuthnBackend {
             AuthnCreateError::Other()
         })?;
 
-        /*let username = username.to_lowercase();
-        let mut matches = username.splitn(2, "@");
-        let err_closure = || {
-            warn!("Error parsing username as email: '{}'", username);
-            AuthnCreateError::Other()
-        };
-        let u1 = matches.next().ok_or_else(&err_closure)?;
-        let u2 = matches.next().ok_or_else(&err_closure)?;
-        let login = format!("{}@{}", u1.replace(".", ""), u2);*/
-
         let login = sanitise_email(username).map_err(|_| AuthnCreateError::Other())?;
         let username = username.to_lowercase();
 
