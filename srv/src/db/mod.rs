@@ -9,6 +9,12 @@ use rocket::{Request, State, Outcome};
 
 use config::Config;
 
+pub mod models;
+pub mod staff;
+pub mod student;
+pub mod session;
+pub mod project;
+
 // The following is based on Rocket's guide on integrating DB connection pooling.
 // https://rocket.rs/guide/state/#databases
 

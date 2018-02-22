@@ -2,12 +2,12 @@ extern crate chrono;
 #[macro_use]
 extern crate clap;
 extern crate fern;
-#[macro_use]
-extern crate log;
+extern crate hpas;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate log;
 extern crate regex;
-extern crate hpas;
 
 use regex::Regex;
 use clap::{App, Arg};

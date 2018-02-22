@@ -16,8 +16,9 @@ clap = "~2.30"
 log = "~0.4"
 fern = "~0.5"
 chrono = { version = "~0.4", features = ["serde"] }
-diesel = { version = "~1.1", features = ["postgres"] }
+diesel = { version = "~1.1", features = ["postgres", "chrono", "numeric"] }
 diesel_migrations = "~1.1"
 r2d2 = "~0.8"
 r2d2-diesel = "~1.0"
 ring-pwhash = "~0.11"
+bigdecimal = "0.0.10"

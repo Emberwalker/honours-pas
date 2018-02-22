@@ -1,6 +1,4 @@
-use rocket::{Request, Route, Data};
-use rocket::handler::Outcome;
-use rocket::http::Method::*;
+use rocket::Route;
 
 use config::Config as HPASConfig;
 

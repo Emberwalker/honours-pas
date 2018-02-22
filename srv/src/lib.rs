@@ -14,6 +14,8 @@ extern crate diesel;
 extern crate diesel_migrations;
 extern crate r2d2;
 extern crate r2d2_diesel;
+extern crate chrono;
+extern crate bigdecimal;
 
 #[macro_use]
 extern crate serde_derive;
