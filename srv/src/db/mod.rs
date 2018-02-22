@@ -9,6 +9,30 @@ use rocket::{Request, State, Outcome};
 
 use config::Config;
 
+macro_rules! generate_create_fn {
+    ($table:ident, $new_type:ty, $model_type:ty, $ret_field:ident, $ret_type:ty) => (
+        use diesel;
+        use db;
+        pub fn create(conn: &db::DatabaseConnection, val: &$new_type) -> Result<$ret_type, diesel::result::Error> {
+            use diesel::prelude::*;
+            use diesel::insert_into;
+            use schema::$table;
+
+            debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/pre: {:?}", val);
+
+            let res = insert_into($table::table)
+                .values(val)
+                .get_result::<$model_type>(conn.raw())
+                .map_err(|err| {
+                    warn!("Error fetching from '{}': {}", stringify!($table), err);
+                    err
+                })?;
+            debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/post: {:?}", res);
+            Ok(res.$ret_field)
+        }
+    )
+}
+
 pub mod models;
 pub mod staff;
 pub mod student;
