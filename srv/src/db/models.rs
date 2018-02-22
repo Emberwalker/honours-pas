@@ -53,7 +53,7 @@ pub struct Project {
 pub struct StudentComment {
     pub student: i32,
     pub session: i32,
-    pub comment: String,
+    pub comment: Option<String>,
 }
 
 // This doesn't implement AsChangeset - Diesel requires it only be used on types with non-PK fields.
@@ -125,7 +125,7 @@ pub mod new {
     pub struct StudentComment<'a> {
         pub student: i32,
         pub session: i32,
-        pub comment: &'a str,
+        pub comment: Option<&'a str>,
     }
 
     #[derive(Insertable, PartialEq, Debug)]

@@ -5,7 +5,7 @@ use r2d2;
 use r2d2_diesel::ConnectionManager;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest};
-use rocket::{Request, State, Outcome};
+use rocket::{Outcome, Request, State};
 
 use config::Config;
 
@@ -14,6 +14,15 @@ macro_rules! generate_create_fn {
         use diesel;
         use db;
         pub fn create(conn: &db::DatabaseConnection, val: &$new_type) -> Result<$ret_type, diesel::result::Error> {
+            // We recycle the inner implementation below. Less duplication! Thankfully Rust discards the 'pub' it seems.
+            generate_create_fn!($table, $new_type, $model_type);
+            create(conn, val).map(|res| res.$ret_field)
+        }
+    );
+    ($table:ident, $new_type:ty, $model_type:ty) => (
+        use diesel;
+        use db;
+        pub fn create(conn: &db::DatabaseConnection, val: &$new_type) -> Result<$model_type, diesel::result::Error> {
             use diesel::prelude::*;
             use diesel::insert_into;
             use schema::$table;
@@ -24,11 +33,11 @@ macro_rules! generate_create_fn {
                 .values(val)
                 .get_result::<$model_type>(conn.raw())
                 .map_err(|err| {
-                    warn!("Error fetching from '{}': {}", stringify!($table), err);
+                    debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/err: {:?}", err);
                     err
                 })?;
             debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/post: {:?}", res);
-            Ok(res.$ret_field)
+            Ok(res)
         }
     )
 }
