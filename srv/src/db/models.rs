@@ -3,7 +3,7 @@ use bigdecimal::BigDecimal;
 use schema::*;
 
 // Models for returned table rows and updates.
-#[derive(Identifiable, Queryable, AsChangeset, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, AsChangeset, Clone, PartialEq, Debug)]
 #[table_name = "staff"]
 pub struct Staff {
     pub id: i32,
@@ -12,7 +12,7 @@ pub struct Staff {
     pub is_admin: bool,
 }
 
-#[derive(Identifiable, Queryable, Associations, AsChangeset, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset, Clone, PartialEq, Debug)]
 #[belongs_to(Session, foreign_key = "last_session")]
 #[table_name = "students"]
 pub struct Student {
@@ -22,7 +22,7 @@ pub struct Student {
     pub last_session: Option<i32>,
 }
 
-#[derive(Identifiable, Queryable, AsChangeset, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, AsChangeset, Clone, PartialEq, Debug)]
 #[table_name = "sessions"]
 pub struct Session {
     pub id: i32,
@@ -33,7 +33,7 @@ pub struct Session {
     pub force_archive: bool,
 }
 
-#[derive(Identifiable, Queryable, Associations, AsChangeset, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset, Clone, PartialEq, Debug)]
 #[belongs_to(Session, foreign_key = "session")]
 #[table_name = "projects"]
 pub struct Project {
@@ -45,7 +45,7 @@ pub struct Project {
     pub description_md: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, AsChangeset, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset,Clone,  PartialEq, Debug)]
 #[belongs_to(Student, foreign_key = "student")]
 #[belongs_to(Session, foreign_key = "session")]
 #[table_name = "student_comments"]
@@ -57,7 +57,7 @@ pub struct StudentComment {
 }
 
 // This doesn't implement AsChangeset - Diesel requires it only be used on types with non-PK fields.
-#[derive(Identifiable, Queryable, Associations, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, Associations, Clone, PartialEq, Debug)]
 #[belongs_to(Student, foreign_key = "student")]
 #[belongs_to(Project, foreign_key = "project")]
 #[table_name = "student_marks"]
@@ -67,7 +67,7 @@ pub struct StudentMark {
     pub project: i32,
 }
 
-#[derive(Identifiable, Queryable, Associations, AsChangeset, PartialEq, Debug)]
+#[derive(Identifiable, Queryable, Associations, AsChangeset, Clone, PartialEq, Debug)]
 #[belongs_to(Student, foreign_key = "student")]
 #[belongs_to(Project, foreign_key = "project")]
 #[table_name = "student_selections"]

@@ -1,7 +1,21 @@
 pub use super::models::Student;
 pub use super::models::new::Student as NewStudent;
 
+use diesel::result::Error;
+use super::{DatabaseConnection, SelectError};
+
 generate_create_fn!(students, NewStudent, Student, id, i32);
+
+pub fn find_email(conn: &DatabaseConnection, student_email: &str) -> Result<Student, SelectError> {
+    generate_select_body!(single, conn, students, Student, (email, student_email))
+}
+
+pub fn find_all_by_session(
+    conn: &DatabaseConnection,
+    session: i32,
+) -> Result<Vec<Student>, SelectError> {
+    generate_select_body!(multi, conn, students, Student, (last_session, session))
+}
 
 pub mod selection {
     pub use super::super::models::StudentSelection;

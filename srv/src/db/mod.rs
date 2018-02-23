@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use diesel;
 use diesel::pg::PgConnection;
 use r2d2;
 use r2d2_diesel::ConnectionManager;
@@ -47,11 +48,67 @@ macro_rules! generate_create_fn {
     )
 }
 
+/// Generates the body of a SELECT function.
+macro_rules! generate_select_body {
+    (single, $conn:ident, $table:ident, $model_type:ty $(, ($field:ident, $val:ident))*) => (
+        {
+            let vals = generate_select_body!(
+                multi,
+                $conn,
+                $table,
+                $model_type,
+                $(
+                    ($field, $val)
+                ),*)?;
+            match vals.get(0).map(|it| it.clone()) {
+                None => Err(SelectError::NoSuchValue()),
+                Some(e) => Ok(e.clone()),
+            }
+        }
+    );
+    (multi, $conn:ident, $table:ident, $model_type:ty$(, ($field:ident, $val:ident))*) => (
+        {
+            let vals = generate_select_body!(
+                __in,
+                $conn,
+                $table,
+                $model_type,
+                $(
+                    ($field, $val)
+                ),*);
+            vals
+                .map_err(|e| {
+                    match e {
+                        diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+                        e => SelectError::DieselError(e),
+                    }
+                })
+        }
+    );
+    (__in, $conn:ident, $table:ident, $model_type:ty, $(($field:ident, $val:ident)),*) => (
+        {
+            use diesel::prelude::*;
+            use schema::$table::dsl::*;
+            $table
+            $(
+                .filter($field.eq(&$val))
+            )*
+                .load::<$model_type>($conn.raw())
+        }
+    );
+}
+
+pub enum SelectError {
+    NoSuchValue(),
+    DieselError(diesel::result::Error),
+}
+
 pub mod models;
 pub mod staff;
 pub mod student;
 pub mod session;
 pub mod project;
+pub mod user;
 
 // The following is based on Rocket's guide on integrating DB connection pooling.
 // https://rocket.rs/guide/state/#databases
