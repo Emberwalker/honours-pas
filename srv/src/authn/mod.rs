@@ -1,5 +1,6 @@
 use rocket::Route;
 
+use std::ops::Deref;
 use std::sync::Arc;
 use db::Pool;
 
@@ -26,11 +27,7 @@ pub enum AuthnCreateError {
     Other(),
 }
 
-pub trait AuthnBackend {
-    /// Called before the backend is actually used. This is useful for loading configs from the global config file, and
-    /// for saving a reference to the database pool (if required). Making use of Serde and toml-rs is recommended.
-    fn new(_config_location: &str, _pool: Arc<Pool>) -> Self;
-
+pub trait AuthnBackend: Send + Sync {
     /// Provides a set of Rocket routes. These will be mounted at "/api/authn", for tasks such as e.g. email
     /// verification endpoints. On success, ideally redirect back to "/".If no routes are required, return an empty vec.
     /// When generating the vector, it's probably best to use the Rocket `routes![]` macro.
@@ -45,5 +42,27 @@ pub trait AuthnBackend {
     /// Creates a new user (if the backend supports it).
     fn create_user(&self, _username: &str, _password: &str) -> Result<(), AuthnCreateError> {
         Err(AuthnCreateError::ActionNotSupported())
+    }
+}
+
+pub struct AuthnHolder<'a> (pub Box<AuthnBackend + 'a>);
+
+impl<'a> AuthnHolder<'a> {
+    pub fn get(&'a self) -> &'a AuthnBackend {
+        &*self.0
+    }
+}
+
+impl<'a> AuthnBackend for AuthnHolder<'a> {
+    fn get_rocket_routes(&self) -> Vec<Route> {
+        self.0.get_rocket_routes()
+    }
+
+    fn authenticate(&self, username: &str, password: &str) -> Result<String, AuthnFailure> {
+        self.0.authenticate(username, password)
+    }
+
+    fn create_user(&self, username: &str, password: &str) -> Result<(), AuthnCreateError> {
+        self.0.create_user(username, password)
     }
 }

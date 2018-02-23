@@ -5,15 +5,21 @@ use std::io;
 use std::io::Read;
 use toml;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Config {
     hpas: ConfigHPAS,
+    session: Option<SessionConfig>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 struct ConfigHPAS {
     database_string: String,
     secret_key: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct SessionConfig {
+    pub expiry_minutes: u32,
 }
 
 impl Config {
@@ -25,6 +31,21 @@ impl Config {
         match self.hpas.secret_key {
             None => None,
             Some(ref key) => Some(key.clone()),
+        }
+    }
+
+    pub fn get_session_expiry(&self) -> u32 {
+        match self.session {
+            Some(ref session) => session.expiry_minutes,
+            None => SessionConfig::default().expiry_minutes,
+        }
+    }
+}
+
+impl Default for SessionConfig {
+    fn default() -> Self {
+        SessionConfig {
+            expiry_minutes: 120,
         }
     }
 }
@@ -83,5 +104,6 @@ pub fn default_config() -> Config {
             database_string: "postgres:banana@postgres/postgres".to_string(),
             secret_key: None,
         },
+        session: None,
     }
 }

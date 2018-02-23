@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use std::sync::Arc;
 use diesel::pg::PgConnection;
 use r2d2;
@@ -67,15 +66,6 @@ impl<'a, 'r> FromRequest<'a, 'r> for DatabaseConnection {
                 Outcome::Failure((Status::ServiceUnavailable, ()))
             }
         }
-    }
-}
-
-// For the convenience of using an &DatabaseConnection as a &PgConnection.
-impl Deref for DatabaseConnection {
-    type Target = PgConnection;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 

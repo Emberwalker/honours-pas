@@ -7,6 +7,7 @@ extern crate log;
 #[macro_use]
 extern crate lazy_static;
 extern crate regex;
+extern crate rand;
 
 #[macro_use]
 extern crate diesel;
@@ -36,8 +37,9 @@ mod db;
 mod controller;
 mod authn;
 mod util;
+mod session;
 
-#[cfg(debug_assertions)]
+#[cfg(feature = "insecure")]
 fn get_rocket_config(conf: &config::Config) -> Config {
     let mut b = Config::build(Environment::Development)
         .address("127.0.0.1")
@@ -48,7 +50,7 @@ fn get_rocket_config(conf: &config::Config) -> Config {
     b.finalize().expect("Config builder")
 }
 
-#[cfg(not(debug_assertions))]
+#[cfg(not(feature = "insecure"))]
 fn get_rocket_config(conf: &config::Config) -> Config {
     let mut b = Config::build(Environment::Production)
         .address("0.0.0.0")
@@ -59,8 +61,8 @@ fn get_rocket_config(conf: &config::Config) -> Config {
     b.finalize().expect("Config builder")
 }
 
-fn get_authn_provider(conf_loc: &str, pool: Arc<db::Pool>) -> impl AuthnBackend {
-    authn::simple::SimpleAuthnBackend::new(conf_loc, pool)
+fn get_authn_provider(conf_loc: &str, pool: Arc<db::Pool>) -> Box<AuthnBackend> {
+    Box::new(authn::simple::SimpleAuthnBackend::new(conf_loc, pool))
 }
 
 pub fn run(conf_loc: &str) -> Result<(), String> {
@@ -75,10 +77,12 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
 
     let pool = Arc::new(db::init_pool(&conf));
     let auth_provider = get_authn_provider(conf_loc, Arc::clone(&pool));
+    let session_provider = session::SessionManager::new(&conf);
 
     rocket::custom(get_rocket_config(&conf), true)
-        .manage(auth_provider)
+        .manage(authn::AuthnHolder(auth_provider))
         .manage(pool)
+        .manage(session_provider)
         .mount("/api/v1", controller::v1::get_routes(&conf))
         .launch();
     Ok(())

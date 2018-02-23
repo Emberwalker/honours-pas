@@ -26,13 +26,15 @@ pub struct SimpleAuthnBackend {
     pool: Arc<Pool>,
 }
 
-impl<'a> AuthnBackend for SimpleAuthnBackend {
-    fn new(_config_location: &str, pool: Arc<Pool>) -> Self {
+impl SimpleAuthnBackend {
+    pub fn new(_config_location: &str, pool: Arc<Pool>) -> Self {
         SimpleAuthnBackend {
             pool: pool,
         }
     }
+}
 
+impl<'a> AuthnBackend for SimpleAuthnBackend {
     fn authenticate(&self, username: &str, passwd: &str) -> Result<String, AuthnFailure> {
         use schema::authn_credentials::dsl::*;
 
