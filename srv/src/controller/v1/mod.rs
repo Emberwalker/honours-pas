@@ -38,7 +38,7 @@ fn login(
             }
             _ => {
                 return Err(status::Custom(
-                    Status::Unauthorized,
+                    Status::Forbidden,
                     Json(GenericMessage {
                         message: "incorrect username or password".to_string(),
                     }),
@@ -51,7 +51,7 @@ fn login(
     match user::find_user(&conn, &res) {
         None => {
             return Err(status::Custom(
-                Status::Forbidden,
+                Status::Unauthorized,
                 Json(GenericMessage {
                     message: "user does not exist".to_string(),
                 }),
