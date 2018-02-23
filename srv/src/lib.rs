@@ -3,28 +3,28 @@
 #![plugin(rocket_codegen)]
 
 #[macro_use]
-extern crate log;
-#[macro_use]
 extern crate lazy_static;
-extern crate regex;
+#[macro_use]
+extern crate log;
 extern crate rand;
+extern crate regex;
 
+extern crate bigdecimal;
+extern crate chrono;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
 extern crate r2d2;
 extern crate r2d2_diesel;
-extern crate chrono;
-extern crate bigdecimal;
 
 #[macro_use]
 extern crate serde_derive;
 extern crate toml;
 
+extern crate ring_pwhash;
 extern crate rocket;
 extern crate rocket_contrib;
-extern crate ring_pwhash;
 
 use std::sync::Arc;
 use rocket::config::{Config, Environment};

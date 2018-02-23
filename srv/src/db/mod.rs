@@ -12,7 +12,10 @@ macro_rules! generate_create_fn {
     ($table:ident, $new_type:ty, $model_type:ty, $ret_field:ident, $ret_type:ty) => (
         use diesel;
         use db;
-        pub fn create(conn: &db::DatabaseConnection, val: &$new_type) -> Result<$ret_type, diesel::result::Error> {
+        pub fn create(
+            conn: &db::DatabaseConnection,
+            val: &$new_type,
+        ) -> Result<$ret_type, diesel::result::Error> {
             // We recycle the inner implementation below. Less duplication! Thankfully Rust discards the 'pub' it seems.
             generate_create_fn!($table, $new_type, $model_type);
             create(conn, val).map(|res| res.$ret_field)
@@ -21,7 +24,10 @@ macro_rules! generate_create_fn {
     ($table:ident, $new_type:ty, $model_type:ty) => (
         use diesel;
         use db;
-        pub fn create(conn: &db::DatabaseConnection, val: &$new_type) -> Result<$model_type, diesel::result::Error> {
+        pub fn create(
+            conn: &db::DatabaseConnection,
+            val: &$new_type,
+        ) -> Result<$model_type, diesel::result::Error> {
             use diesel::prelude::*;
             use diesel::insert_into;
             use schema::$table;

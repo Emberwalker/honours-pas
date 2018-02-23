@@ -28,9 +28,7 @@ pub struct SimpleAuthnBackend {
 
 impl SimpleAuthnBackend {
     pub fn new(_config_location: &str, pool: Arc<Pool>) -> Self {
-        SimpleAuthnBackend {
-            pool: pool,
-        }
+        SimpleAuthnBackend { pool: pool }
     }
 }
 
@@ -91,11 +89,14 @@ impl<'a> AuthnBackend for SimpleAuthnBackend {
             AuthnCreateError::DatabaseFailure()
         })?;
 
-        diesel::insert_into(authn_credentials).values(&new_user).execute(&*conn).map_err(|e| {
-            error!("Database error when inserting new user: {}", e);
-            AuthnCreateError::DatabaseFailure()
-        })?;
-        
+        diesel::insert_into(authn_credentials)
+            .values(&new_user)
+            .execute(&*conn)
+            .map_err(|e| {
+                error!("Database error when inserting new user: {}", e);
+                AuthnCreateError::DatabaseFailure()
+            })?;
+
         Ok(())
     }
 }

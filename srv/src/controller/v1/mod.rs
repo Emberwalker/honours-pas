@@ -20,7 +20,6 @@ pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
 #[post("/auth", data = "<body>")]
 fn login(
     body: Json<LoginMessage>,
-    conn: DatabaseConnection,
     authn_manager: State<AuthnHolder>,
     session_manager: State<Arc<SessionManager>>,
     mut cookies: Cookies,
@@ -28,16 +27,29 @@ fn login(
     let res = match authn_manager.authenticate(&body.username[..], &body.password[..]) {
         Ok(email) => email,
         Err(e) => match e {
-            AuthnFailure::Error() => return Err(status::Custom(Status::InternalServerError, Json(GenericMessage {
-                message: "internal server error".to_string(),
-            }))),
-            _ => return Err(status::Custom(Status::Unauthorized, Json(GenericMessage {
-                message: "incorrect username or password".to_string(),
-            }))),
-        }
+            AuthnFailure::Error() => {
+                return Err(status::Custom(
+                    Status::InternalServerError,
+                    Json(GenericMessage {
+                        message: "internal server error".to_string(),
+                    }),
+                ))
+            }
+            _ => {
+                return Err(status::Custom(
+                    Status::Unauthorized,
+                    Json(GenericMessage {
+                        message: "incorrect username or password".to_string(),
+                    }),
+                ))
+            }
+        },
     };
 
-    debug!("New session: {:?}", session_manager.new_session(&res[..], &mut cookies));
+    debug!(
+        "New session: {:?}",
+        session_manager.new_session(&res[..], &mut cookies)
+    );
 
     Ok(Json(GenericMessage {
         message: "ok".to_string(),

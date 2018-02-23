@@ -1,4 +1,4 @@
-use ring_pwhash::scrypt::{ScryptParams, scrypt_check, scrypt_simple};
+use ring_pwhash::scrypt::{scrypt_check, scrypt_simple, ScryptParams};
 use std::io::Result;
 
 lazy_static! {

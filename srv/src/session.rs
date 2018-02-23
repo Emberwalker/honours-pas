@@ -34,35 +34,41 @@ impl SessionManager {
     pub fn new(conf: &Config) -> Arc<Self> {
         let expiry = conf.get_session_expiry();
         let arc = Arc::new(SessionManager {
-            max_age: ChronoDuration::minutes(i64::from(expiry)).to_std().expect("Chrono to std::time"),
+            max_age: ChronoDuration::minutes(i64::from(expiry))
+                .to_std()
+                .expect("Chrono to std::time"),
             sessions: RwLock::new(HashMap::new()),
         });
         let arc_clone = Arc::clone(&arc);
 
         // Spawn cleaner thread.
-        thread::Builder::new().name("session-cleanup".to_string()).spawn(move || {
-            let duration = Duration::from_secs(60);
-            loop {
-                thread::sleep(duration);
-                let mut vec = Vec::<String>::new();
-                let now = Instant::now();
-                { // Read block
-                    let sessions = arc_clone.sessions.read().unwrap();
-                    for (k, v) in sessions.iter() {
-                        if now.duration_since(v.created) > arc_clone.max_age {
-                            vec.push(k.to_string());
+        thread::Builder::new()
+            .name("session-cleanup".to_string())
+            .spawn(move || {
+                let duration = Duration::from_secs(60);
+                loop {
+                    thread::sleep(duration);
+                    let mut vec = Vec::<String>::new();
+                    let now = Instant::now();
+                    {
+                        // Read block
+                        let sessions = arc_clone.sessions.read().unwrap();
+                        for (k, v) in sessions.iter() {
+                            if now.duration_since(v.created) > arc_clone.max_age {
+                                vec.push(k.to_string());
+                            }
+                        }
+                    } // Read block END
+                    if vec.len() > 0 {
+                        info!("Purging {} expired sessions.", vec.len());
+                        let mut sessions = arc_clone.sessions.write().unwrap();
+                        for id in vec.drain(..) {
+                            sessions.remove(&id);
                         }
                     }
-                } // Read block END
-                if vec.len() > 0 {
-                    info!("Purging {} expired sessions.", vec.len());
-                    let mut sessions = arc_clone.sessions.write().unwrap();
-                    for id in vec.drain(..) {
-                        sessions.remove(&id);
-                    }
                 }
-            }
-        }).expect("cleanup thread creation");
+            })
+            .expect("cleanup thread creation");
 
         arc
     }
@@ -80,14 +86,21 @@ impl SessionManager {
             let mut sessions = self.sessions.write().unwrap();
             sessions.insert(key.clone(), session);
         }
-        let cookie = Cookie::build("session", key).secure(SECURED).http_only(true).finish();
+        let cookie = Cookie::build("session", key)
+            .secure(SECURED)
+            .http_only(true)
+            .finish();
         cookies.add_private(cookie);
 
         session_cloned
     }
 
     fn generate_new_session_key() -> String {
-        OsRng::new().expect("OS RNG").gen_ascii_chars().take(32).collect::<String>()
+        OsRng::new()
+            .expect("OS RNG")
+            .gen_ascii_chars()
+            .take(32)
+            .collect::<String>()
     }
 }
 
@@ -103,7 +116,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for Session {
                 let sessions = manager.sessions.read().unwrap();
                 match sessions.get(c.value()) {
                     None => Outcome::Failure((Status::Forbidden, ())),
-                    Some(sess) => Outcome::Success(sess.clone())
+                    Some(sess) => Outcome::Success(sess.clone()),
                 }
             }
         }

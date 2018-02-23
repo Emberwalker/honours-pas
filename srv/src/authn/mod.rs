@@ -1,9 +1,5 @@
 use rocket::Route;
 
-use std::ops::Deref;
-use std::sync::Arc;
-use db::Pool;
-
 // `simple` is the default database-backed provider. It does nothing fancy.
 pub mod simple;
 
@@ -14,7 +10,7 @@ pub enum AuthnFailure {
     /// An invalid password was passed.
     InvalidPassword(),
     /// Some error occured while performing the check e.g. database error.
-    Error()
+    Error(),
 }
 
 // TODO: Add more error types as they become apparent.
@@ -45,13 +41,7 @@ pub trait AuthnBackend: Send + Sync {
     }
 }
 
-pub struct AuthnHolder<'a> (pub Box<AuthnBackend + 'a>);
-
-impl<'a> AuthnHolder<'a> {
-    pub fn get(&'a self) -> &'a AuthnBackend {
-        &*self.0
-    }
-}
+pub struct AuthnHolder<'a>(pub Box<AuthnBackend + 'a>);
 
 impl<'a> AuthnBackend for AuthnHolder<'a> {
     fn get_rocket_routes(&self) -> Vec<Route> {
