@@ -15,6 +15,7 @@ pub struct Config {
 struct ConfigHPAS {
     database_string: String,
     secret_key: Option<String>,
+    authn_provider: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -38,6 +39,13 @@ impl Config {
         match self.session {
             Some(ref session) => session.expiry_minutes,
             None => SessionConfig::default().expiry_minutes,
+        }
+    }
+
+    pub fn get_authn_provider(&self) -> String {
+        match self.hpas.authn_provider {
+            None => "simple".to_string(),
+            Some(ref prov) => prov.to_lowercase(),
         }
     }
 }
@@ -103,6 +111,7 @@ pub fn default_config() -> Config {
         hpas: ConfigHPAS {
             database_string: "postgres:banana@postgres/postgres".to_string(),
             secret_key: None,
+            authn_provider: None,
         },
         session: None,
     }

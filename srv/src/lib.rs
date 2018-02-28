@@ -22,6 +22,7 @@ extern crate r2d2_diesel;
 extern crate serde_derive;
 extern crate toml;
 
+extern crate ldap3;
 extern crate ring_pwhash;
 extern crate rocket;
 extern crate rocket_contrib;
@@ -61,8 +62,15 @@ fn get_rocket_config(conf: &config::Config) -> Config {
     b.finalize().expect("Config builder")
 }
 
-fn get_authn_provider(conf_loc: &str, pool: Arc<db::Pool>) -> Box<AuthnBackend> {
-    Box::new(authn::simple::SimpleAuthnBackend::new(conf_loc, pool))
+fn get_authn_provider(conf_loc: &str, conf: &config::Config, pool: Arc<db::Pool>) -> Box<AuthnBackend> {
+    match conf.get_authn_provider().as_str() {
+        "simple" => Box::new(authn::simple::SimpleAuthnBackend::new(conf_loc, pool)),
+        "ldap" => Box::new(authn::ldap::LdapAuthnBackend::new(conf_loc, pool)),
+        s => {
+            error!("No such authn backend: {}", s);
+            panic!("No such authn backend: {}", s);
+        }
+    }
 }
 
 pub fn run(conf_loc: &str) -> Result<(), String> {
@@ -76,7 +84,7 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
     info!("Database migrations check completed.");
 
     let pool = Arc::new(db::init_pool(&conf));
-    let auth_provider = get_authn_provider(conf_loc, Arc::clone(&pool));
+    let auth_provider = get_authn_provider(conf_loc, &conf, Arc::clone(&pool));
     let session_provider = session::SessionManager::new(&conf);
 
     rocket::custom(get_rocket_config(&conf), true)

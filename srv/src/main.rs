@@ -95,8 +95,9 @@ fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
             }
         })
         .level(lvl)
-        // Set Hyper to WARN or the assigned level, whichever is least verbose.
+        // Set Hyper + tokio to WARN or the assigned level, whichever is least verbose.
         .level_for("hyper", cmp::min(log::LevelFilter::Warn, lvl))
+        .level_for("tokio_core", cmp::min(log::LevelFilter::Warn, lvl))
         .chain(std::io::stdout())
         .apply()?;
     Ok(())

@@ -2,6 +2,8 @@ use rocket::Route;
 
 // `simple` is the default database-backed provider. It does nothing fancy.
 pub mod simple;
+// `ldap` is the LDAP/AD-based provider.
+pub mod ldap;
 
 #[derive(Debug)]
 pub enum AuthnFailure {
@@ -9,6 +11,8 @@ pub enum AuthnFailure {
     InvalidUser(),
     /// An invalid password was passed.
     InvalidPassword(),
+    /// An invalid set of credentials. Returned by schemes which cannot tell whether username or password is wrong.
+    InvalidUserOrPassword(),
     /// Some error occured while performing the check e.g. database error.
     Error(),
 }
