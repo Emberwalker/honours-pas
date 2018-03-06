@@ -2,3 +2,12 @@
 database_string="username:password@pghost/database"
 secret_key="(output of 'openssl rand -base64 32')"
 authn_provider="(simple or ldap)"
+
+[ldap]
+server_url="ldap://hostname:1234"
+search_base="dc=example,dc=com"
+filter_field="sAMAccountName (for Active Directory)"
+email_field="mail"
+domain="AD_DOMAIN"
+is_ad=true
+normalize_logins=true

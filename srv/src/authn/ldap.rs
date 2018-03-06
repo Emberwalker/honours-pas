@@ -1,13 +1,57 @@
 use std::sync::Arc;
-use std::error::Error;
+use std::fs::File;
+use std::io::Read;
 use regex::Regex;
 use ldap3::{ldap_escape, LdapConn, Scope, SearchEntry};
+use toml;
 use db::Pool;
 use super::{AuthnBackend, AuthnCreateError, AuthnFailure};
 use util;
 
 lazy_static! {
     static ref VALID_USERNAME_REGEX: Regex = Regex::new(r"^[\w\d\.@]+$").unwrap();
+}
+
+#[derive(Deserialize, Debug)]
+struct ConfigRoot {
+    ldap: LdapConfig,
+}
+
+#[derive(Deserialize, Debug)]
+struct LdapConfig {
+    server_url: String,
+    search_base: String,
+    filter_field: Option<String>,
+    email_field: Option<String>,
+    domain: Option<String>,
+    is_ad: Option<bool>,
+    normalize_logins: Option<bool>,
+}
+
+impl LdapConfig {
+    fn to_backend(self) -> LdapAuthnBackend {
+        let ad = self.is_ad.unwrap_or(false);
+        if ad && self.domain.is_none() {
+            error!("LDAP configuration specifies an AD server, but no AD domain.");
+            panic!("LDAP configuration specifies an AD server, but no AD domain.");
+        }
+
+        LdapAuthnBackend {
+            server_url: self.server_url,
+            search_base: self.search_base,
+            filter_field: self.filter_field.unwrap_or_else(|| {
+                if ad {
+                    "sAMAccountName".to_string()
+                } else {
+                    "userPrincipalName".to_string()
+                }
+            }),
+            email_field: self.email_field.unwrap_or_else(|| "mail".to_string()),
+            domain: self.domain,
+            is_ad: ad,
+            normalize_logins: self.normalize_logins.unwrap_or(false),
+        }
+    }
 }
 
 pub struct LdapAuthnBackend {
@@ -28,16 +72,20 @@ enum LdapAuthnError {
 
 impl LdapAuthnBackend {
     pub fn new(config_location: &str, _pool: Arc<Pool>) -> Self {
-        // TODO: Load from config
-        LdapAuthnBackend {
-            server_url: "ldap://thanatos.mshome.net".to_string(),
-            search_base: "dc=test,dc=drakon,dc=io".to_string(),
-            filter_field: "sAMAccountName".to_string(),
-            email_field: "mail".to_string(),
-            domain: Some("TESTNET".to_string()),
-            is_ad: true,
-            normalize_logins: true,
+        let res: Result<ConfigRoot, toml::de::Error> = {
+            info!("Loading LDAP configuration from {}", config_location);
+            let mut f = File::open(config_location).unwrap();
+            let mut contents = String::new();
+            f.read_to_string(&mut contents).unwrap();
+            toml::from_str(&contents[..])
+        };
+
+        if res.is_err() {
+            error!("Unable to parse LDAP config; is a field missing?");
+            panic!(res.unwrap_err());
         }
+
+        res.unwrap().ldap.to_backend()
     }
 
     fn attempt_authn(&self, uname: &str, passwd: &str) -> Result<String, LdapAuthnError> {
