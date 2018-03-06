@@ -1,7 +1,6 @@
 pub use super::models::Staff;
 pub use super::models::new::Staff as NewStaff;
 
-use diesel::result::Error;
 use super::{DatabaseConnection, SelectError};
 
 generate_create_fn!(staff, NewStaff, Staff, id, i32);

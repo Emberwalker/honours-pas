@@ -123,7 +123,7 @@ impl LdapAuthnBackend {
             .map_err(|_e| LdapAuthnError::InvalidLogin())?;
 
         let filter = format!("({}={})", self.filter_field, ldap_escape(uid));
-        let (results, meta) = conn
+        let (results, _meta) = conn
             .search(&self.search_base, Scope::Subtree, &filter, vec!(self.email_field.clone()))
             .map_err(|e| {
                 warn!("Error fetching user row: {}", e);

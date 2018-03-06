@@ -1,7 +1,6 @@
 pub use super::models::Student;
 pub use super::models::new::Student as NewStudent;
 
-use diesel::result::Error;
 use super::{DatabaseConnection, SelectError};
 
 generate_create_fn!(students, NewStudent, Student, id, i32);
