@@ -13,8 +13,12 @@ use session::{Session, SessionManager};
 mod types;
 use self::types::*;
 
+mod project;
+
 pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
-    routes![login]
+    let mut r = routes![login, whoami];
+    r.append(&mut project::get_routes());
+    r
 }
 
 #[post("/auth", data = "<body>")]
@@ -68,4 +72,21 @@ fn login(
     Ok(Json(GenericMessage {
         message: "ok".to_string(),
     }))
+}
+
+#[get("/whoami")]
+fn whoami(conn: DatabaseConnection, session: Session) -> Json<WhoAmIMessage> {
+    let utype = match user::find_user(&conn, &session.email[..]) {
+        Some(user::User::Staff(s)) => match s.is_admin {
+            true => "admin",
+            false => "staff",
+        },
+        Some(user::User::Student(_s)) => "student",
+        None => panic!("A session exists for a user which does not exist!"),
+    };
+
+    Json(WhoAmIMessage {
+        email: session.email,
+        user_type: utype.to_string(),
+    })
 }

@@ -20,7 +20,7 @@ const SECURED: bool = true;
 
 #[derive(Clone, Debug)]
 pub struct Session {
-    email: String,
+    pub email: String,
     created: Instant,
 }
 

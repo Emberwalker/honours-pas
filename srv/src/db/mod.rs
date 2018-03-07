@@ -87,11 +87,12 @@ macro_rules! generate_select_body {
     );
     (__in, $conn:ident, $table:ident, $model_type:ty, $(($field:ident, $val:ident)),*) => (
         {
+            // Note that we do NOT use the DSL. This causes naming conflicts in some cases (like filtering on `id`...)
             use diesel::prelude::*;
-            use schema::$table::dsl::*;
-            $table
+            use schema::$table;
+            $table::table
             $(
-                .filter($field.eq(&$val))
+                .filter($table::$field.eq(&$val))
             )*
                 .load::<$model_type>($conn.raw())
         }
