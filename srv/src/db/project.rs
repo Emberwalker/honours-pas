@@ -3,7 +3,7 @@ pub use super::models::new::Project as NewProject;
 
 use super::{DatabaseConnection, SelectError, session};
 
-generate_create_fn!(projects, NewProject, Project, id, i32);
+generate_create_fn!(projects, NewProject, Project);
 
 pub fn get_all_current(conn: &DatabaseConnection) -> Result<Vec<Project>, SelectError> {
     let sess = session::get_latest_session(conn)?;

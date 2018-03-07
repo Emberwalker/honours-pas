@@ -110,7 +110,7 @@ pub mod new {
         pub force_archive: bool,
     }
 
-    #[derive(Deserialize, Insertable, PartialEq, Debug)]
+    /*#[derive(Deserialize, Insertable, PartialEq, Debug)]
     #[table_name = "projects"]
     pub struct Project<'a> {
         pub session: i32,
@@ -118,6 +118,15 @@ pub mod new {
         pub supervisor_email: &'a str,
         pub name: &'a str,
         pub description_md: &'a str,
+    }*/
+    #[derive(Deserialize, Insertable, PartialEq, Debug)]
+    #[table_name = "projects"]
+    pub struct Project {
+        pub session: i32,
+        pub supervisor_name: String,
+        pub supervisor_email: String,
+        pub name: String,
+        pub description_md: String,
     }
 
     #[derive(Insertable, PartialEq, Debug)]

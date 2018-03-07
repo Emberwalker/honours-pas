@@ -3,7 +3,7 @@ pub use super::models::new::Session as NewSession;
 
 use db::{DatabaseConnection, SelectError};
 
-generate_create_fn!(sessions, NewSession, Session, id, i32);
+//generate_create_fn!(sessions, NewSession, Session);
 
 pub fn get_latest_session(conn: &DatabaseConnection) -> Result<Session, SelectError> {
     use diesel;

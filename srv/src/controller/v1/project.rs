@@ -1,20 +1,16 @@
-use std::sync::Arc;
-
-use rocket::{Route, State};
+use rocket::Route;
 use rocket::response::status;
-use rocket::http::{Cookies, Status};
+use rocket::http::Status;
 use rocket_contrib::Json;
 
-use config::Config as HPASConfig;
 use db::{user, DatabaseConnection, SelectError};
-use db::project;
-use authn::{AuthnBackend, AuthnFailure, AuthnHolder};
-use session::{Session, SessionManager};
+use db::{project, staff};
+use session::Session;
 
 use super::types::*;
 
 pub fn get_routes() -> Vec<Route> {
-    routes![get_projs]
+    routes![get_projs, new_proj, rm_proj]
 }
 
 #[get("/projects")]
@@ -48,4 +44,40 @@ fn get_projs(conn: DatabaseConnection, session: Session) -> Result<Json<ProjectL
             }
         }
     }
+}
+
+#[post("/projects", data = "<body>")]
+fn new_proj(
+    mut body: Json<project::NewProject>,
+    usr: staff::Staff,
+    conn: DatabaseConnection,
+) -> Result<Json<project::Project>, status::Custom<Json<GenericMessage>>> {
+    if !usr.is_admin {
+        body.supervisor_name = usr.full_name;
+        body.supervisor_email = usr.email;
+    }
+
+    match project::create(&conn, &body) {
+        Ok(p) => Ok(Json(p)),
+        Err(e) => {
+            error!("Diesel error when creating project: {}", e);
+            debug!("Additional information: {:?}", e);
+            Err(status::Custom(Status::InternalServerError, Json(GenericMessage {
+                message: "database error".to_string(),
+            })))
+        }
+    }
+}
+
+#[delete("/projects/<id>")]
+fn rm_proj(
+    id: i32,
+    usr: staff::Admin,
+    _conn: DatabaseConnection,
+) -> Result<Json<GenericMessage>, status::Custom<Json<GenericMessage>>> {
+    // TODO
+    error!("Attempt to delete project {} from {}; not implemented.", id, usr.email);
+    Err(status::Custom(Status::NotImplemented, Json(GenericMessage {
+        message: "not implemented".to_string(),
+    })))
 }

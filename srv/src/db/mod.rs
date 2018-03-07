@@ -10,18 +10,6 @@ use rocket::{Outcome, Request, State};
 use config::Config;
 
 macro_rules! generate_create_fn {
-    ($table:ident, $new_type:ty, $model_type:ty, $ret_field:ident, $ret_type:ty) => (
-        use diesel;
-        use db;
-        pub fn create(
-            conn: &db::DatabaseConnection,
-            val: &$new_type,
-        ) -> Result<$ret_type, diesel::result::Error> {
-            // We recycle the inner implementation below. Less duplication! Thankfully Rust discards the 'pub' it seems.
-            generate_create_fn!($table, $new_type, $model_type);
-            create(conn, val).map(|res| res.$ret_field)
-        }
-    );
     ($table:ident, $new_type:ty, $model_type:ty) => (
         use diesel;
         use db;
@@ -68,6 +56,7 @@ macro_rules! generate_select_body {
     );
     (multi, $conn:ident, $table:ident, $model_type:ty$(, ($field:ident, $val:ident))*) => (
         {
+            use diesel;
             let vals = generate_select_body!(
                 __in,
                 $conn,
