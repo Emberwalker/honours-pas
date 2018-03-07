@@ -40,6 +40,7 @@ mod controller;
 mod authn;
 mod util;
 mod session;
+mod fairing;
 
 #[cfg(feature = "insecure")]
 fn get_rocket_config(conf: &config::Config) -> Config {
@@ -97,6 +98,7 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
     let session_provider = session::SessionManager::new(&conf);
 
     rocket::custom(get_rocket_config(&conf), true)
+        .attach(fairing::ServerHeader())
         .manage(authn::AuthnHolder(auth_provider))
         .manage(pool)
         .manage(session_provider)
