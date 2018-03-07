@@ -18,6 +18,7 @@ extern crate diesel_migrations;
 extern crate r2d2;
 extern crate r2d2_diesel;
 
+extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate toml;
@@ -73,15 +74,23 @@ fn get_authn_provider(conf_loc: &str, conf: &config::Config, pool: Arc<db::Pool>
     }
 }
 
-pub fn run(conf_loc: &str) -> Result<(), String> {
+fn get_conf(conf_loc: &str) -> config::Config {
     // TODO: More nuanced config error handling (like logging what keys had to be defaulted)
-    let conf = config::load_config(conf_loc).unwrap_or(config::default_config());
+    config::load_config(conf_loc).unwrap_or(config::default_config())
+}
+
+fn run_migrations(conf: &config::Config) {
     debug!("Using configuration: {:?}", conf);
     info!("Running database migrations (if needed)...");
-    if let Err(e) = migrate::run_pending_migrations(&conf) {
+    if let Err(e) = migrate::run_pending_migrations(conf) {
         panic!("Error running DB migrations: {}", e);
     }
     info!("Database migrations check completed.");
+}
+
+pub fn run(conf_loc: &str) -> Result<(), String> {
+    let conf = get_conf(conf_loc);
+    run_migrations(&conf);
 
     let pool = Arc::new(db::init_pool(&conf));
     let auth_provider = get_authn_provider(conf_loc, &conf, Arc::clone(&pool));
@@ -93,5 +102,25 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
         .manage(session_provider)
         .mount("/api/v1", controller::v1::get_routes(&conf))
         .launch();
+    Ok(())
+}
+
+pub fn add_user(conf_loc: &str, uname: &str, passwd: &str, fname: &str) -> Result<(), String> {
+    use db::staff;
+    use db::models::new::Staff as NewStaff;
+
+    let conf = get_conf(conf_loc);
+    run_migrations(&conf);
+
+    let pool = Arc::new(db::init_pool(&conf));
+    let auth_provider = get_authn_provider(conf_loc, &conf, Arc::clone(&pool));
+
+    auth_provider.create_user(uname, passwd).map_err(|e| format!("{:?}", e))?;
+    staff::create(&db::DatabaseConnection(pool.get().unwrap()), &NewStaff {
+        email: uname,
+        full_name: fname,
+        is_admin: true,
+    }).map_err(|e| format!("{:?}", e))?;
+
     Ok(())
 }

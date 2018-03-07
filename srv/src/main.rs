@@ -10,7 +10,7 @@ extern crate log;
 extern crate regex;
 
 use regex::Regex;
-use clap::{App, Arg};
+use clap::{App, Arg, SubCommand};
 use std::cmp;
 
 static CONF_LOC_ENV: &'static str = "HONOURS_PAS_CONF";
@@ -35,13 +35,46 @@ fn main() {
                 .help("Provide a custom configuration file.")
                 .env(CONF_LOC_ENV)
                 .default_value(DEFAULT_CONF_LOC)
+                .global(true)
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("v")
                 .short("v")
                 .multiple(true)
-                .help("Sets verbosity. May be specified up to 4 times."),
+                .help("Sets verbosity. May be specified up to 4 times.")
+                .global(true),
+        )
+        .subcommand(
+            SubCommand::with_name("add_user")
+                .about("For 'simple' authn backend: Adds an admin user to the system.")
+                .arg(
+                    Arg::with_name("username")
+                        .short("u")
+                        .long("username")
+                        .value_name("USERNAME")
+                        .help("New user's name. Must be a valid email address.")
+                        .required(true)
+                        .takes_value(true)
+                )
+                .arg(
+                    Arg::with_name("password")
+                        .short("p")
+                        .long("password")
+                        .value_name("PASSWORD")
+                        .help("New user's password.")
+                        .required(true)
+                        .takes_value(true)
+                )
+                .arg(
+                    Arg::with_name("fullname")
+                        .short("n")
+                        .long("name")
+                        .value_name("NAME")
+                        .help("New user's full name.")
+                        .required(true)
+                        .takes_value(true)
+                )
         )
         .get_matches();
 
@@ -60,10 +93,21 @@ fn main() {
 
     info!(target: "main", "Logger configured; using log level {}", log_lvl);
 
-    if let Err(e) = hpas::run(conf_loc) {
-        error!("Failed with error: {}", e);
-        debug!("Full error details: {:?}", e);
+    if let Some(submatches) = matches.subcommand_matches("add_user") {
+        if let Err(e) = hpas::add_user(
+            conf_loc,
+            submatches.value_of("username").unwrap(),
+            submatches.value_of("password").unwrap(),
+            submatches.value_of("fullname").unwrap())
+        {
+            error!("Failed with error: {}", e);
+        }
+    } else {
+        if let Err(e) = hpas::run(conf_loc) {
+            error!("Failed with error: {}", e);
+        }
     }
+
 }
 
 fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
