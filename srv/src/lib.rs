@@ -29,7 +29,7 @@ extern crate rocket;
 extern crate rocket_contrib;
 
 use std::sync::Arc;
-use rocket::config::{Config, Environment};
+use rocket::config::{Config, Environment, LoggingLevel};
 use authn::AuthnBackend;
 
 mod config;
@@ -46,7 +46,8 @@ mod fairing;
 fn get_rocket_config(conf: &config::Config) -> Config {
     let mut b = Config::build(Environment::Development)
         .address("127.0.0.1")
-        .port(8080);
+        .port(8080)
+        .log_level(LoggingLevel::Debug);
     if let Some(key) = conf.get_secret_key() {
         b = b.secret_key(key);
     }
@@ -57,7 +58,8 @@ fn get_rocket_config(conf: &config::Config) -> Config {
 fn get_rocket_config(conf: &config::Config) -> Config {
     let mut b = Config::build(Environment::Production)
         .address("0.0.0.0")
-        .port(8080);
+        .port(8080)
+        .log_level(LoggingLevel::Critical);
     if let Some(key) = conf.get_secret_key() {
         b = b.secret_key(key);
     }
