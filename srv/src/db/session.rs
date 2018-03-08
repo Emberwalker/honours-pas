@@ -1,12 +1,25 @@
 pub use super::models::Session;
 pub use super::models::new::Session as NewSession;
 
+use diesel;
 use db::{DatabaseConnection, SelectError};
 
 //generate_create_fn!(sessions, NewSession, Session);
 
+/// Fetches a session from the database along with whether it's the current session.
+pub fn get_session(conn: &DatabaseConnection, id: i32) -> Result<(bool, Session), SelectError> {
+    match get_latest_session(conn) {
+        Ok(ref s) if s.id == id => return Ok((true, s.clone())),
+        Ok(_) => (),
+        Err(SelectError::NoSuchValue()) => return Err(SelectError::NoSuchValue()),
+        Err(e @ SelectError::DieselError(_)) => return Err(e),
+    }
+
+    let res = generate_select_body!(single, conn, sessions, Session, (id, id))?;
+    Ok((false, res))
+}
+
 pub fn get_latest_session(conn: &DatabaseConnection) -> Result<Session, SelectError> {
-    use diesel;
     use diesel::prelude::*;
     use schema::sessions::dsl::*;
 

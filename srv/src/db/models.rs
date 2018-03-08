@@ -33,7 +33,7 @@ pub struct Session {
     pub force_archive: bool,
 }
 
-#[derive(Serialize, Identifiable, Queryable, Associations, AsChangeset, Clone, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, AsChangeset, Clone, PartialEq, Debug)]
 #[belongs_to(Session, foreign_key = "session")]
 #[table_name = "projects"]
 pub struct Project {
@@ -110,15 +110,6 @@ pub mod new {
         pub force_archive: bool,
     }
 
-    /*#[derive(Deserialize, Insertable, PartialEq, Debug)]
-    #[table_name = "projects"]
-    pub struct Project<'a> {
-        pub session: i32,
-        pub supervisor_name: &'a str,
-        pub supervisor_email: &'a str,
-        pub name: &'a str,
-        pub description_md: &'a str,
-    }*/
     #[derive(Deserialize, Insertable, PartialEq, Debug)]
     #[table_name = "projects"]
     pub struct Project {
