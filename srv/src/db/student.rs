@@ -8,7 +8,8 @@ pub use super::models::new::Student as NewStudent;
 use super::{DatabaseConnection, SelectError};
 use session::Session;
 
-//generate_create_fn!(students, NewStudent, Student);
+generate_create_fn!(students, NewStudent, Student);
+generate_create_fn!(batch, students, NewStudent);
 
 pub fn find_email(conn: &DatabaseConnection, student_email: &str) -> Result<Student, SelectError> {
     generate_select_body!(single, conn, students, Student, (email, student_email))
