@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use rocket::{Route, State};
+use rocket::{Catcher, Route, State};
 use rocket::http::Cookies;
 
 use config::Config as HPASConfig;
@@ -12,6 +12,7 @@ mod types;
 
 #[macro_use]
 mod macros;
+mod errors;
 mod project;
 mod staff;
 
@@ -23,6 +24,10 @@ pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
         project::get_routes(),
         staff::get_routes(),
     ]
+}
+
+pub fn get_catchers(_conf: &HPASConfig) -> Vec<Catcher> {
+    errors::get_catchers()
 }
 
 #[post("/auth", data = "<body>")]

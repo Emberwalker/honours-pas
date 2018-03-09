@@ -104,6 +104,7 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
         .manage(authn::AuthnHolder(auth_provider))
         .manage(pool)
         .manage(session_provider)
+        .catch(controller::v1::get_catchers(&conf))
         .mount("/api/v1", controller::v1::get_routes(&conf))
         .launch();
     Ok(())
