@@ -32,13 +32,14 @@ use std::sync::Arc;
 use rocket::config::{Config, Environment, LoggingLevel};
 use authn::AuthnBackend;
 
+#[macro_use]
+mod util;
 mod config;
 mod schema;
 mod migrate;
 mod db;
 mod controller;
 mod authn;
-mod util;
 mod session;
 mod fairing;
 

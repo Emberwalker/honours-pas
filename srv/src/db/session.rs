@@ -1,10 +1,9 @@
 pub use super::models::Session;
 pub use super::models::new::Session as NewSession;
 
-use diesel;
 use db::{DatabaseConnection, SelectError};
 
-//generate_create_fn!(sessions, NewSession, Session);
+generate_create_fn!(sessions, NewSession, Session);
 
 /// Fetches a session from the database along with whether it's the current session.
 pub fn get_session(conn: &DatabaseConnection, id: i32) -> Result<(bool, Session), SelectError> {

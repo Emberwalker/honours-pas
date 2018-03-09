@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
 use rocket::{Route, State};
-use rocket::response::status;
-use rocket::http::{Cookies, Status};
-use rocket_contrib::Json;
+use rocket::http::Cookies;
 
 use config::Config as HPASConfig;
 use db::{user, DatabaseConnection};
@@ -16,11 +14,16 @@ use self::types::*;
 #[macro_use]
 mod macros;
 mod project;
+mod staff;
+
+v1_imports!();
 
 pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
-    let mut r = routes![login, whoami];
-    r.append(&mut project::get_routes());
-    r
+    concat_vec![
+        routes![login, whoami],
+        project::get_routes(),
+        staff::get_routes(),
+    ]
 }
 
 #[post("/auth", data = "<body>")]
@@ -30,7 +33,7 @@ fn login(
     authn_manager: State<AuthnHolder>,
     session_manager: State<Arc<SessionManager>>,
     mut cookies: Cookies,
-) -> Result<Json<GenericMessage>, status::Custom<Json<GenericMessage>>> {
+) -> Result<Json<GenericMessage>, ErrorResponse> {
     let res = match authn_manager.authenticate(&body.username, &body.password) {
         Ok(email) => email,
         Err(e) => match e {

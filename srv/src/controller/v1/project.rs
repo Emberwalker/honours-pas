@@ -1,7 +1,6 @@
+v1_imports!();
+
 use rocket::Route;
-use rocket::response::status;
-use rocket::http::Status;
-use rocket_contrib::Json;
 
 use db::{user, DatabaseConnection, SelectError};
 use db::{project, staff, session};
@@ -14,7 +13,7 @@ pub fn get_routes() -> Vec<Route> {
 }
 
 #[get("/projects")]
-fn get_projs(conn: DatabaseConnection, session: Session) -> Result<Json<ProjectList>, status::Custom<Json<GenericMessage>>> {
+fn get_projs(conn: DatabaseConnection, session: Session) -> Result<Json<ProjectList>, ErrorResponse> {
     let res = match user::find_user(&conn, &session.email[..]) {
         Some(user::User::Staff(_s)) => project::get_all(&conn),
         Some(user::User::Student(_s)) => project::get_all_current(&conn),
@@ -41,7 +40,7 @@ fn new_proj(
     mut body: Json<project::NewProject>,
     usr: staff::Staff,
     conn: DatabaseConnection,
-) -> Result<Json<project::Project>, status::Custom<Json<GenericMessage>>> {
+) -> Result<Json<project::Project>, ErrorResponse> {
     if !usr.is_admin {
         body.supervisor_name = usr.full_name;
         body.supervisor_email = usr.email;
@@ -63,7 +62,7 @@ fn update_proj(
     body: Json<project::Project>,
     usr: staff::Staff,
     conn: DatabaseConnection,
-) -> Result<Json<project::Project>, status::Custom<Json<GenericMessage>>> {
+) -> Result<Json<project::Project>, ErrorResponse> {
     if !usr.is_admin && usr.email != body.supervisor_email {
         return Err(bad_request!("you do not own that project"));
     }
@@ -76,7 +75,7 @@ fn update_proj(
         match e {
             SelectError::NoSuchValue() => not_found!("no such project"),
             SelectError::DieselError(e) => {
-                error!("Diesel error fetching a session: {}", e);
+                error!("Diesel error fetching a project: {}", e);
                 debug!("Additional information: {:?}", e);
                 internal_server_error!("database error")
             },
@@ -105,7 +104,7 @@ fn rm_proj(
     id: i32,
     usr: staff::Admin,
     _conn: DatabaseConnection,
-) -> Result<Json<GenericMessage>, status::Custom<Json<GenericMessage>>> {
+) -> Result<Json<GenericMessage>, ErrorResponse> {
     // TODO
     error!("Attempt to delete project {} from {}; not implemented.", id, usr.email);
     Err(not_implemented!("not implemented"))

@@ -11,15 +11,14 @@ use super::{DatabaseConnection, SelectError};
 use session::Session;
 
 generate_create_fn!(staff, NewStaff, Staff);
-generate_create_fn!(batch, staff, NewStaff);
 
 pub fn find_email(conn: &DatabaseConnection, staff_email: &str) -> Result<Staff, SelectError> {
     generate_select_body!(single, conn, staff, Staff, (email, staff_email))
 }
 
-/*pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<Staff>, SelectError> {
+pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<Staff>, SelectError> {
     generate_select_body!(multi, conn, staff, Staff)
-}*/
+}
 
 impl<'a,'r> FromRequest<'a,'r> for Staff {
     type Error = ();

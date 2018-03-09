@@ -25,3 +25,13 @@ pub fn sanitise_email(uname: &str) -> Result<String, ()> {
     let u2 = matches.next().ok_or_else(&err_closure)?;
     Ok(format!("{}@{}", u1.replace(".", ""), u2))
 }
+
+macro_rules! concat_vec {
+    [$( $x:expr ),*$(,)*] => ({
+        let mut v = Vec::new();
+        $(
+            v.append(&mut $x);
+        )*
+        v
+    })
+}

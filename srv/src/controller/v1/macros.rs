@@ -1,3 +1,12 @@
+/// Used by all v1 modules to get required things in scope for macro expansion.
+macro_rules! v1_imports {
+    () => (
+        use rocket::response::status;
+        use rocket::http::Status;
+        use rocket_contrib::Json;
+    )
+}
+
 macro_rules! generic_message {
     ($( $arg:tt )*) => (
         Json(GenericMessage {

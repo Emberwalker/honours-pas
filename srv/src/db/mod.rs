@@ -9,31 +9,13 @@ use rocket::{Outcome, Request, State};
 
 use config::Config;
 
-/// Generates a `create` or `create_batch` fn. To use `create_batch`, you must also implement `create`!
+/// Generates a `create` and `create_batch` fn.
 macro_rules! generate_create_fn {
-    (batch, $table:ident, $new_type:ty) => (
-        pub fn create_batch(conn: &db::DatabaseConnection, val: &Vec<$new_type>) -> Result<(), diesel::result::Error> {
-            use diesel::prelude::*;
-            use diesel::insert_into;
-            use schema::$table;
-
-            debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/pre: {:?}", val);
-
-            let res = insert_into($table::table)
-                .values(val)
-                .execute(conn.raw())
-                .map_err(|err| {
-                    debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/err: {:?}", err);
-                    err
-                })?;
-            debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/post: {} records.", res);
-            Ok(())
-        }
-    );
     ($table:ident, $new_type:ty, $model_type:ty) => (
         use diesel;
         use db;
-        #[allow(dead_code)] // Allows using this macro as a prereq to create_batch without warnings
+
+        #[allow(dead_code)] // May not be used for all modules
         pub fn create(
             conn: &db::DatabaseConnection,
             val: &$new_type,
@@ -53,6 +35,25 @@ macro_rules! generate_create_fn {
                 })?;
             debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/post: {:?}", res);
             Ok(res)
+        }
+
+        #[allow(dead_code)] // May not be used for all modules
+        pub fn create_batch(conn: &db::DatabaseConnection, val: &Vec<$new_type>) -> Result<(), diesel::result::Error> {
+            use diesel::prelude::*;
+            use diesel::insert_into;
+            use schema::$table;
+
+            debug!(target: concat!("macro_gen::db::", stringify!($table), "::batch"), "INSERT/pre: {:?}", val);
+
+            let res = insert_into($table::table)
+                .values(val)
+                .execute(conn.raw())
+                .map_err(|err| {
+                    debug!(target: concat!("macro_gen::db::", stringify!($table), "::batch"), "INSERT/err: {:?}", err);
+                    err
+                })?;
+            debug!(target: concat!("macro_gen::db::", stringify!($table), "::batch"), "INSERT/post: {} records.", res);
+            Ok(())
         }
     )
 }
@@ -109,6 +110,7 @@ macro_rules! generate_select_body {
     );
 }
 
+#[derive(Debug)]
 pub enum SelectError {
     NoSuchValue(),
     DieselError(diesel::result::Error),
