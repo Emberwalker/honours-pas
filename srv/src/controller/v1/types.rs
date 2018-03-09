@@ -1,16 +1,15 @@
 use rocket::response::status;
-use rocket::http::Status;
 use rocket_contrib::Json;
 
-use db::models::Project;
-use db::models::Staff;
+use db::project::Project;
+use db::staff::{Staff, NewStaff};
+
+pub type ErrorResponse = status::Custom<Json<GenericMessage>>;
 
 #[derive(Serialize, Debug)]
 pub struct GenericMessage {
     pub message: String,
 }
-
-pub type ErrorResponse = status::Custom<Json<GenericMessage>>;
 
 #[derive(Deserialize, Debug)]
 pub struct LoginMessage {
@@ -32,4 +31,9 @@ pub struct ProjectList {
 #[derive(Serialize, Debug)]
 pub struct StaffList {
     pub staff: Vec<Staff>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NewStaffList {
+    pub staff: Vec<NewStaff>,
 }

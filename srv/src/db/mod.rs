@@ -9,9 +9,11 @@ use rocket::{Outcome, Request, State};
 
 use config::Config;
 
-/// Generates a `create` and `create_batch` fn.
+/// Generates a `create` and `create_batch` fn. Fields can be passed at the end to enable upsert based on that field.
+/// Upsert entries look like `(field_name -> other_field, another_field)` - `field_name` is the conflicting field, and
+/// the other fields pointed to are the fields to update on conflict.
 macro_rules! generate_create_fn {
-    ($table:ident, $new_type:ty, $model_type:ty) => (
+    ($table:ident, $new_type:ty, $model_type:ty$(, ($up_field:ident -> $($re_field:ident),+))*) => (
         use diesel;
         use db;
 
@@ -22,12 +24,23 @@ macro_rules! generate_create_fn {
         ) -> Result<$model_type, diesel::result::Error> {
             use diesel::prelude::*;
             use diesel::insert_into;
+            #[allow(unused_imports)] // This is only used if upserts are being used in this macro call.
+            use diesel::pg::upsert::*;
             use schema::$table;
 
             debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/pre: {:?}", val);
 
             let res = insert_into($table::table)
                 .values(val)
+                $(
+                    .on_conflict($table::$up_field)
+                    .do_update()
+                    .set((
+                        $(
+                            $table::$re_field.eq(excluded($table::$re_field)),
+                        )+
+                    ))
+                )*
                 .get_result::<$model_type>(conn.raw())
                 .map_err(|err| {
                     debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/err: {:?}", err);
@@ -41,12 +54,23 @@ macro_rules! generate_create_fn {
         pub fn create_batch(conn: &db::DatabaseConnection, val: &Vec<$new_type>) -> Result<(), diesel::result::Error> {
             use diesel::prelude::*;
             use diesel::insert_into;
+            #[allow(unused_imports)] // This is only used if upserts are being used in this macro call.
+            use diesel::pg::upsert::*;
             use schema::$table;
 
             debug!(target: concat!("macro_gen::db::", stringify!($table), "::batch"), "INSERT/pre: {:?}", val);
 
             let res = insert_into($table::table)
                 .values(val)
+                $(
+                    .on_conflict($table::$up_field)
+                    .do_update()
+                    .set((
+                        $(
+                            $table::$re_field.eq(excluded($table::$re_field)),
+                        )+
+                    ))
+                )*
                 .execute(conn.raw())
                 .map_err(|err| {
                     debug!(target: concat!("macro_gen::db::", stringify!($table), "::batch"), "INSERT/err: {:?}", err);

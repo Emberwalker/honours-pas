@@ -5,10 +5,8 @@ use rocket::Route;
 use db::{DatabaseConnection, SelectError};
 use db::staff;
 
-use super::types::*;
-
 pub fn get_routes() -> Vec<Route> {
-    routes![get_staff]
+    routes![get_staff, new_staff]
 }
 
 #[get("/staff")]
@@ -25,4 +23,13 @@ fn get_staff(
             Err(internal_server_error!("database error"))
         }
     }
+}
+
+#[post("/staff", data = "<body>")]
+fn new_staff(
+    body: Json<NewStaffList>,
+    _usr: staff::Admin,
+    conn: DatabaseConnection,
+) -> Result<Json<GenericMessage>, ErrorResponse> {
+    unimplemented!()
 }

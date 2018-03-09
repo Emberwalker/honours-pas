@@ -9,7 +9,6 @@ use authn::{AuthnBackend, AuthnFailure, AuthnHolder};
 use session::{Session, SessionManager};
 
 mod types;
-use self::types::*;
 
 #[macro_use]
 mod macros;

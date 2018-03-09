@@ -4,6 +4,8 @@ macro_rules! v1_imports {
         use rocket::response::status;
         use rocket::http::Status;
         use rocket_contrib::Json;
+
+        use controller::v1::types::*;
     )
 }
 

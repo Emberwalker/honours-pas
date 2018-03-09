@@ -86,26 +86,26 @@ pub mod new {
 
     #[derive(Deserialize, Insertable, PartialEq, Debug)]
     #[table_name = "staff"]
-    pub struct Staff<'a> {
-        pub email: &'a str,
-        pub full_name: &'a str,
+    pub struct Staff {
+        pub email: String,
+        pub full_name: String,
         pub is_admin: bool,
     }
 
     #[derive(Deserialize, Insertable, PartialEq, Debug)]
     #[table_name = "students"]
-    pub struct Student<'a> {
-        pub email: &'a str,
-        pub full_name: &'a str,
+    pub struct Student {
+        pub email: String,
+        pub full_name: String,
         pub last_session: i32,
     }
 
     #[derive(Deserialize, Insertable, PartialEq, Debug)]
     #[table_name = "sessions"]
-    pub struct Session<'a> {
-        pub name: &'a str,
-        pub supervisor_name: &'a str,
-        pub supervisor_email: &'a str,
+    pub struct Session {
+        pub name: String,
+        pub supervisor_name: String,
+        pub supervisor_email: String,
         pub created: NaiveDateTime,
         pub force_archive: bool,
     }
@@ -122,10 +122,10 @@ pub mod new {
 
     #[derive(Insertable, PartialEq, Debug)]
     #[table_name = "student_comments"]
-    pub struct StudentComment<'a> {
+    pub struct StudentComment {
         pub student: i32,
         pub session: i32,
-        pub comment: Option<&'a str>,
+        pub comment: Option<String>,
     }
 
     #[derive(Deserialize, Insertable, PartialEq, Debug)]

@@ -1,5 +1,4 @@
 #![feature(plugin)]
-#![feature(conservative_impl_trait)]
 #![plugin(rocket_codegen)]
 
 #[macro_use]
@@ -122,8 +121,8 @@ pub fn add_user(conf_loc: &str, uname: &str, passwd: &str, fname: &str) -> Resul
 
     auth_provider.create_user(uname, passwd).map_err(|e| format!("{:?}", e))?;
     staff::create(&db::DatabaseConnection(pool.get().unwrap()), &NewStaff {
-        email: uname,
-        full_name: fname,
+        email: uname.to_string(),
+        full_name: fname.to_string(),
         is_admin: true,
     }).map_err(|e| format!("{:?}", e))?;
 

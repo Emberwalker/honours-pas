@@ -6,8 +6,6 @@ use db::{user, DatabaseConnection, SelectError};
 use db::{project, staff, session};
 use session::Session;
 
-use super::types::*;
-
 pub fn get_routes() -> Vec<Route> {
     routes![get_projs, new_proj, update_proj, rm_proj]
 }
