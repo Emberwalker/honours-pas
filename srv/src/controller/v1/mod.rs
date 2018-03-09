@@ -13,6 +13,8 @@ use session::{Session, SessionManager};
 mod types;
 use self::types::*;
 
+#[macro_use]
+mod macros;
 mod project;
 
 pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
@@ -33,20 +35,10 @@ fn login(
         Ok(email) => email,
         Err(e) => match e {
             AuthnFailure::Error() => {
-                return Err(status::Custom(
-                    Status::InternalServerError,
-                    Json(GenericMessage {
-                        message: "internal server error".to_string(),
-                    }),
-                ))
+                return Err(internal_server_error!("internal server error"));
             }
             _ => {
-                return Err(status::Custom(
-                    Status::Forbidden,
-                    Json(GenericMessage {
-                        message: "incorrect username or password".to_string(),
-                    }),
-                ))
+                return Err(forbidden!("incorrect username or password"));
             }
         },
     };
@@ -54,12 +46,7 @@ fn login(
     // Check this is actually a valid user here (not just in e.g. an AD Forest)
     match user::find_user(&conn, &res) {
         None => {
-            return Err(status::Custom(
-                Status::Unauthorized,
-                Json(GenericMessage {
-                    message: "user does not exist".to_string(),
-                }),
-            ))
+            return Err(unauthorized!("user does not exist"));
         }
         Some(u) => debug!("User login: {:?}", u),
     };
