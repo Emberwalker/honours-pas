@@ -15,6 +15,7 @@ mod macros;
 mod errors;
 mod project;
 mod staff;
+mod student;
 
 v1_imports!();
 
@@ -23,6 +24,7 @@ pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
         routes![login, whoami],
         project::get_routes(),
         staff::get_routes(),
+        student::get_routes(),
     ]
 }
 

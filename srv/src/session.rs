@@ -95,6 +95,12 @@ impl SessionManager {
         session_cloned
     }
 
+    pub fn remove_session(&self, email: &str) {
+        info!("Expiring active sessions for {}", email);
+        let mut sessions = self.sessions.write().unwrap();
+        sessions.retain(|_k, v| v.email != email);
+    }
+
     fn generate_new_session_key() -> String {
         OsRng::new()
             .expect("OS RNG")

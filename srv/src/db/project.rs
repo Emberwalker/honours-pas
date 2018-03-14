@@ -1,7 +1,6 @@
 pub use super::models::Project;
 pub use super::models::new::Project as NewProject;
 
-use diesel::result::Error as DieselError;
 use super::{DatabaseConnection, SelectError, session};
 
 generate_crud_fns!(projects, NewProject, Project);

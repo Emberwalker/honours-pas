@@ -3,6 +3,7 @@ use rocket_contrib::Json;
 
 use db::project::Project;
 use db::staff::{Staff, NewStaff};
+use db::student::{Student, NewStudent};
 
 pub type ErrorResponse = status::Custom<Json<GenericMessage>>;
 
@@ -36,4 +37,14 @@ pub struct StaffList {
 #[derive(Deserialize, Debug)]
 pub struct NewStaffList {
     pub staff: Vec<NewStaff>,
+}
+
+#[derive(Serialize, Debug)]
+pub struct StudentList {
+    pub students: Vec<Student>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NewStudentList {
+    pub students: Vec<NewStudent>,
 }

@@ -13,6 +13,10 @@ use session::Session;
 // Enable upsert on the email field.
 generate_crud_fns!(staff, NewStaff, Staff, (email -> full_name, is_admin));
 
+pub fn get(conn: &DatabaseConnection, id: i32) -> Result<Staff, SelectError> {
+    generate_select_body!(single, conn, staff, Staff, (id, id))
+}
+
 pub fn find_email(conn: &DatabaseConnection, staff_email: &str) -> Result<Staff, SelectError> {
     generate_select_body!(single, conn, staff, Staff, (email, staff_email))
 }
