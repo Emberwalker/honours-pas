@@ -9,11 +9,13 @@ use rocket::{Outcome, Request, State};
 
 use config::Config;
 
-/// Generates a `create` and `create_batch` fn. Fields can be passed at the end to enable upsert based on that field.
-/// Upsert entries look like `(field_name -> other_field, another_field)` - `field_name` is the conflicting field, and
-/// the other fields pointed to are the fields to update on conflict.
-macro_rules! generate_create_fn {
-    ($table:ident, $new_type:ty, $model_type:ty$(, ($up_field:ident -> $($re_field:ident),+))*) => (
+/// Generates basic CRUD functions. Fields can be passed at the end to enable upsert based on that field.
+/// Upsert entries look like `(field_name, another_field_name -> other_field, another_field)` - the fields before `->`
+/// are the conflicting fields (usually PKs), and the fields after are the ones to update on conflict.
+/// Passing `noupdate` as the last parameter disables creating the `update` call - this is useful for tables which can't
+/// implement AsChangeset (such as tables with only PKs).
+macro_rules! generate_crud_fns {
+    ($table:ident, $new_type:ty, $model_type:ty $(, ($($up_field:ident),+ -> $($re_field:ident),+))*, noupdate) => (
         use diesel;
         use db;
 
@@ -33,7 +35,11 @@ macro_rules! generate_create_fn {
             let res = insert_into($table::table)
                 .values(val)
                 $(
-                    .on_conflict($table::$up_field)
+                    .on_conflict((
+                        $(
+                            $table::$up_field
+                        ),+
+                    ))
                     .do_update()
                     .set((
                         $(
@@ -50,7 +56,7 @@ macro_rules! generate_create_fn {
             Ok(res)
         }
 
-        #[allow(dead_code)] // May not be used for all modules
+        #[allow(dead_code)]
         pub fn create_batch(conn: &db::DatabaseConnection, val: &Vec<$new_type>) -> Result<(), diesel::result::Error> {
             use diesel::prelude::*;
             use diesel::insert_into;
@@ -63,7 +69,11 @@ macro_rules! generate_create_fn {
             let res = insert_into($table::table)
                 .values(val)
                 $(
-                    .on_conflict($table::$up_field)
+                    .on_conflict((
+                        $(
+                            $table::$up_field
+                        ),+
+                    ))
                     .do_update()
                     .set((
                         $(
@@ -78,6 +88,24 @@ macro_rules! generate_create_fn {
                 })?;
             debug!(target: concat!("macro_gen::db::", stringify!($table), "::batch"), "INSERT/post: {} records.", res);
             Ok(())
+        }
+
+        #[allow(dead_code)]
+        pub fn delete(conn: &db::DatabaseConnection, val: &$model_type) -> Result<(), diesel::result::Error> {
+            use diesel::prelude::*;
+            use diesel::Identifiable;
+            use schema::$table;
+
+            diesel::delete($table::table.find(val.id())).execute(conn.raw()).map(|_| ())
+        }
+    );
+    ($table:ident, $new_type:ty, $model_type:ty $(, ($($up_field:ident),+ -> $($re_field:ident),+))*) => (
+        generate_crud_fns!($table, $new_type, $model_type $(, ($($up_field),+ -> $($re_field),+))*, noupdate);
+
+        #[allow(dead_code)]
+        pub fn update(conn: &db::DatabaseConnection, val: &$model_type) -> Result<$model_type, diesel::result::Error> {
+            use diesel::prelude::SaveChangesDsl;
+            val.save_changes(conn.raw())
         }
     )
 }

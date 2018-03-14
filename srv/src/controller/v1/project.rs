@@ -88,7 +88,7 @@ fn update_proj(
         return Err(bad_request!("cannot edit an archived project"));
     }
 
-    project::update_project(&conn, &body).map_err(|e| {
+    project::update(&conn, &body).map_err(|e| {
         error!("Diesel error occured updating project: {}", e);
         debug!("Additional information: {:?}", e);
         internal_server_error!("database error")

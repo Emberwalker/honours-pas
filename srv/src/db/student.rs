@@ -9,7 +9,7 @@ use super::{DatabaseConnection, SelectError};
 use session::Session;
 
 // Enable upsert on the email field.
-generate_create_fn!(students, NewStudent, Student, (email -> full_name, last_session));
+generate_crud_fns!(students, NewStudent, Student, (email -> full_name, last_session));
 
 pub fn find_email(conn: &DatabaseConnection, student_email: &str) -> Result<Student, SelectError> {
     generate_select_body!(single, conn, students, Student, (email, student_email))
@@ -45,19 +45,19 @@ pub mod selection {
     pub use super::super::models::StudentSelection;
     pub use super::super::models::new::StudentSelection as NewStudentSelection;
 
-    generate_create_fn!(student_selections, NewStudentSelection, StudentSelection);
+    generate_crud_fns!(student_selections, NewStudentSelection, StudentSelection, (student, project -> weight));
 }
 
 pub mod mark {
     pub use super::super::models::StudentMark;
     pub use super::super::models::new::StudentMark as NewStudentMark;
 
-    generate_create_fn!(student_marks, NewStudentMark, StudentMark);
+    generate_crud_fns!(student_marks, NewStudentMark, StudentMark, noupdate);
 }
 
 pub mod comment {
     pub use super::super::models::StudentComment;
     pub use super::super::models::new::StudentComment as NewStudentComment;
 
-    generate_create_fn!(student_comments, NewStudentComment, StudentComment);
+    generate_crud_fns!(student_comments, NewStudentComment, StudentComment);
 }

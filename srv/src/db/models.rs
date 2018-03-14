@@ -45,7 +45,7 @@ pub struct Project {
     pub description_md: String,
 }
 
-#[derive(Serialize, Identifiable, Queryable, Associations, AsChangeset,Clone,  PartialEq, Debug)]
+#[derive(Serialize, Identifiable, Queryable, Associations, AsChangeset, Clone, PartialEq, Debug)]
 #[belongs_to(Student, foreign_key = "student")]
 #[belongs_to(Session, foreign_key = "session")]
 #[table_name = "student_comments"]

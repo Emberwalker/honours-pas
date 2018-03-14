@@ -4,7 +4,7 @@ pub use super::models::new::Project as NewProject;
 use diesel::result::Error as DieselError;
 use super::{DatabaseConnection, SelectError, session};
 
-generate_create_fn!(projects, NewProject, Project);
+generate_crud_fns!(projects, NewProject, Project);
 
 pub fn get_all_current(conn: &DatabaseConnection) -> Result<Vec<Project>, SelectError> {
     let sess = session::get_latest_session(conn)?;
@@ -20,9 +20,4 @@ pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<Project>, SelectError> {
 
 pub fn get_project(conn: &DatabaseConnection, id: i32) -> Result<Project, SelectError> {
     generate_select_body!(single, conn, projects, Project, (id, id))
-}
-
-pub fn update_project(conn: &DatabaseConnection, proj: &Project) -> Result<(), DieselError> {
-    use diesel::prelude::*;
-    proj.save_changes(conn.raw()).map(|_: Project| ())
 }

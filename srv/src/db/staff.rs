@@ -11,7 +11,7 @@ use super::{DatabaseConnection, SelectError};
 use session::Session;
 
 // Enable upsert on the email field.
-generate_create_fn!(staff, NewStaff, Staff, (email -> full_name, is_admin));
+generate_crud_fns!(staff, NewStaff, Staff, (email -> full_name, is_admin));
 
 pub fn find_email(conn: &DatabaseConnection, staff_email: &str) -> Result<Staff, SelectError> {
     generate_select_body!(single, conn, staff, Staff, (email, staff_email))
