@@ -8,7 +8,7 @@ use db::student::{mark, selection, comment, Student};
 use db::{project, session};
 
 pub fn get_routes() -> Vec<Route> {
-    routes![get_marks, add_mark, rm_mark, set_selections]
+    routes![get_marks, add_mark, rm_mark, set_selections, set_comment]
 }
 
 #[get("/me/marks")]
