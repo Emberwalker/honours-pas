@@ -4,7 +4,7 @@ use rocket::{Catcher, Route, State};
 use rocket::http::Cookies;
 
 use config::Config as HPASConfig;
-use db::{user, DatabaseConnection};
+use db::user;
 use authn::{AuthnBackend, AuthnFailure, AuthnHolder};
 use session::{Session, SessionManager};
 
@@ -16,6 +16,7 @@ mod errors;
 mod project;
 mod staff;
 mod student;
+mod me;
 
 v1_imports!();
 
@@ -25,6 +26,7 @@ pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
         project::get_routes(),
         staff::get_routes(),
         student::get_routes(),
+        me::get_routes(),
     ]
 }
 
@@ -39,7 +41,7 @@ fn login(
     authn_manager: State<AuthnHolder>,
     session_manager: State<Arc<SessionManager>>,
     mut cookies: Cookies,
-) -> Result<Json<GenericMessage>, ErrorResponse> {
+) -> V1Response<GenericMessage> {
     let res = match authn_manager.authenticate(&body.username, &body.password) {
         Ok(email) => email,
         Err(e) => match e {
@@ -65,9 +67,7 @@ fn login(
         session_manager.new_session(&res[..], &mut cookies)
     );
 
-    Ok(Json(GenericMessage {
-        message: "ok".to_string(),
-    }))
+    Ok(generic_message!("ok"))
 }
 
 #[get("/whoami")]

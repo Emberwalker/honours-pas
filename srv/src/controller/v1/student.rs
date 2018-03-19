@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 use rocket::{Route, State};
 
-use db::{DatabaseConnection, SelectError};
 use db::staff;
 use db::student;
 use session::SessionManager;
@@ -17,7 +16,7 @@ pub fn get_routes() -> Vec<Route> {
 fn get_students(
     _usr: staff::Admin,
     conn: DatabaseConnection,
-) -> Result<Json<StudentList>, ErrorResponse> {
+) -> V1Response<StudentList> {
     match student::get_all(&conn) {
         Ok(v) => Ok(Json(StudentList {
             students: v,
@@ -30,7 +29,7 @@ fn get_students(
 }
 
 #[get("/students/current")]
-fn get_curr_students(_usr: staff::Admin, conn: DatabaseConnection) -> Result<Json<StudentList>, ErrorResponse> {
+fn get_curr_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StudentList> {
     match student::get_all_current(&conn) {
         Ok(v) => Ok(Json(StudentList {
             students: v,
@@ -48,7 +47,7 @@ fn rm_student(
     _usr: staff::Admin,
     conn: DatabaseConnection,
     manager: State<Arc<SessionManager>>
-) -> Result<Json<GenericMessage>, ErrorResponse> {
+) -> V1Response<GenericMessage> {
     let target = student::get(&conn, id).map_err(|e| {
         match e {
             SelectError::NoSuchValue() => not_found!("no such student"),
@@ -73,7 +72,7 @@ fn new_students(
     body: Json<NewStudentList>,
     _usr: staff::Admin,
     conn: DatabaseConnection,
-) -> Result<Json<GenericMessage>, ErrorResponse> {
+) -> V1Response<GenericMessage> {
     student::create_batch(&conn, &body.students).map_err(|e| {
         error!("Diesel error creating students: {}", e);
         debug!("Additional information: {:?}", e);

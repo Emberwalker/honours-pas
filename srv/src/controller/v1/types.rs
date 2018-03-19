@@ -6,6 +6,7 @@ use db::staff::{Staff, NewStaff};
 use db::student::{Student, NewStudent};
 
 pub type ErrorResponse = status::Custom<Json<GenericMessage>>;
+pub type V1Response<T> = Result<Json<T>, ErrorResponse>;
 
 #[derive(Serialize, Debug)]
 pub struct GenericMessage {
@@ -47,4 +48,14 @@ pub struct StudentList {
 #[derive(Deserialize, Debug)]
 pub struct NewStudentList {
     pub students: Vec<NewStudent>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct MarkMessage {
+    pub id: i32,
+}
+
+#[derive(Serialize, Debug)]
+pub struct MarkList {
+    pub projects: Vec<i32>,
 }

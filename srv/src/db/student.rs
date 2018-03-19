@@ -58,6 +58,7 @@ impl<'a,'r> FromRequest<'a,'r> for Student {
 pub mod selection {
     pub use super::super::models::StudentSelection;
     pub use super::super::models::new::StudentSelection as NewStudentSelection;
+    use super::super::{DatabaseConnection, SelectError};
 
     generate_crud_fns!(student_selections, NewStudentSelection, StudentSelection, (student, project -> weight));
 }
@@ -65,13 +66,20 @@ pub mod selection {
 pub mod mark {
     pub use super::super::models::StudentMark;
     pub use super::super::models::new::StudentMark as NewStudentMark;
+    use super::super::{DatabaseConnection, SelectError};
 
     generate_crud_fns!(student_marks, NewStudentMark, StudentMark, noupdate);
+
+    pub fn get_all_for_student(conn: &DatabaseConnection, id: i32) -> Result<Vec<i32>, SelectError> {
+        let vals = generate_select_body!(multi, conn, student_marks, StudentMark, (student, id))?;
+        Ok(vals.into_iter().map(|it| it.project).collect())
+    }
 }
 
 pub mod comment {
     pub use super::super::models::StudentComment;
     pub use super::super::models::new::StudentComment as NewStudentComment;
+    use super::super::{DatabaseConnection, SelectError};
 
-    generate_crud_fns!(student_comments, NewStudentComment, StudentComment);
+    generate_crud_fns!(student_comments, NewStudentComment, StudentComment, (student, session -> comment));
 }

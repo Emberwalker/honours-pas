@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 use rocket::{Route, State};
 
-use db::{DatabaseConnection, SelectError};
 use db::staff;
 use session::SessionManager;
 
@@ -13,10 +12,7 @@ pub fn get_routes() -> Vec<Route> {
 }
 
 #[get("/staff")]
-fn get_staff(
-    _usr: staff::Admin,
-    conn: DatabaseConnection,
-) -> Result<Json<StaffList>, ErrorResponse> {
+fn get_staff(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StaffList> {
     match staff::get_all(&conn) {
         Ok(v) => Ok(Json(StaffList {
             staff: v,
@@ -34,22 +30,9 @@ fn rm_staff(
     _usr: staff::Admin,
     conn: DatabaseConnection,
     manager: State<Arc<SessionManager>>
-) -> Result<Json<GenericMessage>, ErrorResponse> {
-    let target = staff::get(&conn, id).map_err(|e| {
-        match e {
-            SelectError::NoSuchValue() => not_found!("no such staff member"),
-            SelectError::DieselError(e) => {
-                error!("Diesel error fetching staff member: {}", e);
-                debug!("Additional information: {:?}", e);
-                internal_server_error!("database error")
-            }
-        }
-    })?;
-    staff::delete(&conn, &target).map_err(|e| {
-        error!("Diesel error deleting staff member: {}", e);
-        debug!("Additional information: {:?}", e);
-        internal_server_error!("database error")
-    })?;
+) -> V1Response<GenericMessage> {
+    let target = staff::get(&conn, id).map_err(select_error_handler!("no such staff member"))?;
+    staff::delete(&conn, &target).map_err(|e| diesel_error_handler!(e))?;
     manager.remove_session(&target.email);
     Ok(generic_message!("ok"))
 }
@@ -59,11 +42,7 @@ fn new_staff(
     body: Json<NewStaffList>,
     _usr: staff::Admin,
     conn: DatabaseConnection,
-) -> Result<Json<GenericMessage>, ErrorResponse> {
-    staff::create_batch(&conn, &body.staff).map_err(|e| {
-        error!("Diesel error creating staff: {}", e);
-        debug!("Additional information: {:?}", e);
-        internal_server_error!("database error")
-    })?;
+) -> V1Response<GenericMessage> {
+    staff::create_batch(&conn, &body.staff).map_err(|e| diesel_error_handler!(e))?;
     Ok(generic_message!("ok"))
 }
