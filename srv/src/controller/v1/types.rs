@@ -59,3 +59,14 @@ pub struct MarkMessage {
 pub struct MarkList {
     pub projects: Vec<i32>,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct SelectionList {
+    pub selections: Vec<SelectionEntry>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct SelectionEntry {
+    pub id: i32,
+    pub weight: f64,
+}

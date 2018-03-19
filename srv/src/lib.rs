@@ -9,6 +9,7 @@ extern crate log;
 extern crate rand;
 extern crate regex;
 
+extern crate num_traits;
 extern crate bigdecimal;
 extern crate chrono;
 #[macro_use]
