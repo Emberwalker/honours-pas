@@ -5,7 +5,7 @@ use num_traits::cast::FromPrimitive;
 use bigdecimal::BigDecimal;
 
 use db::student::{mark, selection, comment, Student};
-use db::project;
+use db::{project, session};
 
 pub fn get_routes() -> Vec<Route> {
     routes![get_marks, add_mark, rm_mark, set_selections]
@@ -63,12 +63,22 @@ fn set_selections(body: Json<SelectionList>, usr: Student, conn: DatabaseConnect
             weight: BigDecimal::from_f64(it.weight).unwrap(),
         }).collect();
 
-    selection::create_batch(&conn, new_sels).map_err(|e| match e {
-        result::Error::DatabaseError(result::DatabaseErrorKind::ForeignKeyViolation, _) => {
-            bad_request!("unknown project in selections")
-        },
+    selection::create_batch(&conn, &new_sels).map_err(|e| match e {
+        result::Error::DatabaseError(result::DatabaseErrorKind::ForeignKeyViolation, _) =>
+            bad_request!("unknown project in selections"),
         _ => diesel_error_handler!(e),
     })?;
-    
+
+    Ok(generic_message!("ok"))
+}
+
+#[put("/me/comment", data = "<body>")]
+fn set_comment(body: Json<CommentMessage>, usr: Student, conn: DatabaseConnection) -> V1Response<GenericMessage> {
+    let sess = session::get_latest_session(&conn).map_err(select_error_handler!("unable to get current session"))?;
+    comment::create(&conn, &comment::NewStudentComment {
+        student: usr.id,
+        session: sess.id,
+        comment: body.comment.clone(),
+    }).map_err(|e| diesel_error_handler!(e))?;
     Ok(generic_message!("ok"))
 }

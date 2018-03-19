@@ -70,3 +70,8 @@ pub struct SelectionEntry {
     pub id: i32,
     pub weight: f64,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct CommentMessage {
+    pub comment: Option<String>,
+}
