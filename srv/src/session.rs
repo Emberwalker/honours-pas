@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::{Duration, Instant};
+use time;
 
 use chrono::Duration as ChronoDuration;
 use rocket::http::{Cookie, Cookies, Status};
@@ -86,10 +87,15 @@ impl SessionManager {
             let mut sessions = self.sessions.write().unwrap();
             sessions.insert(key.clone(), session);
         }
-        let cookie = Cookie::build("session", key)
+        let mut cookie_builder = Cookie::build("session", key)
             .secure(SECURED)
-            .http_only(true)
-            .finish();
+            .http_only(true);
+        
+        if let Ok(duration) = time::Duration::from_std(self.max_age) {
+            cookie_builder = cookie_builder.expires(time::now() + duration);
+        }
+
+        let cookie = cookie_builder.finish();
         cookies.add_private(cookie);
 
         session_cloned
