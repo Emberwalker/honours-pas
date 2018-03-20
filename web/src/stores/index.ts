@@ -11,7 +11,7 @@ import {IProject, ISession, IUser, UserType} from "../lib/Types";
 Vue.use(Vuex);
 
 // True for user testing demos, False for real auth/backend connect.
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 let initialDemoSessions: ISession[] = [];
 let initialUser: IUser | null = null;
@@ -19,10 +19,11 @@ if (DEMO_MODE) {
   // tslint:disable:object-literal-sort-keys
   initialDemoSessions = [
     {
+      id: 2,
       name: "2017-2018",
       is_current: true,
-      coordinator_name: "Prof. I.P. Freely",
-      coordinator_email: "i.p.freely@not.dundee.ac.uk",
+      supervisor_name: "Prof. I.P. Freely",
+      supervisor_email: "i.p.freely@not.dundee.ac.uk",
       projects: [
         {
           name: "Sample Project #1",
@@ -69,10 +70,11 @@ int main() {
       ],
     },
     {
+      id: 1,
       name: "2016-2017",
       is_current: false,
-      coordinator_name: "Prof. I.P. Freely",
-      coordinator_email: "i.p.freely@not.dundee.ac.uk",
+      supervisor_name: "Prof. I.P. Freely",
+      supervisor_email: "i.p.freely@not.dundee.ac.uk",
       projects: [
         {
           name: "Old Sample Project #1",
@@ -111,12 +113,12 @@ enum _Mutations {
   SET_SERVER_OPS = "SET_SERVER_OPS",
 }
 
-const COMMIT_WORKING = {
+export const COMMIT_WORKING = {
   isWorking: true,
   type: Mutations.SET_IS_WORKING,
 };
 
-const COMMIT_NOT_WORKING = {
+export const COMMIT_NOT_WORKING = {
   isWorking: false,
   type: Mutations.SET_IS_WORKING,
 };
@@ -126,7 +128,7 @@ export interface IReadableError {
   human: string;
 }
 
-let initialServerOpts: object | null = null;
+let initialServerOpts: any | null = null;
 let initialWorking: boolean = true;
 
 if (!DEMO_MODE) {
@@ -148,7 +150,7 @@ if (!DEMO_MODE) {
   };
 }
 
-function getErrorCommit(human: string, err: Error | null): {type: string, err: IReadableError} {
+export function getErrorCommit(human: string, err: Error | null): {type: string, err: IReadableError} {
   return {
     err: {
       human,
@@ -184,7 +186,7 @@ const STORE = new Vuex.Store({
   state: {
     available_sessions: initialDemoSessions as ISession[],
     demo_mode: DEMO_MODE as boolean,
-    server_opts: initialServerOpts as object | null,
+    server_opts: initialServerOpts as any | null,
     user: initialUser as IUser | null,
     working: initialWorking,
     error: null as IReadableError | null,
@@ -255,41 +257,43 @@ const STORE = new Vuex.Store({
       state.server_opts = payload.opts;
     },
     [Mutations.SET_ERROR](state, payload) {
+      console.error(payload.err.human, payload.err.err);
       state.error = payload.err;
+    },
+    [Mutations.SET_PROJECTS_AND_SESSIONS](state, payload) {
+      state.available_sessions = payload.sessions;
     },
   },
   actions: {
     async [Actions.ADD_MARKED_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.post("/me/marks", { id: payload.project }).then((res) => {
         ctx.commit({
           type: _Mutations.ADD_MARKED_PROJECT,
           project: payload.project,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while adding a marked project.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
     async [Actions.RM_MARKED_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.delete("/me/marks/" + payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.RM_MARKED_PROJECT,
           project: payload.project,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while removing a marked project.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
     async [Actions.SET_SELECTED_PROJECTS](ctx, payload) {
       ctx.commit(COMMIT_WORKING);

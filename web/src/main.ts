@@ -26,23 +26,3 @@ const vm = new Vue({
 });
 
 highlightingInit();
-
-// Auth guard
-router.beforeEach((to, from, next) => {
-  if (vm.$store.state.demo_mode) {
-    return next(); // SKIP!
-  }
-  if (to.name !== "login") {
-    if (vm.$data.user) {
-      return next();
-    } else {
-      return next("/login");
-    }
-  } else {
-    if (vm.$data.user) {
-      return next("/");
-    } else {
-      return next();
-    }
-  }
-});

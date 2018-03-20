@@ -14,10 +14,11 @@ export interface IProject {
 }
 
 export interface ISession {
+  id: number;
   name: string;
   is_current: boolean;
-  coordinator_name: string;
-  coordinator_email: string;
+  supervisor_name: string;
+  supervisor_email: string;
   projects: IProject[];
 }
 
@@ -31,7 +32,6 @@ export interface IUser {
 }
 
 export interface IProjectSelection {
-  owner: IUser;
   project: number;
   weight: number;
 }

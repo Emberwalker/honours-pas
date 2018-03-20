@@ -17,11 +17,13 @@ Vue.use(Router);
 
 const isNotStudentGuard: NavigationGuard = (to, from, next) => {
   if (store.state.user !== null && store.state.user.user_type !== UserType.Student) { return next(); }
+  console.warn("Not student bar: " + to.path);
   next("/");
 };
 
 const isStudentGuard: NavigationGuard = (to, from, next) => {
   if (store.state.user !== null && store.state.user.user_type === UserType.Student) { return next(); }
+  console.warn("Student bar: " + to.path);
   next("/");
 };
 
@@ -29,6 +31,7 @@ const isAdminGuard: NavigationGuard = (to, from, next) => {
   if (store.state.user !== null && store.state.user.user_type === UserType.Administrator) {
     return next();
   }
+  console.warn("Admin bar: " + to.path);
   next("/");
 };
 
@@ -98,7 +101,8 @@ const router = new Router({
 });
 
 router.beforeEach((to, from, next) => {
-  if (to.path !== "/login" && store.state.user === null) {
+  if (to.path !== "/login" && !store.state.user) {
+    console.debug("PRENAV: Redirect to Login");
     return next("/login");
   }
   next();

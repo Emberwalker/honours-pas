@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <nav-header/>
-    <div class="container">
+    <div class="container h-100">
       <router-view/>
     </div>
     <div class="modal fade" ref="workingModal" id="workingModal" tabindex="-1" role="dialog" aria-labelledby="workingModalLabel"
@@ -39,6 +39,7 @@
 </template>
 
 <script lang="ts">
+  import $ from "jquery";
   import Vue from "vue";
   import Feather from "./components/Feather.vue";
   import NavHeader from "./components/NavHeader.vue";
@@ -66,6 +67,20 @@
       },
     },
     name: "app",
+    mounted() {
+      // We add these to handle 'quick' changes to working state during transitions
+      const working = $(this.$refs.workingModal) as any;
+      working.on("shown.bs.modal", () => {
+        if (!this.isWaiting) {
+          working.modal("hide");
+        }
+      });
+      working.on("hidden.bs.modal", () => {
+        if (this.isWaiting) {
+          working.modal("show");
+        }
+      });
+    },
     watch: {
       isErrored(newVal: boolean) {
         const modal: any = $(this.$refs.errorModal);
@@ -92,6 +107,7 @@
 
   #app {
     margin-top: 4rem;
+    height: calc(100vh - 4rem);
   }
 
   #app-working-spinner {
