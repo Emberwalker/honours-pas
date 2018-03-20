@@ -32,9 +32,16 @@ pub fn create_with_staff(
     use diesel::insert_into;
     use schema::{projects, project_staff};
 
+    let sess = session::get_latest_session(&conn).map_err(|e| {
+        match e {
+            SelectError::DieselError(e) => e,
+            SelectError::NoSuchValue() => diesel::result::Error::NotFound,
+        }
+    })?;
+
     // Insert projects - this works like the macro, but we need the ID back!
     let res = insert_into(projects::table)
-        .values(&NewProject::from(ps.clone()))
+        .values(&NewProject::from_with_staff(ps.clone(), sess.id))
         .get_result::<Project>(conn.raw())?;
 
     // Merge the new project ID with its staff members, and insert all of them into project_staff.
@@ -58,9 +65,16 @@ pub fn _create_with_staff_batch(
     use diesel::prelude::*;
     use diesel::insert_into;
     use schema::{projects, project_staff};
+    
+    let sess = session::get_latest_session(&conn).map_err(|e| {
+        match e {
+            SelectError::DieselError(e) => e,
+            SelectError::NoSuchValue() => diesel::result::Error::NotFound,
+        }
+    })?;
 
     // Insert projects - this works like the macro, but we need the IDs back!
-    let projs: Vec<NewProject> = ps.iter().map(|it| NewProject::from(it.clone())).collect();
+    let projs: Vec<NewProject> = ps.iter().map(|it| NewProject::from_with_staff(it.clone(), sess.id)).collect();
     let res = insert_into(projects::table)
         .values::<&Vec<NewProject>>(&projs)
         .returning(projects::id)

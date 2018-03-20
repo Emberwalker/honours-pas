@@ -59,7 +59,7 @@ fn set_selections(body: Json<SelectionList>, usr: Student, conn: DatabaseConnect
         .into_iter()
         .map(|it| selection::NewStudentSelection {
             student: usr.id,
-            project: it.id,
+            project: it.project,
             weight: BigDecimal::from_f64(it.weight).unwrap(),
         }).collect();
 

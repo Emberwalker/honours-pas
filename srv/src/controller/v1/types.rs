@@ -81,7 +81,7 @@ pub struct SelectionList {
 
 #[derive(Deserialize, Debug)]
 pub struct SelectionEntry {
-    pub id: i32,
+    pub project: i32,
     pub weight: f64,
 }
 

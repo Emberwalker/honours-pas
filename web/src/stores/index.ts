@@ -5,7 +5,7 @@ import Vuex from "vuex";
 import Actions from "../lib/Actions";
 import HTTP from "../lib/HTTP";
 import Mutations from "../lib/Mutations";
-import {IProject, ISession, IUser, UserType} from "../lib/Types";
+import {IProject, IProjectSelection, ISession, IUser, UserType} from "../lib/Types";
 // import {Promise} from "es6-promise";
 
 Vue.use(Vuex);
@@ -188,6 +188,7 @@ const STORE = new Vuex.Store({
     demo_mode: DEMO_MODE as boolean,
     server_opts: initialServerOpts as any | null,
     user: initialUser as IUser | null,
+    staged_selections: [] as IProjectSelection[],
     working: initialWorking,
     error: null as IReadableError | null,
   },
@@ -263,6 +264,9 @@ const STORE = new Vuex.Store({
     [Mutations.SET_PROJECTS_AND_SESSIONS](state, payload) {
       state.available_sessions = payload.sessions;
     },
+    [Mutations.SET_STAGED_SELECTIONS](state, payload) {
+      state.staged_selections = payload.selections;
+    },
   },
   actions: {
     async [Actions.ADD_MARKED_PROJECT](ctx, payload) {
@@ -297,69 +301,65 @@ const STORE = new Vuex.Store({
     },
     async [Actions.SET_SELECTED_PROJECTS](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.put("/me/selections", { selections: payload.projects }).then((res) => {
         ctx.commit({
           type: _Mutations.SET_SELECTED_PROJECTS,
           projects: payload.projects,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while setting selected projects.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
     async [Actions.SET_SELECTION_COMMENT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.put("/me/comment", { comment: payload.comment }).then((res) => {
         ctx.commit({
           type: _Mutations.SET_SELECTION_COMMENT,
           comment: payload.comment,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while setting selection comment.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
     async [Actions.NEW_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.post("/projects", payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.NEW_PROJECT,
           project: payload.project,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while creating project.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
     async [Actions.EDIT_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.put("/projects/" + payload.project.id, payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.EDIT_PROJECT,
           project: payload.project,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while modifying project.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
-    async[Actions.RM_PROJECT](ctx, payload) {
+    async [Actions.RM_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
       // TODO: Server stuff. In the meantime, fake a delay.
       await sleep(1000);

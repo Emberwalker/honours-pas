@@ -44,7 +44,7 @@
           An optional comment for the module coordinator about your selections.
         </p>
         <textarea title="selection comments" v-model="comment" rows="2" class="form-control"></textarea>
-        <button type="submit" class=" submit-btn btn btn-lg btn-success" v-on:click="submit">Submit</button>
+        <button type="submit" class=" submit-btn btn btn-lg btn-success" @click="submit">Submit</button>
       </div>
     </div>
   </div>
@@ -72,7 +72,7 @@
     },
     data() {
       let selections: IProjectSelection[] = [];
-      _.each(this.$store.state.user.selected_projects, (sel: IProjectSelection) => {
+      _.each(this.$store.state.staged_selections, (sel: IProjectSelection) => {
         const selCopy: IProjectSelection = $.extend({}, sel) as any;
         if (selCopy) { selections.push(selCopy); }
       });
@@ -117,10 +117,12 @@
         this.selections[1].weight = weight;
         if (!this.equalSecondThird) { weight -= 4; }
         this.selections[2].weight = weight;
+        console.log("PRE", this.selections);
         this.$store.dispatch({
           projects: this.selections,
           type: Actions.SET_SELECTED_PROJECTS,
         }).then(() => {
+          console.log("MID");
           return this.$store.dispatch({
             comment: this.comment,
             type: Actions.SET_SELECTION_COMMENT,

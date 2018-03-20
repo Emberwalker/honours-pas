@@ -144,7 +144,6 @@ pub mod new {
 
     #[derive(Deserialize, Clone, Debug)]
     pub struct ProjectWithStaff {
-        pub session: i32,
         pub supervisor_name: String,
         pub supervisor_email: String,
         pub name: String,
@@ -197,10 +196,10 @@ impl ProjectWithStaff {
     }
 }
 
-impl From<new::ProjectWithStaff> for new::Project {
-    fn from(p: new::ProjectWithStaff) -> Self {
+impl new::Project {
+    pub fn from_with_staff(p: new::ProjectWithStaff, session: i32) -> Self {
         new::Project {
-            session: p.session,
+            session: session,
             supervisor_name: p.supervisor_name,
             supervisor_email: p.supervisor_email,
             name: p.name,

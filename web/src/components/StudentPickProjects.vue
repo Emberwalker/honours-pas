@@ -62,6 +62,7 @@
   import _ from "lodash";
   import Vue from "vue";
   import Actions from "../lib/Actions";
+  import Mutations from "../lib/Mutations";
   import {IProject, ISession} from "../lib/Types";
   import ProjectCard from "./ProjectCard.vue";
 
@@ -85,7 +86,7 @@
         }
       },
       selectedCount(): number {
-        let projs = this.$store.state.user.selected_projects;
+        let projs = this.$store.state.staged_selections;
         if (!projs) { projs = []; }
         return projs.length;
       },
@@ -100,7 +101,7 @@
       },
       selected(): IProject[] {
         const projs: IProject[] = [];
-        _.each(this.$store.state.user.selected_projects, (sel) => {
+        _.each(this.$store.state.staged_selections, (sel) => {
           const proj: IProject | undefined = _.first(_.filter(this.session.projects, {id: sel.project}));
           if (proj) { projs.push(proj); }
         });
@@ -120,10 +121,10 @@
         return _.includes(this.$store.state.user.marked_projects, project.id);
       },
       isSelected(project: IProject): boolean {
-        return _.some(this.$store.state.user.selected_projects, {project: project.id});
+        return _.some(this.$store.state.staged_selections, {project: project.id});
       },
       isValid(): boolean {
-        const sels = this.$store.state.user.selected_projects;
+        const sels = this.$store.state.staged_selections;
         if (sels.length !== 3) { return false; }
         return !this.duplicatedSupervisors();
       },
@@ -134,20 +135,19 @@
         });
       },
       select(project: IProject) {
-        let projs = this.$store.state.user.selected_projects;
+        let projs = this.$store.state.staged_selections;
         if (!projs) {
           projs = [];
         }
         // Skip if the project is already selected
         if (_.some(projs, {project: project.id})) { return; }
         projs.push({
-          owner: this.$store.state.user,
           project: project.id,
           weight: 0,
         });
-        this.$store.dispatch({
-          projects: projs,
-          type: Actions.SET_SELECTED_PROJECTS,
+        this.$store.commit({
+          selections: projs,
+          type: Mutations.SET_STAGED_SELECTIONS,
         });
       },
       unmark(project: IProject) {
@@ -157,12 +157,12 @@
         });
       },
       unselect(project: IProject) {
-        let projs = this.$store.state.user.selected_projects;
+        let projs = this.$store.state.staged_selections;
         if (!projs) { return; }
         projs = _.reject(projs, {project: project.id});
-        this.$store.dispatch({
-          projects: projs,
-          type: Actions.SET_SELECTED_PROJECTS,
+        this.$store.commit({
+          selections: projs,
+          type: Mutations.SET_STAGED_SELECTIONS,
         });
       },
     },

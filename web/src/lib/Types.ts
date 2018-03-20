@@ -11,6 +11,7 @@ export interface IProject {
   additional_staff: string[];
   description_md: string;
   id?: number;
+  session?: number;
 }
 
 export interface ISession {
