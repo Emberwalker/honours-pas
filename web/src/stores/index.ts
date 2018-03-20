@@ -3,6 +3,7 @@ import * as _ from "lodash";
 import Vue from "vue";
 import Vuex from "vuex";
 import Actions from "../lib/Actions";
+import HTTP from "../lib/HTTP";
 import Mutations from "../lib/Mutations";
 import {IProject, ISession, IUser, UserType} from "../lib/Types";
 // import {Promise} from "es6-promise";
@@ -10,9 +11,7 @@ import {IProject, ISession, IUser, UserType} from "../lib/Types";
 Vue.use(Vuex);
 
 // True for user testing demos, False for real auth/backend connect.
-const DEMO_MODE = false;
-// True for dev backend connect, false for production.
-const DEV_MODE = true;
+const DEMO_MODE = true;
 
 let initialDemoSessions: ISession[] = [];
 let initialUser: IUser | null = null;
@@ -131,7 +130,7 @@ let initialServerOpts: object | null = null;
 let initialWorking: boolean = true;
 
 if (!DEMO_MODE) {
-  Axios.get("/api/v1/meta").then((response) => {
+  HTTP.get("/meta").then((response) => {
     const opts = response.data;
     STORE.commit({
       opts,
@@ -257,7 +256,7 @@ const STORE = new Vuex.Store({
     },
     [Mutations.SET_ERROR](state, payload) {
       state.error = payload.err;
-    }
+    },
   },
   actions: {
     async [Actions.ADD_MARKED_PROJECT](ctx, payload) {
