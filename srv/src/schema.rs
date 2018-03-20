@@ -18,6 +18,13 @@ table! {
 }
 
 table! {
+    project_staff (project, staff) {
+        project -> Int4,
+        staff -> Text,
+    }
+}
+
+table! {
     sessions (id) {
         id -> Int4,
         name -> Text,
@@ -69,6 +76,7 @@ table! {
     }
 }
 
+joinable!(project_staff -> projects (project));
 joinable!(projects -> sessions (session));
 joinable!(student_comments -> sessions (session));
 joinable!(student_comments -> students (student));
@@ -81,6 +89,7 @@ joinable!(students -> sessions (last_session));
 allow_tables_to_appear_in_same_query!(
     authn_credentials,
     projects,
+    project_staff,
     sessions,
     staff,
     student_comments,

@@ -65,7 +65,7 @@ pub mod selection {
 
     generate_crud_fns!(student_selections, NewStudentSelection, StudentSelection, (student, project -> weight));
 
-    pub fn get_all_for_student(conn: &DatabaseConnection, id: i32) -> Result<Vec<(i32, BigDecimal)>, SelectError> {
+    pub fn _get_all_for_student(conn: &DatabaseConnection, id: i32) -> Result<Vec<(i32, BigDecimal)>, SelectError> {
         let vals = generate_select_body!(multi, conn, student_selections, StudentSelection, (student, id))?;
         Ok(vals.into_iter().map(|it| (it.project, it.weight)).collect())
     }
@@ -100,7 +100,7 @@ pub mod comment {
 
     generate_crud_fns!(student_comments, NewStudentComment, StudentComment, (student, session -> comment));
 
-    pub fn get_current_for_student(conn: &DatabaseConnection, id: i32) -> Result<Option<String>, SelectError> {
+    pub fn _get_current_for_student(conn: &DatabaseConnection, id: i32) -> Result<Option<String>, SelectError> {
         let s = session::get_latest_session(conn)?.id;
         let comm = generate_select_body!(single, conn, student_comments, StudentComment, (student, id), (session, s))?;
         Ok(comm.comment)

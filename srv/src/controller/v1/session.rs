@@ -24,8 +24,11 @@ fn get_sessions_full(usr: user::User, conn: DatabaseConnection) -> V1Response<Se
         user::User::Student(_) => project::get_all_current(&conn),
     }.map_err(select_error_handler!("no projects found"))?;
 
+    let projects_staffed = project::attach_staff(&conn, projects)
+        .map_err(select_error_handler!("error fetching additional staff"))?;
+
     Ok(Json(SessionFullList {
         sessions: sessions,
-        projects: projects,
+        projects: projects_staffed,
     }))
 }

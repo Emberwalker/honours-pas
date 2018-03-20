@@ -2,7 +2,7 @@ use rocket::response::status;
 use rocket_contrib::Json;
 
 use db::session::Session;
-use db::project::Project;
+use db::project::ProjectWithStaff;
 use db::staff::{Staff, NewStaff};
 use db::student::{Student, NewStudent};
 
@@ -36,12 +36,12 @@ pub struct SessionEntry {
 #[derive(Serialize, Debug)]
 pub struct SessionFullList {
     pub sessions: Vec<SessionEntry>,
-    pub projects: Vec<Project>,
+    pub projects: Vec<ProjectWithStaff>,
 }
 
 #[derive(Serialize, Debug)]
 pub struct ProjectList {
-    pub projects: Vec<Project>,
+    pub projects: Vec<ProjectWithStaff>,
 }
 
 #[derive(Serialize, Debug)]

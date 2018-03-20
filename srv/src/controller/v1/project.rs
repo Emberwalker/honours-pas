@@ -16,24 +16,26 @@ fn get_projs(conn: DatabaseConnection, session: Session) -> V1Response<ProjectLi
         Some(user::User::Student(_s)) => project::get_all_current(&conn),
         None => panic!("A session exists for a user which does not exist!"),
     }.map_err(select_error_handler!("no projects found"))?;
+
+    let projs = project::attach_staff(&conn, res).map_err(select_error_handler!("error fetching staff"))?;
     
     Ok(Json(ProjectList {
-        projects: res,
+        projects: projs,
     }))
 }
 
 #[post("/projects", data = "<body>")]
 fn new_proj(
-    mut body: Json<project::NewProject>,
+    mut body: Json<project::NewProjectWithStaff>,
     usr: staff::Staff,
     conn: DatabaseConnection,
-) -> V1Response<project::Project> {
+) -> V1Response<project::ProjectWithStaff> {
     if !usr.is_admin {
         body.supervisor_name = usr.full_name;
         body.supervisor_email = usr.email;
     }
 
-    match project::create(&conn, &body) {
+    match project::create_with_staff(&conn, &body) {
         Ok(p) => Ok(Json(p)),
         Err(e) => Err(diesel_error_handler!(e)),
     }

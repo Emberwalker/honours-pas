@@ -6,7 +6,7 @@ use rocket::http::Cookies;
 use config::Config as HPASConfig;
 use db::user;
 use authn::{AuthnBackend, AuthnFailure, AuthnHolder};
-use session::{Session, SessionManager};
+use session::SessionManager;
 
 mod types;
 
