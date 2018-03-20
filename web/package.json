@@ -12,7 +12,7 @@
     "repl": "local-repl"
   },
   "dependencies": {
-    "@types/lodash": "^4.14.85",
+    "axios": "^0.18.0",
     "bootstrap": "^4.0.0-beta.2",
     "feather-icons": "^4.0.1",
     "highlight.js": "^9.12.0",
@@ -29,6 +29,7 @@
     "@types/highlight.js": "^9.12.1",
     "@types/jquery": "^3.2.16",
     "@types/marked": "^0.3.0",
+    "@types/lodash": "^4.14.85",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
     "babel-eslint": "^7.1.1",

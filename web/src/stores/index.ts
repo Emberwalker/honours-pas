@@ -1,3 +1,4 @@
+import Axios from "axios";
 import * as _ from "lodash";
 import Vue from "vue";
 import Vuex from "vuex";
@@ -9,11 +10,12 @@ import {IProject, ISession, IUser, UserType} from "../lib/Types";
 Vue.use(Vuex);
 
 // True for user testing demos, False for real auth/backend connect.
-const DEMO_MODE = true;
+const DEMO_MODE = false;
+// True for dev backend connect, false for production.
+const DEV_MODE = true;
 
 let initialDemoSessions: ISession[] = [];
 let initialUser: IUser | null = null;
-let initialSessionKey: string | null = null;
 if (DEMO_MODE) {
   // tslint:disable:object-literal-sort-keys
   initialDemoSessions = [
@@ -93,8 +95,6 @@ int main() {
     selection_comment: "",
     user_type: UserType.Administrator,
   };
-
-  initialSessionKey = "0xDEADBEEF";
   // tslint:enable:object-literal-sort-keys
 }
 
@@ -109,6 +109,7 @@ enum _Mutations {
   RM_PROJECT = "RM_PROJECT",
   ARCHIVE_SESSION = "ARCHIVE_SESSION",
   PURGE_SESSION = "PURGE_SESSION",
+  SET_SERVER_OPS = "SET_SERVER_OPS",
 }
 
 const COMMIT_WORKING = {
@@ -126,6 +127,28 @@ export interface IReadableError {
   human: string;
 }
 
+let initialServerOpts: object | null = null;
+let initialWorking: boolean = true;
+
+if (!DEMO_MODE) {
+  Axios.get("/api/v1/meta").then((response) => {
+    const opts = response.data;
+    STORE.commit({
+      opts,
+      type: _Mutations.SET_SERVER_OPS,
+    });
+    STORE.commit(COMMIT_NOT_WORKING);
+  }).catch((err) => {
+    STORE.commit(getErrorCommit("Unable to fetch client metadata. Is the API server running?", err));
+  });
+} else {
+  initialWorking = false;
+  initialServerOpts = {
+    auth: "simple",
+    base_url: "",
+  };
+}
+
 function getErrorCommit(human: string, err: Error | null): {type: string, err: IReadableError} {
   return {
     err: {
@@ -141,7 +164,7 @@ function sleep(ms: number): Promise<any> {
 }
 
 // tslint:disable:object-literal-sort-keys
-export default new Vuex.Store({
+const STORE = new Vuex.Store({
   getters: {
     current_session: (state) => {
       return _.first(state.available_sessions.filter((val) => val.is_current));
@@ -162,9 +185,9 @@ export default new Vuex.Store({
   state: {
     available_sessions: initialDemoSessions as ISession[],
     demo_mode: DEMO_MODE as boolean,
-    session_key: initialSessionKey as string | null,
+    server_opts: initialServerOpts as object | null,
     user: initialUser as IUser | null,
-    working: false,
+    working: initialWorking,
     error: null as IReadableError | null,
   },
   mutations: {
@@ -188,9 +211,8 @@ export default new Vuex.Store({
         state.user.selection_comment = payload.comment;
       }
     },
-    [Mutations.SET_USER_AND_SESSION](state, payload) {
+    [Mutations.SET_USER](state, payload) {
       state.user = payload.user;
-      state.session_key = payload.session_key;
     },
     [_Mutations.NEW_PROJECT](state, payload) {
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
@@ -230,6 +252,12 @@ export default new Vuex.Store({
     [Mutations.SET_IS_WORKING](state, payload) {
       state.working = payload.isWorking;
     },
+    [_Mutations.SET_SERVER_OPS](state, payload) {
+      state.server_opts = payload.opts;
+    },
+    [Mutations.SET_ERROR](state, payload) {
+      state.error = payload.err;
+    }
   },
   actions: {
     async [Actions.ADD_MARKED_PROJECT](ctx, payload) {
@@ -379,3 +407,5 @@ export default new Vuex.Store({
   },
 });
 // tslint:enable:object-literal-sort-keys
+
+export default STORE;
