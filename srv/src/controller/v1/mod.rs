@@ -13,6 +13,7 @@ mod types;
 #[macro_use]
 mod macros;
 mod errors;
+mod session;
 mod project;
 mod staff;
 mod student;
@@ -21,9 +22,17 @@ mod meta;
 
 v1_imports!();
 
-pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
+pub fn get_routes(conf: &HPASConfig) -> Vec<Route> {
+    // Disable login route for OAuth 2.0 provider.
+    let mut mod_routes = if conf.get_authn_provider() == "oauth2" {
+        routes![whoami]
+    } else {
+        routes![login, whoami]
+    };
+
     concat_vec![
-        routes![login, whoami],
+        mod_routes,
+        session::get_routes(),
         project::get_routes(),
         staff::get_routes(),
         student::get_routes(),
@@ -43,7 +52,7 @@ fn login(
     authn_manager: State<AuthnHolder>,
     session_manager: State<Arc<SessionManager>>,
     mut cookies: Cookies,
-) -> V1Response<GenericMessage> {
+) -> V1Response<WhoAmIMessage> {
     let res = match authn_manager.authenticate(&body.username, &body.password) {
         Ok(email) => email,
         Err(e) => match e {
@@ -57,34 +66,54 @@ fn login(
     };
 
     // Check this is actually a valid user here (not just in e.g. an AD Forest)
-    match user::find_user(&conn, &res) {
+    let usr = match user::find_user(&conn, &res) {
         None => {
             return Err(unauthorized!("user does not exist"));
         }
-        Some(u) => debug!("User login: {:?}", u),
+        Some(u) => {
+            debug!("User login: {:?}", u);
+            u
+        },
     };
 
     debug!(
         "New session: {:?}",
-        session_manager.new_session(&res[..], &mut cookies)
+        session_manager.new_session(&res, &mut cookies)
     );
 
-    Ok(generic_message!("ok"))
+    let resp = match usr {
+        // TODO: Check student is valid for *this* session.
+        user::User::Student(s) => WhoAmIMessage {
+            email: s.email,
+            name: s.full_name,
+            user_type: "student".to_string(),
+        },
+        user::User::Staff(s) => WhoAmIMessage {
+            email: s.email,
+            name: s.full_name,
+            user_type: match s.is_admin {
+                true => "admin".to_string(),
+                false => "staff".to_string(),
+            },
+        },
+    };
+
+    Ok(Json(resp))
 }
 
 #[get("/whoami")]
-fn whoami(conn: DatabaseConnection, session: Session) -> Json<WhoAmIMessage> {
-    let utype = match user::find_user(&conn, &session.email[..]) {
-        Some(user::User::Staff(s)) => match s.is_admin {
+fn whoami(usr: user::User) -> Json<WhoAmIMessage> {
+    let utype = match usr {
+        user::User::Staff(ref s) => match s.is_admin {
             true => "admin",
             false => "staff",
         },
-        Some(user::User::Student(_s)) => "student",
-        None => panic!("A session exists for a user which does not exist!"),
+        user::User::Student(ref _s) => "student",
     };
 
     Json(WhoAmIMessage {
-        email: session.email,
+        email: usr.email(),
+        name: usr.full_name(),
         user_type: utype.to_string(),
     })
 }

@@ -1,6 +1,7 @@
 use rocket::response::status;
 use rocket_contrib::Json;
 
+use db::session::Session;
 use db::project::Project;
 use db::staff::{Staff, NewStaff};
 use db::student::{Student, NewStudent};
@@ -22,7 +23,20 @@ pub struct LoginMessage {
 #[derive(Serialize, Debug)]
 pub struct WhoAmIMessage {
     pub email: String,
+    pub name: String,
     pub user_type: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct SessionEntry {
+    pub session: Session,
+    pub is_current: bool,
+}
+
+#[derive(Serialize, Debug)]
+pub struct SessionFullList {
+    pub sessions: Vec<SessionEntry>,
+    pub projects: Vec<Project>,
 }
 
 #[derive(Serialize, Debug)]

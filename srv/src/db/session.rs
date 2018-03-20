@@ -35,3 +35,29 @@ pub fn get_latest_session(conn: &DatabaseConnection) -> Result<Session, SelectEr
 
     Ok(res)
 }
+
+pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<(bool, Session)>, SelectError> {
+    use diesel::prelude::*;
+    use schema::sessions::dsl::*;
+
+    let res = sessions
+        .order(created.desc())
+        .load::<Session>(conn.raw())
+        .map_err(|e| {
+            match e {
+                diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+                e => SelectError::DieselError(e),
+            }
+        })?;
+    
+    let mut first = true;
+    Ok(res.into_iter().map(|it| {
+        let out = if first && !it.force_archive {
+            (true, it)
+        } else {
+            (false, it)
+        };
+        first = false;
+        out
+    }).collect())
+}
