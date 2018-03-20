@@ -17,6 +17,7 @@ mod project;
 mod staff;
 mod student;
 mod me;
+mod meta;
 
 v1_imports!();
 
@@ -27,6 +28,7 @@ pub fn get_routes(_conf: &HPASConfig) -> Vec<Route> {
         staff::get_routes(),
         student::get_routes(),
         me::get_routes(),
+        meta::get_routes(),
     ]
 }
 

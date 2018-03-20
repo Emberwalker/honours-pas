@@ -1,12 +1,16 @@
 /// Used by all v1 modules to get required things in scope for macro expansion.
 macro_rules! v1_imports {
     () => (
+        #[allow(unused_imports)]
         use rocket::response::status;
+        #[allow(unused_imports)]
         use rocket::http::Status;
+        #[allow(unused_imports)]
         use rocket_contrib::Json;
 
         #[allow(unused_imports)]
         use db::{DatabaseConnection, SelectError};
+        #[allow(unused_imports)]
         use controller::v1::types::*;
     )
 }

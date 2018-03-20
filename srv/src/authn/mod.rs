@@ -1,5 +1,7 @@
 use rocket::Route;
 
+use serde_json::Value;
+
 // `simple` is the default database-backed provider. It does nothing fancy.
 pub mod simple;
 // `ldap` is the LDAP/AD-based provider.
@@ -43,6 +45,9 @@ pub trait AuthnBackend: Send + Sync {
     fn create_user(&self, _username: &str, _password: &str) -> Result<(), AuthnCreateError> {
         Err(AuthnCreateError::ActionNotSupported())
     }
+
+    /// Allows adding metadata to the client metadata endpoint.
+    fn add_to_client_meta(&self, _meta: &mut Value) {}
 }
 
 pub struct AuthnHolder<'a>(pub Box<AuthnBackend + 'a>);
@@ -58,5 +63,9 @@ impl<'a> AuthnBackend for AuthnHolder<'a> {
 
     fn create_user(&self, username: &str, password: &str) -> Result<(), AuthnCreateError> {
         self.0.create_user(username, password)
+    }
+
+    fn add_to_client_meta(&self, meta: &mut Value) {
+        self.0.add_to_client_meta(meta);
     }
 }

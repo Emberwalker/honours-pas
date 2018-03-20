@@ -23,6 +23,8 @@ extern crate r2d2_diesel;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate serde_json;
 extern crate toml;
 
 extern crate ldap3;
@@ -104,11 +106,12 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
 
     rocket::custom(get_rocket_config(&conf), true)
         .attach(fairing::ServerHeader())
+        .catch(controller::v1::get_catchers(&conf))
+        .mount("/api/v1", controller::v1::get_routes(&conf))
         .manage(authn::AuthnHolder(auth_provider))
         .manage(pool)
         .manage(session_provider)
-        .catch(controller::v1::get_catchers(&conf))
-        .mount("/api/v1", controller::v1::get_routes(&conf))
+        .manage(conf)
         .launch();
     Ok(())
 }
