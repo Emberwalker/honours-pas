@@ -245,12 +245,12 @@ const STORE = new Vuex.Store({
       state.available_sessions = [payload.session, ...state.available_sessions];
     },
     [_Mutations.ARCHIVE_SESSION](state, payload) {
-      const session = _.first(state.available_sessions.filter((val) => val.name === payload.session));
+      const session = _.first(state.available_sessions.filter((val) => val.id === payload.session));
       if (!session) { return; }
       session.is_current = false;
     },
     [_Mutations.PURGE_SESSION](state, payload) {
-      state.available_sessions = _.filter(state.available_sessions, (val) => val.name !== payload.session);
+      state.available_sessions = _.filter(state.available_sessions, (val) => val.id !== payload.session);
     },
     [Mutations.SET_IS_WORKING](state, payload) {
       state.working = payload.isWorking;
@@ -377,35 +377,33 @@ const STORE = new Vuex.Store({
     },
     async [Actions.ARCHIVE_SESSION](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.post("/sessions/" + payload.session + "/archive", {}).then((res) => {
         ctx.commit({
           type: _Mutations.ARCHIVE_SESSION,
           session: payload.session,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while archiving session.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
     async [Actions.PURGE_SESSION](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.delete("/sessions/" + payload.session).then((res) => {
         ctx.commit({
           type: _Mutations.PURGE_SESSION,
           session: payload.session,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while deleting session.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
     async [Actions.NEW_SESSION](ctx, payload) {
       ctx.commit(COMMIT_WORKING);

@@ -5,7 +5,7 @@
     <router-link v-if="isStudent" to="/pick">
       <button type="button" class="btn-select-projects btn btn-lg btn-primary">Select Projects...</button>
     </router-link>
-    <router-link v-else to="/new">
+    <router-link v-else-if="sessions.length !== 0" to="/new">
       <button type="button" class="btn-select-projects btn btn-lg btn-primary">New Project...</button>
     </router-link>
   </h1>
@@ -135,10 +135,12 @@ export default Vue.extend({
       }
     },
     rmProjectName(): string {
+      if (!this.$store.getters.current_session) { return "<null>"; }
       const p = _.first(_.filter(this.$store.getters.current_session.projects, (it) => it.id === this.rmProjectId));
       return p ? p.name : "<null>";
     },
     rmProjectSuper(): string {
+      if (!this.$store.getters.current_session) { return "<null>"; }
       const p = _.first(_.filter(this.$store.getters.current_session.projects, (it) => it.id === this.rmProjectId));
       return p ? p.supervisor_name + "<" + p.supervisor_email + ">" : "<null>";
     },

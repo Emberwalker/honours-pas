@@ -28,15 +28,15 @@
                     <h4>Projects by Supervisor</h4>
                     <ul class="list-unstyled">
                       <li v-for="supervisor in projectsBySupervisor[session.name]" :key="supervisor.email">
-                        {{ supervisor.count }}: {{ supervisor.name }} &lt;{{ supervisor.email }}&lt;
+                        {{ supervisor.count }}: {{ supervisor.name }} &lt;{{ supervisor.email }}&gt;
                       </li>
                     </ul>
                   </div>
                 </div>
               </div>
               <button v-if="session.is_current" @click="generateReport(session)" type="button" class="btn btn-sm btn-primary">Generate Report</button>
-              <button v-if="session.is_current" type="button" data-toggle="modal" data-target="#archiveModal" :data-session="session.name" class="float-md-right btn btn-sm btn-danger stripes-sm">Archive Session</button>
-              <button v-else type="button" data-toggle="modal" data-target="#purgeModal" :data-session="session.name" class="float-md-right btn btn-sm btn-danger stripes-sm">Delete Permanently</button>
+              <button v-if="session.is_current" type="button" data-toggle="modal" data-target="#archiveModal" :data-session="session.id" class="float-md-right btn btn-sm btn-danger stripes-sm">Archive Session</button>
+              <button v-else type="button" data-toggle="modal" data-target="#purgeModal" :data-session="session.id" class="float-md-right btn btn-sm btn-danger stripes-sm">Delete Permanently</button>
             </div>
           </div>
         </div>
@@ -204,14 +204,14 @@
       onArchiveSubmit() {
         if (this.activeModalSession === "") { return; }
         this.$store.dispatch({
-          session: this.activeModalSession,
+          session: parseInt(this.activeModalSession, 10),
           type: Actions.ARCHIVE_SESSION,
         });
       },
       onPurgeSubmit() {
         if (this.activeModalSession === "") { return; }
         this.$store.dispatch({
-          session: this.activeModalSession,
+          session: parseInt(this.activeModalSession, 10),
           type: Actions.PURGE_SESSION,
         });
       },

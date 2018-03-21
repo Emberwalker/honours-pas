@@ -10,7 +10,7 @@ pub fn get_session(conn: &DatabaseConnection, id: i32) -> Result<(bool, Session)
     match get_latest_session(conn) {
         Ok(ref s) if s.id == id => return Ok((true, s.clone())),
         Ok(_) => (),
-        Err(SelectError::NoSuchValue()) => return Err(SelectError::NoSuchValue()),
+        Err(SelectError::NoSuchValue()) => (), // Pass to try below
         Err(e @ SelectError::DieselError(_)) => return Err(e),
     }
 
