@@ -2,11 +2,11 @@ v1_imports!();
 
 use rocket::Route;
 
-use db::{project, staff, session, user};
+use db::{project, staff, student, session, user};
 use session::Session;
 
 pub fn get_routes() -> Vec<Route> {
-    routes![get_projs, new_proj, update_proj, rm_proj]
+    routes![get_projs, new_proj, update_proj, rm_proj, get_project_students]
 }
 
 #[get("/projects")]
@@ -77,8 +77,17 @@ fn update_proj(
 }
 
 #[delete("/projects/<id>")]
-fn rm_proj(id: i32, usr: staff::Admin, _conn: DatabaseConnection) -> V1Response<GenericMessage> {
-    // TODO
-    error!("Attempt to delete project {} from {}; not implemented.", id, usr.email);
-    Err(not_implemented!("not implemented"))
+fn rm_proj(id: i32, usr: staff::Admin, conn: DatabaseConnection) -> V1Response<GenericMessage> {
+    let p = project::get_project(&conn, id).map_err(select_error_handler!("no such project"))?;
+    project::delete(&conn, &p).map_err(|e| diesel_error_handler!(e))
+}
+
+#[get("/projects/<id>/students")]
+fn get_project_students(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StudentList> {
+    let students = student::selection::get_students_for_project(&conn, id)
+        .map_err(select_error_handler!("database error"))?;
+
+    Ok(Json(StudentList {
+        students: students,
+    }))
 }

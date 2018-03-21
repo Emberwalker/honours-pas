@@ -62,6 +62,7 @@ pub mod selection {
     pub use super::super::models::StudentSelection;
     pub use super::super::models::new::StudentSelection as NewStudentSelection;
     use super::super::{DatabaseConnection, SelectError};
+    use db::student;
 
     generate_crud_fns!(student_selections, NewStudentSelection, StudentSelection, (student, project -> weight));
 
@@ -76,6 +77,28 @@ pub mod selection {
         use schema::student_selections;
         diesel::delete(student_selections::table.filter(student_selections::student.eq(id))).execute(conn.raw())?;
         Ok(())
+    }
+
+    pub fn get_students_for_project(
+        conn: &DatabaseConnection,
+        proj: i32,
+    ) -> Result<Vec<student::Student>, SelectError> {
+        use diesel::prelude::*;
+        use schema::{students, student_selections};
+
+        let students = student_selections::table
+            .inner_join(students::table)
+            .filter(student_selections::project.eq(proj))
+            .select(students::table::all_columns())
+            .load::<student::Student>(conn.raw())
+            .map_err(|e| {
+                match e {
+                    diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+                    e => SelectError::DieselError(e),
+                }
+            })?;
+
+        Ok(students)
     }
 }
 
