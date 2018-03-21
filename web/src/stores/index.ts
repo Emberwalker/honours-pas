@@ -335,7 +335,7 @@ const STORE = new Vuex.Store({
       const promise = HTTP.post("/projects", payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.NEW_PROJECT,
-          project: payload.project,
+          project: res.data,
         });
       });
 
