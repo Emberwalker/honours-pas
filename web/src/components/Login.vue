@@ -17,7 +17,7 @@
             </div>
             <div class="form-group">
               <label for="password-field">Password</label>
-              <input type="password" class="form-control form-control-sm" id="password-field" placeholder="Password" v-model="password">
+              <input type="password" class="form-control form-control-sm" id="password-field" placeholder="Password" autocomplete="current-password" v-model="password">
             </div>
             <div class="container">
               <div class="row justify-content-end">

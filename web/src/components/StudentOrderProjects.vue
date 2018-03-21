@@ -117,12 +117,10 @@
         this.selections[1].weight = weight;
         if (!this.equalSecondThird) { weight -= 4; }
         this.selections[2].weight = weight;
-        console.log("PRE", this.selections);
         this.$store.dispatch({
           projects: this.selections,
           type: Actions.SET_SELECTED_PROJECTS,
         }).then(() => {
-          console.log("MID");
           return this.$store.dispatch({
             comment: this.comment,
             type: Actions.SET_SELECTION_COMMENT,
