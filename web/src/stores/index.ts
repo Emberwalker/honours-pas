@@ -108,6 +108,7 @@ enum _Mutations {
   NEW_PROJECT = "NEW_PROJECT",
   EDIT_PROJECT = "EDIT_PROJECT",
   RM_PROJECT = "RM_PROJECT",
+  NEW_SESSION = "NEW_SESSION",
   ARCHIVE_SESSION = "ARCHIVE_SESSION",
   PURGE_SESSION = "PURGE_SESSION",
   SET_SERVER_OPS = "SET_SERVER_OPS",
@@ -238,6 +239,10 @@ const STORE = new Vuex.Store({
       session.projects = _.filter(session.projects, (p: IProject) => {
         return p.id !== payload.project;
       });
+    },
+    [_Mutations.NEW_SESSION](state, payload) {
+      _.each(state.available_sessions, (it) => it.is_current = false);
+      state.available_sessions = [payload.session, ...state.available_sessions];
     },
     [_Mutations.ARCHIVE_SESSION](state, payload) {
       const session = _.first(state.available_sessions.filter((val) => val.name === payload.session));
@@ -404,8 +409,22 @@ const STORE = new Vuex.Store({
       }
     },
     async [Actions.NEW_SESSION](ctx, payload) {
-      // TODO
-      console.error("Not implemented!");
+      ctx.commit(COMMIT_WORKING);
+      const promise = HTTP.post("/sessions", payload.session).then((res) => {
+        const sess: any = res.data;
+        sess.projects = [] as IProject[];
+        sess.is_current = true;
+        ctx.commit({
+          type: _Mutations.NEW_SESSION,
+          session: sess as ISession,
+        });
+      });
+
+      promise.finally(() => {
+        ctx.commit(COMMIT_NOT_WORKING);
+      });
+
+      return promise;
     },
   },
 });
