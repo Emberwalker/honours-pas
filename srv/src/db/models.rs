@@ -128,8 +128,8 @@ pub mod new {
         pub name: String,
         pub supervisor_name: String,
         pub supervisor_email: String,
-        pub created: NaiveDateTime,
-        pub force_archive: bool,
+        pub created: Option<NaiveDateTime>,
+        pub force_archive: Option<bool>,
     }
 
     #[derive(Deserialize, Insertable, PartialEq, Debug)]

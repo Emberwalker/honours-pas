@@ -2,10 +2,10 @@ v1_imports!();
 
 use rocket::Route;
 
-use db::{project, session, user};
+use db::{project, session, user, staff};
 
 pub fn get_routes() -> Vec<Route> {
-    routes![get_sessions_full]
+    routes![get_sessions_full, new_session]
 }
 
 #[get("/sessions/complete")]
@@ -31,4 +31,16 @@ fn get_sessions_full(usr: user::User, conn: DatabaseConnection) -> V1Response<Se
         sessions: sessions,
         projects: projects_staffed,
     }))
+}
+
+#[post("/sessions", data = "<body>")]
+fn new_session(
+    mut body: Json<session::NewSession>,
+    _usr: staff::Admin,
+    conn: DatabaseConnection,
+) -> V1Response<session::Session> {
+    body.created = None;
+    body.force_archive = None;
+    let sess = session::create(&conn, &body).map_err(|e| diesel_error_handler!(e))?;
+    Ok(Json(sess))
 }
