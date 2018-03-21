@@ -77,9 +77,10 @@ fn update_proj(
 }
 
 #[delete("/projects/<id>")]
-fn rm_proj(id: i32, usr: staff::Admin, conn: DatabaseConnection) -> V1Response<GenericMessage> {
+fn rm_proj(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1Response<GenericMessage> {
     let p = project::get_project(&conn, id).map_err(select_error_handler!("no such project"))?;
-    project::delete(&conn, &p).map_err(|e| diesel_error_handler!(e))
+    project::delete(&conn, &p).map_err(|e| diesel_error_handler!(e))?;
+    Ok(generic_message!("ok"))
 }
 
 #[get("/projects/<id>/students")]

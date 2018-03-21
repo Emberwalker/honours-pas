@@ -362,19 +362,18 @@ const STORE = new Vuex.Store({
     },
     async [Actions.RM_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      // TODO: Server stuff. In the meantime, fake a delay.
-      await sleep(1000);
-      try {
+      const promise = HTTP.delete("/projects/" + payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.RM_PROJECT,
           project: payload.project,
         });
+      });
+
+      promise.finally(() => {
         ctx.commit(COMMIT_NOT_WORKING);
-      } catch (err) {
-        ctx.commit(COMMIT_NOT_WORKING);
-        ctx.commit(getErrorCommit("Error occurred while deleting project.", err));
-        throw err;
-      }
+      });
+
+      return promise;
     },
     async [Actions.ARCHIVE_SESSION](ctx, payload) {
       ctx.commit(COMMIT_WORKING);

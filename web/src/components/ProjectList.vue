@@ -25,7 +25,7 @@
   </div> <!-- if hasMarked END -->
   <div class="projlist-section">
     <h2>Projects by Session</h2>
-    <div class="projlist-section" v-for="session in sessions">
+    <div class="projlist-section" v-for="session in sessions" :key="session.id">
       <h3>{{ session.name }}</h3>
       <p class="h5 font-weight-normal text-muted" v-if="!session || session.projects.length === 0">No projects in this session.</p>
       <project-card v-if="session" v-for="project in session.projects" :project="project" :key="project.id" :isCurrent="session.is_current">
@@ -55,10 +55,21 @@
           </button>
         </div>
         <div class="modal-body">
-          <p>
-            Deleting a project will invalidate any student choices dependant on this project. Affected students will be
-            emailed to remake their choices.
+          <p class="font-weight-bold">
+            {{rmProjectName}}
           </p>
+          <p class="subtitle font-weight-normal text-muted">
+            Supervisor: {{rmProjectSuper}}
+          </p>
+          <p>
+            Deleting a project will invalidate any student choices dependant on it. Affected students are
+            listed below for this project.
+          </p>
+          <ul>
+            <li v-for="student in affectedStudents" :key="student.id">
+              <a target="_blank" :href="'mailto:' + student.email">{{student.full_name}} &lt;{{student.email}}&gt;</a>
+            </li>
+          </ul>
           <span class="font-weight-bold">
             Are you sure you wish to delete this project?
           </span>
@@ -77,7 +88,10 @@
 import _ from "lodash";
 import Vue from "vue";
 import Actions from "../lib/Actions";
+import HTTP from "../lib/HTTP";
+import Mutations from "../lib/Mutations";
 import { IProject, ISession, UserType } from "../lib/Types";
+import { COMMIT_NOT_WORKING, COMMIT_WORKING, getErrorCommit } from "../stores/index";
 import ProjectCard from "./ProjectCard.vue";
 
 export default Vue.extend({
@@ -87,6 +101,7 @@ export default Vue.extend({
   data() {
     return {
       rmProjectId: -1,
+      affectedStudents: [] as any[],
     };
   },
   computed: {
@@ -118,6 +133,14 @@ export default Vue.extend({
       } else {
         return [];
       }
+    },
+    rmProjectName(): string {
+      const p = _.first(_.filter(this.$store.getters.current_session.projects, (it) => it.id === this.rmProjectId));
+      return p ? p.name : "<null>";
+    },
+    rmProjectSuper(): string {
+      const p = _.first(_.filter(this.$store.getters.current_session.projects, (it) => it.id === this.rmProjectId));
+      return p ? p.supervisor_name + "<" + p.supervisor_email + ">" : "<null>";
     },
     isAdmin(): boolean {
       const usr = this.$store.state.user;
@@ -172,6 +195,17 @@ export default Vue.extend({
   mounted() {
     $(this.$refs.rmModal).on("show.bs.modal", (evt: any) => {
       this.rmProjectId = $(evt.relatedTarget).data("project");
+      this.$store.commit(COMMIT_WORKING);
+      HTTP.get("/projects/" + this.rmProjectId + "/students").then((res) => {
+        this.affectedStudents = res.data.students;
+      }).catch((e) => {
+        this.$store.commit({
+          type: Mutations.SET_ERROR,
+          error: getErrorCommit("unable to fetch affected students.", e),
+        });
+      }).finally(() => {
+        this.$store.commit(COMMIT_NOT_WORKING);
+      });
     });
   },
   name: "ProjectList",
@@ -192,6 +226,10 @@ export default Vue.extend({
 
 .rm-footer {
   display: block;
+}
+
+p.subtitle {
+  margin-top: -1rem;
 }
 
 </style>

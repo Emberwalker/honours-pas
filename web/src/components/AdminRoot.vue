@@ -28,7 +28,7 @@
                     <h4>Projects by Supervisor</h4>
                     <ul class="list-unstyled">
                       <li v-for="supervisor in projectsBySupervisor[session.name]" :key="supervisor.email">
-                        {{ supervisor.count }}: {{ supervisor.name }} <{{ supervisor.email }}>
+                        {{ supervisor.count }}: {{ supervisor.name }} &lt;{{ supervisor.email }}&lt;
                       </li>
                     </ul>
                   </div>
