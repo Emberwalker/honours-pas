@@ -229,14 +229,12 @@ const STORE = new Vuex.Store({
     },
     [_Mutations.EDIT_PROJECT](state, payload) {
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
-      // TODO: Send to server.
       const project = payload.project!;
       const idx = _.findIndex(session.projects, (ent) => ent.id === project.id);
       session.projects[idx] = project;
     },
     [_Mutations.RM_PROJECT](state, payload) {
       const session = _.first(state.available_sessions.filter((val) => val.is_current))!;
-      // TODO: Send to server.
       session.projects = _.filter(session.projects, (p: IProject) => {
         return p.id !== payload.project;
       });
@@ -244,11 +242,9 @@ const STORE = new Vuex.Store({
     [_Mutations.ARCHIVE_SESSION](state, payload) {
       const session = _.first(state.available_sessions.filter((val) => val.name === payload.session));
       if (!session) { return; }
-      // TODO: Send to server
       session.is_current = false;
     },
     [_Mutations.PURGE_SESSION](state, payload) {
-      // TODO: Send to server
       state.available_sessions = _.filter(state.available_sessions, (val) => val.name !== payload.session);
     },
     [Mutations.SET_IS_WORKING](state, payload) {
@@ -406,6 +402,10 @@ const STORE = new Vuex.Store({
         ctx.commit(getErrorCommit("Error occurred while deleting session.", err));
         throw err;
       }
+    },
+    async [Actions.NEW_SESSION](ctx, payload) {
+      // TODO
+      console.error("Not implemented!");
     },
   },
 });

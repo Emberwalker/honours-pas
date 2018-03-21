@@ -23,6 +23,12 @@ export interface ISession {
   projects: IProject[];
 }
 
+export interface INewSession {
+  name: string;
+  supervisor_name: string;
+  supervisor_email: string;
+}
+
 export interface IUser {
   name: string;
   email: string;

@@ -8,6 +8,7 @@ enum Actions {
   RM_PROJECT = "RM_PROJECT",
   ARCHIVE_SESSION = "ARCHIVE_SESSION",
   PURGE_SESSION = "PURGE_SESSION",
+  NEW_SESSION = "NEW_SESSION",
 }
 
 export default Actions;

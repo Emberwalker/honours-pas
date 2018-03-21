@@ -13,7 +13,7 @@
           <form @submit.self.prevent="login()">
             <div class="form-group">
               <label for="username-field">Email Address</label>
-              <input type="email" class="form-control form-control-sm" id="username-field" placeholder="Email Address" v-model="username">
+              <input type="email" class="form-control form-control-sm" id="username-field" placeholder="Email Address" autocomplete="username" v-model="username">
             </div>
             <div class="form-group">
               <label for="password-field">Password</label>
