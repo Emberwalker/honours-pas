@@ -41,7 +41,6 @@ import { IProject, IProjectSelection, ISession, IUser, UserType } from "../lib/T
 import { COMMIT_NOT_WORKING, COMMIT_WORKING, getErrorCommit } from "../stores";
 
 export default Vue.extend({
-  name: "Login",
   computed: {
     server_opts(): any | null {
       return this.$store.state.server_opts;
@@ -49,10 +48,10 @@ export default Vue.extend({
   },
   data() {
     return {
-      show_form: false,
-      show_err: false,
-      username: "",
       password: "",
+      show_err: false,
+      show_form: false,
+      username: "",
     };
   },
   methods: {
@@ -79,8 +78,8 @@ export default Vue.extend({
     login() {
       this.$store.commit(COMMIT_WORKING);
       HTTP.post("/auth", {
-        username: this.username,
         password: this.password,
+        username: this.username,
       }).then((res) => {
         this.onSuccess(res.data);
       }).catch((err) => {
@@ -110,26 +109,26 @@ export default Vue.extend({
           const projs = _.filter(projectsRaw, (it) => it.session === s.session.id) as IProject[];
           const session: ISession = {
             id: s.session.id as number,
-            name: s.session.name as string,
-            supervisor_name: s.session.supervisor_name as string,
-            supervisor_email: s.session.supervisor_email as string,
             is_current: s.is_current as boolean,
+            name: s.session.name as string,
             projects: projs,
+            supervisor_email: s.session.supervisor_email as string,
+            supervisor_name: s.session.supervisor_name as string,
           };
           return session;
         });
 
         this.$store.commit({
-          type: Mutations.SET_PROJECTS_AND_SESSIONS,
           sessions,
+          type: Mutations.SET_PROJECTS_AND_SESSIONS,
         });
 
         if (utype === UserType.Student) {
           return HTTP.get("/me/marks").then((res) => {
             const user: IUser = {
-              name: whoami.name as string,
               email: whoami.email as string,
               marked_projects: res.data.projects as number[],
+              name: whoami.name as string,
               selected_projects: [] as IProjectSelection[],
               selection_comment: "",
               user_type: utype,
@@ -142,9 +141,9 @@ export default Vue.extend({
           });
         } else {
           const user: IUser = {
-            name: whoami.name as string,
             email: whoami.email as string,
             marked_projects: [] as number[],
+            name: whoami.name as string,
             selected_projects: [] as IProjectSelection[],
             selection_comment: "",
             user_type: utype,
@@ -169,6 +168,7 @@ export default Vue.extend({
     }
     this.update_opts();
   },
+  name: "Login",
   watch: {
     server_opts(newVal: any | null, oldVal: any | null) {
       if (!oldVal && newVal) {

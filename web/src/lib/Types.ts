@@ -48,3 +48,10 @@ export interface ISupervisorCounter {
   email: string;
   count: number;
 }
+
+export interface IUserEntry {
+  full_name: string;
+  email: string;
+  id: number;
+  is_admin?: boolean;
+}

@@ -131,15 +131,45 @@
           </div>
         </div>
       </div>
-      <!-- Sessions END -->
+      <!-- Sessions END, Staff START -->
       <div class="row">
         <div class="col">
           <h2 class="h1">Staff</h2>
         </div>
       </div>
       <div class="row">
-        <!-- TODO: Staff management -->
+        <div v-if="!staffLoaded" class="col">
+          <feather :spin="true" icon="refresh-cw"/>
+          <span class="h5 text-muted loading-text">Loading...</span>
+        </div>
+        <div v-else class="col">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Is Admin?</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="s in staff" :key="s.id">
+                <th scope="row">{{s.id}}</th>
+                <td>{{s.full_name}}</td>
+                <td>{{s.email}}</td>
+                <td v-if="s.is_admin" class="text-weight-bold">&#10003;</td>
+                <td v-else class="text-weight-bold">&#10007;</td>
+                <td><!-- TODO --></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+      <div class="row">
+        <!-- TODO: File selection for Papa Parse -->
+      </div>
+      <!-- Staff END, Students START -->
       <div class="row">
         <div class="col">
           <h2 class="h1">Students</h2>
@@ -149,101 +179,158 @@
         </div>
       </div>
       <div class="row">
-        <!-- TODO: Student management -->
+        <div v-if="!studentsLoaded" class="col">
+          <feather :spin="true" icon="refresh-cw"/>
+          <span class="h5 text-muted loading-text">Loading...</span>
+        </div>
+        <div v-else class="col">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="s in students" :key="s.id">
+                <th scope="row">{{s.id}}</th>
+                <td>{{s.full_name}}</td>
+                <td>{{s.email}}</td>
+                <td><!-- TODO --></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+      <div class="row">
+        <!-- TODO: File selection for Papa Parse -->
+      </div>
+      <!-- Students END -->
     </div>
   </div>
 </template>
 
 <script lang="ts">
-  import _ from "lodash";
-  import Vue from "vue";
-  import {mapState} from "vuex";
-  import Actions from "../lib/Actions";
-  import {INewSession, IProject, ISession, ISupervisorCounter} from "../lib/Types";
+import $ from "jquery";
+import _ from "lodash";
+import Vue from "vue";
+import {mapState} from "vuex";
+import Actions from "../lib/Actions";
+import HTTP from "../lib/HTTP";
+import {INewSession, IProject, ISession, ISupervisorCounter, IUserEntry} from "../lib/Types";
 
-  export default Vue.extend({
-    computed: {
-      projectsBySupervisor() {
-        const sessions: ISession[] = this.$store.getters.sessions_for_user;
-        const out = _.map(sessions, (session: ISession) => {
-          const currSess: {[key: string]: ISupervisorCounter} = {};
-          _.each(session.projects, (proj: IProject) => {
-            if (!currSess[proj.supervisor_email]) {
-              currSess[proj.supervisor_email] = {
-                count: 0,
-                email: proj.supervisor_email,
-                name: proj.supervisor_name,
-              };
-            }
-            currSess[proj.supervisor_email].count += 1;
-          });
-          const sessSorted = _.reverse(_.sortBy(_.values(currSess), ["count"]));
-          return [session.name, sessSorted];
+export default Vue.extend({
+  computed: {
+    projectsBySupervisor() {
+      const sessions: ISession[] = this.$store.getters.sessions_for_user;
+      const out = _.map(sessions, (session: ISession) => {
+        const currSess: {[key: string]: ISupervisorCounter} = {};
+        _.each(session.projects, (proj: IProject) => {
+          if (!currSess[proj.supervisor_email]) {
+            currSess[proj.supervisor_email] = {
+              count: 0,
+              email: proj.supervisor_email,
+              name: proj.supervisor_name,
+            };
+          }
+          currSess[proj.supervisor_email].count += 1;
         });
-        return _.fromPairs(out);
-      },
-      ...mapState({
-        sessions: "available_sessions",
-      }),
+        const sessSorted = _.reverse(_.sortBy(_.values(currSess), ["count"]));
+        return [session.name, sessSorted];
+      });
+      return _.fromPairs(out);
     },
-    data() {
-      return {
-        activeModalSession: "",
-        newSessionInputError: false,
-        newSessionName: "",
-        newSessionSuperEmail: this.$store.state.user.email.slice(0), // Force a copy
-        newSessionSuperName: this.$store.state.user.name.slice(0),
+    ...mapState({
+      sessions: "available_sessions",
+    }),
+  },
+  data() {
+    return {
+      activeModalSession: "",
+      newSessionInputError: false,
+      newSessionName: "",
+      newSessionSuperEmail: this.$store.state.user.email.slice(0), // Force a copy
+      newSessionSuperName: this.$store.state.user.name.slice(0),
+      staff: [] as IUserEntry[],
+      staffLoaded: false,
+      students: [] as IUserEntry[],
+      studentsLoaded: false,
+    };
+  },
+  methods: {
+    generateReport(session: ISession) {
+      // TODO
+      console.error("Report requested; not implemented! Session:", session.name);
+    },
+    onArchiveSubmit() {
+      if (this.activeModalSession === "") { return; }
+      this.$store.dispatch({
+        session: parseInt(this.activeModalSession, 10),
+        type: Actions.ARCHIVE_SESSION,
+      }).then(() => {
+        // Update the student list after (as the current session has changed)
+        this.updateStudents();
+      });
+    },
+    onPurgeSubmit() {
+      if (this.activeModalSession === "") { return; }
+      this.$store.dispatch({
+        session: parseInt(this.activeModalSession, 10),
+        type: Actions.PURGE_SESSION,
+      }).then(() => {
+        // Update the student list after (as the current session has changed)
+        this.updateStudents();
+      });
+    },
+    onNewSubmit() {
+      if (this.newSessionName === "" || this.newSessionSuperEmail === "" || this.newSessionSuperName === "") {
+        this.newSessionInputError = true;
+        return;
+      }
+      this.newSessionInputError = false;
+      ($(this.$refs.newModal) as any).modal("hide");
+
+      const newSess: INewSession = {
+        name: this.newSessionName.slice(0),
+        supervisor_email: this.newSessionSuperEmail.slice(0),
+        supervisor_name: this.newSessionSuperName.slice(0),
       };
-    },
-    methods: {
-      generateReport(session: ISession) {
-        // TODO
-        console.error("Report requested; not implemented! Session:", session.name);
-      },
-      onArchiveSubmit() {
-        if (this.activeModalSession === "") { return; }
-        this.$store.dispatch({
-          session: parseInt(this.activeModalSession, 10),
-          type: Actions.ARCHIVE_SESSION,
-        });
-      },
-      onPurgeSubmit() {
-        if (this.activeModalSession === "") { return; }
-        this.$store.dispatch({
-          session: parseInt(this.activeModalSession, 10),
-          type: Actions.PURGE_SESSION,
-        });
-      },
-      onNewSubmit() {
-        if (this.newSessionName === "" || this.newSessionSuperEmail === "" || this.newSessionSuperName === "") {
-          this.newSessionInputError = true;
-          return;
-        }
-        this.newSessionInputError = false;
-        ($(this.$refs.newModal) as any).modal("hide");
 
-        const newSess: INewSession = {
-          name: this.newSessionName.slice(0),
-          supervisor_email: this.newSessionSuperEmail.slice(0),
-          supervisor_name: this.newSessionSuperName.slice(0),
-        };
+      this.$store.dispatch({
+        session: newSess,
+        type: Actions.NEW_SESSION,
+      }).then(() => {
+        // Update the student list after (as the current session has changed)
+        this.updateStudents();
+      });
+    },
+    updateStudents() {
+      this.studentsLoaded = false;
+      HTTP.get("/students").then((res) => {
+        this.students = res.data.students as IUserEntry[];
+        this.studentsLoaded = true;
+      });
+    },
+  },
+  mounted() {
+    const evtHandler = (evt: any) => {
+      this.activeModalSession = $(evt.relatedTarget).data("session");
+    };
+    $(this.$refs.archiveModal).on("show.bs.modal", evtHandler);
+    $(this.$refs.purgeModal).on("show.bs.modal", evtHandler);
 
-        this.$store.dispatch({
-          session: newSess,
-          type: Actions.NEW_SESSION,
-        });
-      },
-    },
-    mounted() {
-      const evtHandler = (evt: any) => {
-        this.activeModalSession = $(evt.relatedTarget).data("session");
-      };
-      $(this.$refs.archiveModal).on("show.bs.modal", evtHandler);
-      $(this.$refs.purgeModal).on("show.bs.modal", evtHandler);
-    },
-    name: "AdminRoot",
-  });
+    // Kick off loading of staff and students
+    // TODO: Error handling
+    HTTP.get("/staff").then((res) => {
+      this.staff = res.data.staff as IUserEntry[];
+      this.staffLoaded = true;
+    });
+    this.updateStudents();
+  },
+  name: "AdminRoot",
+});
 </script>
 
 <style scoped lang="scss">
@@ -253,5 +340,9 @@
 
 .btn-new-session {
   margin-left: 1rem;
+}
+
+.loading-text {
+  vertical-align: top;
 }
 </style>

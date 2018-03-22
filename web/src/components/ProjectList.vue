@@ -100,8 +100,8 @@ export default Vue.extend({
   },
   data() {
     return {
-      rmProjectId: -1,
       affectedStudents: [] as any[],
+      rmProjectId: -1,
     };
   },
   computed: {
@@ -201,10 +201,7 @@ export default Vue.extend({
       HTTP.get("/projects/" + this.rmProjectId + "/students").then((res) => {
         this.affectedStudents = res.data.students;
       }).catch((e) => {
-        this.$store.commit({
-          type: Mutations.SET_ERROR,
-          error: getErrorCommit("unable to fetch affected students.", e),
-        });
+        this.$store.commit(getErrorCommit("unable to fetch affected students.", e));
       }).finally(() => {
         this.$store.commit(COMMIT_NOT_WORKING);
       });
