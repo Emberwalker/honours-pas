@@ -6,6 +6,8 @@
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate downcast;
 extern crate rand;
 extern crate regex;
 
@@ -26,9 +28,11 @@ extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate toml;
+extern crate jsonwebtoken;
 
 extern crate ldap3;
 extern crate ring_pwhash;
+extern crate reqwest;
 extern crate rocket;
 extern crate rocket_contrib;
 
@@ -71,10 +75,11 @@ fn get_rocket_config(conf: &config::Config) -> Config {
     b.finalize().expect("Config builder")
 }
 
-fn get_authn_provider(conf_loc: &str, conf: &config::Config, pool: Arc<db::Pool>) -> Box<AuthnBackend> {
+fn get_authn_provider(conf_loc: &str, conf: &config::Config, pool: Arc<db::Pool>) -> Arc<AuthnBackend> {
     match conf.get_authn_provider().as_str() {
-        "simple" => Box::new(authn::simple::SimpleAuthnBackend::new(conf_loc, pool)),
-        "ldap" => Box::new(authn::ldap::LdapAuthnBackend::new(conf_loc, pool)),
+        "simple" => Arc::new(authn::simple::SimpleAuthnBackend::new(conf_loc, pool)),
+        "ldap" => Arc::new(authn::ldap::LdapAuthnBackend::new(conf_loc, pool)),
+        "aad"|"openid" => authn::openid::OpenIDAuthnBackend::new(conf_loc, conf),
         s => {
             error!("No such authn backend: {}", s);
             panic!("No such authn backend: {}", s);
@@ -108,7 +113,8 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
         .attach(fairing::ServerHeader())
         .catch(controller::v1::get_catchers(&conf))
         .mount("/api/v1", controller::v1::get_routes(&conf))
-        .manage(authn::AuthnHolder(auth_provider))
+        .mount("/api/authn", auth_provider.get_rocket_routes())
+        .manage(authn::AuthnHolder(Arc::clone(&auth_provider)))
         .manage(pool)
         .manage(session_provider)
         .manage(conf)

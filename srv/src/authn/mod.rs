@@ -1,11 +1,14 @@
-use rocket::Route;
+use std::sync::Arc;
 
+use rocket::Route;
 use serde_json::Value;
 
 // `simple` is the default database-backed provider. It does nothing fancy.
 pub mod simple;
 // `ldap` is the LDAP/AD-based provider.
 pub mod ldap;
+// `openid` is the OpenID Connect provider (useful for Azure AD)
+pub mod openid;
 
 #[derive(Debug)]
 pub enum AuthnFailure {
@@ -15,6 +18,8 @@ pub enum AuthnFailure {
     InvalidPassword(),
     /// An invalid set of credentials. Returned by schemes which cannot tell whether username or password is wrong.
     InvalidUserOrPassword(),
+    /// Action not supported by backend (e.g. OAuth 2.0 doesn't use a username/password)
+    NotSupported(),
     /// Some error occured while performing the check e.g. database error.
     Error(),
 }
@@ -31,10 +36,10 @@ pub enum AuthnCreateError {
 
 pub trait AuthnBackend: Send + Sync {
     /// Provides a set of Rocket routes. These will be mounted at "/api/authn", for tasks such as e.g. email
-    /// verification endpoints. On success, ideally redirect back to "/".If no routes are required, return an empty vec.
+    /// verification endpoints. On success, ideally redirect back to "/". Only implement if needing routes.
     /// When generating the vector, it's probably best to use the Rocket `routes![]` macro.
     fn get_rocket_routes(&self) -> Vec<Route> {
-        Vec::new()
+        routes![]
     }
 
     /// Called when the system attempts to authenticate a user. Returns the users externally-visible email address if
@@ -48,9 +53,16 @@ pub trait AuthnBackend: Send + Sync {
 
     /// Allows adding metadata to the client metadata endpoint.
     fn add_to_client_meta(&self, _meta: &mut Value) {}
+
+    /// Allows custom on-logout functionality in providers.
+    fn on_logout(&self, _email: &str) {}
 }
 
-pub struct AuthnHolder<'a>(pub Box<AuthnBackend + 'a>);
+// Enable (safe) downcasting to implementing types.
+// See https://github.com/fkoep/downcast-rs
+downcast!(AuthnBackend);
+
+pub struct AuthnHolder<'a>(pub Arc<AuthnBackend + 'a>);
 
 impl<'a> AuthnBackend for AuthnHolder<'a> {
     fn get_rocket_routes(&self) -> Vec<Route> {

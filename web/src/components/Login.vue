@@ -63,8 +63,8 @@ export default Vue.extend({
           this.onSuccess(res.data);
         }).catch((err) => {
           // Need to make a new session.
-          if (this.server_opts.auth === "oauth2") {
-            window.location.replace(this.server_opts.oauth2_url);
+          if (this.server_opts.auth === "openid") {
+            window.location.replace(this.server_opts.openid_url);
           } else {
             this.show_form = true;
           }
