@@ -25,9 +25,15 @@ diesel = { version = "~1.1", features = ["postgres", "chrono", "numeric"] }
 diesel_migrations = "~1.1"
 r2d2 = "~0.8"
 r2d2-diesel = "~1.0"
-ring-pwhash = "~0.11"
+ring-pwhash = "~0.12"
 bigdecimal = "0.0.10"
 num-traits = "~0.1"
 rand = "0.4"
 ldap3 = "~0.5"
 time = "~0.1"
+downcast = "~0.9"
+reqwest = "~0.8"
+jsonwebtoken = "~4.0"
+
+[patch.crates-io]
+rocket = { path = "rocket/lib" }
