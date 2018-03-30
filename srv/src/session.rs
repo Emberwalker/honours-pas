@@ -8,10 +8,10 @@ use chrono::Duration as ChronoDuration;
 use rocket::http::{Cookie, Cookies, Status};
 use rocket::request::{self, FromRequest};
 use rocket::{Outcome, Request, State};
-use rand::os::OsRng;
-use rand::Rng;
+use rand::{OsRng, Rng};
 
 use config::Config;
+use authn::{AuthnBackend, AuthnHolder};
 
 #[cfg(feature = "insecure")]
 const SECURED: bool = false;
@@ -101,12 +101,15 @@ impl SessionManager {
         session_cloned
     }
 
-    pub fn remove_session(&self, email: &str) {
+    pub fn remove_session(&self, email: &str, auth_backend: &AuthnHolder) {
         info!("Expiring active sessions for {}", email);
         let mut sessions = self.sessions.write().unwrap();
         sessions.retain(|_k, v| v.email != email);
+        auth_backend.on_logout(email);
     }
 
+    // TODO: When rand 0.5 comes out, update this to use the Alphanumeric distribution and use an RNG which cannot fail
+    // such as ChaChaRng, seeded from EntropyRng.
     fn generate_new_session_key() -> String {
         OsRng::new()
             .expect("OS RNG")

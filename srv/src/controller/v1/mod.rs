@@ -23,8 +23,8 @@ mod meta;
 v1_imports!();
 
 pub fn get_routes(conf: &HPASConfig) -> Vec<Route> {
-    // Disable login route for OAuth 2.0 provider.
-    let mut mod_routes = if conf.get_authn_provider() == "oauth2" {
+    // Disable login route for OpenID/Azure AD provider.
+    let mut mod_routes = if conf.get_authn_provider() == "openid" || conf.get_authn_provider() == "aad" {
         routes![whoami]
     } else {
         routes![login, whoami]

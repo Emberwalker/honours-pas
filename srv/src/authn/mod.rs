@@ -80,4 +80,8 @@ impl<'a> AuthnBackend for AuthnHolder<'a> {
     fn add_to_client_meta(&self, meta: &mut Value) {
         self.0.add_to_client_meta(meta);
     }
+
+    fn on_logout(&self, email: &str) {
+        self.0.on_logout(email);
+    }
 }

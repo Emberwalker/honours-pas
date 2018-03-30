@@ -5,9 +5,11 @@ authn_provider="(simple, aad, openid or ldap)"
 
 [aad]
 tenant="(a valid tenant id or domain e.g. 'azure.example.com')"
+application_id="(the Application ID field for this application in Azure AD's portal)"
 
 [openid]
 discovery_url="https://example.com:8443/.well-known/openid-configuration"
+audience="(this field is optional; skip it if you don't know what this is)"
 
 [ldap]
 server_url="ldap://hostname:1234"

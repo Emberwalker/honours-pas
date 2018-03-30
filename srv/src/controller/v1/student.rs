@@ -7,6 +7,7 @@ use rocket::{Route, State};
 use db::staff;
 use db::student;
 use session::SessionManager;
+use authn::AuthnHolder;
 
 pub fn get_routes() -> Vec<Route> {
     routes![get_students, get_curr_students, rm_student, new_students]
@@ -46,7 +47,8 @@ fn rm_student(
     id: i32,
     _usr: staff::Admin,
     conn: DatabaseConnection,
-    manager: State<Arc<SessionManager>>
+    auth: State<AuthnHolder>,
+    manager: State<Arc<SessionManager>>,
 ) -> V1Response<GenericMessage> {
     let target = student::get(&conn, id).map_err(|e| {
         match e {
@@ -63,7 +65,7 @@ fn rm_student(
         debug!("Additional information: {:?}", e);
         internal_server_error!("database error")
     })?;
-    manager.remove_session(&target.email);
+    manager.remove_session(&target.email, &auth);
     Ok(generic_message!("ok"))
 }
 
