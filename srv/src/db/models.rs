@@ -33,7 +33,8 @@ pub struct Session {
     pub force_archive: bool,
 }
 
-#[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, AsChangeset, Clone, PartialEq, Debug)]
+#[derive(Serialize, Deserialize, Identifiable, Queryable, Associations, AsChangeset, Clone,
+         PartialEq, Debug)]
 #[belongs_to(Session, foreign_key = "session")]
 #[table_name = "projects"]
 pub struct Project {

@@ -13,6 +13,9 @@ impl Fairing for ServerHeader {
     }
 
     fn on_response(&self, _request: &Request, response: &mut Response) {
-        response.set_header(Header::new("Server", "Project Allocation Service (Rust/Rocket)"));
+        response.set_header(Header::new(
+            "Server",
+            "Project Allocation Service (Rust/Rocket)",
+        ));
     }
 }

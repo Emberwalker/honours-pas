@@ -26,11 +26,9 @@ pub fn get_latest_session(conn: &DatabaseConnection) -> Result<Session, SelectEr
         .filter(force_archive.eq(false))
         .order(created.desc())
         .first::<Session>(conn.raw())
-        .map_err(|e| {
-            match e {
-                diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-                e => SelectError::DieselError(e),
-            }
+        .map_err(|e| match e {
+            diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+            e => SelectError::DieselError(e),
         })?;
 
     Ok(res)
@@ -43,21 +41,21 @@ pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<(bool, Session)>, Select
     let res = sessions
         .order(created.desc())
         .load::<Session>(conn.raw())
-        .map_err(|e| {
-            match e {
-                diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-                e => SelectError::DieselError(e),
-            }
+        .map_err(|e| match e {
+            diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+            e => SelectError::DieselError(e),
         })?;
-    
+
     let mut first = true;
-    Ok(res.into_iter().map(|it| {
-        let out = if first && !it.force_archive {
-            (true, it)
-        } else {
-            (false, it)
-        };
-        first = false;
-        out
-    }).collect())
+    Ok(res.into_iter()
+        .map(|it| {
+            let out = if first && !it.force_archive {
+                (true, it)
+            } else {
+                (false, it)
+            };
+            first = false;
+            out
+        })
+        .collect())
 }

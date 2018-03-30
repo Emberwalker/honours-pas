@@ -55,7 +55,7 @@ fn main() {
                         .value_name("USERNAME")
                         .help("New user's name. Must be a valid email address.")
                         .required(true)
-                        .takes_value(true)
+                        .takes_value(true),
                 )
                 .arg(
                     Arg::with_name("password")
@@ -64,7 +64,7 @@ fn main() {
                         .value_name("PASSWORD")
                         .help("New user's password.")
                         .required(true)
-                        .takes_value(true)
+                        .takes_value(true),
                 )
                 .arg(
                     Arg::with_name("fullname")
@@ -73,8 +73,8 @@ fn main() {
                         .value_name("NAME")
                         .help("New user's full name.")
                         .required(true)
-                        .takes_value(true)
-                )
+                        .takes_value(true),
+                ),
         )
         .get_matches();
 
@@ -98,8 +98,8 @@ fn main() {
             conf_loc,
             submatches.value_of("username").unwrap(),
             submatches.value_of("password").unwrap(),
-            submatches.value_of("fullname").unwrap())
-        {
+            submatches.value_of("fullname").unwrap(),
+        ) {
             error!("Failed with error: {}", e);
         }
     } else {
@@ -107,7 +107,6 @@ fn main() {
             error!("Failed with error: {}", e);
         }
     }
-
 }
 
 fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {

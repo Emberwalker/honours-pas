@@ -1,7 +1,7 @@
 v1_imports!();
 
-use rocket::{Catcher, Request, Error};
-use rocket::response::{Result, Responder};
+use rocket::{Catcher, Error, Request};
+use rocket::response::{Responder, Result};
 
 // Note for this we're _manually_ building catchers. Until Rocket 0.4, the error catcher attribute `error(...)`
 // conflicts with the `log` crate `error!(...)` macro. Once Rocket 0.4 is out, `error` becomes `catch` and fixes it.

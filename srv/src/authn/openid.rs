@@ -5,14 +5,20 @@ use std::fs::File;
 use std::io::Read;
 use std::thread;
 
-use rocket::Route;
+use time;
+use url;
+use rocket::{Route, State};
+use rocket::http::{Cookie, Cookies, Status};
+use rocket::request::LenientForm;
+use rocket::response::Failure;
 use serde_json::Value;
 use toml;
 use reqwest;
 use jsonwebtoken as jwt;
 
+use util;
 use config::Config as HPASConfig;
-use super::{AuthnBackend, AuthnFailure};
+use super::{AuthnBackend, AuthnFailure, AuthnHolder};
 
 lazy_static! {
     static ref CSRF_DURATION: Duration = Duration::from_secs(5*60); // 5 minutes
@@ -21,6 +27,12 @@ lazy_static! {
 }
 
 const JWKS_REFRESH: u32 = 60; // 60 x 30s iterations = 30mins
+
+#[cfg(feature = "insecure")]
+const SECURED: bool = false;
+
+#[cfg(not(feature = "insecure"))]
+const SECURED: bool = true;
 
 #[derive(Debug)]
 enum ConfigWrapper {
@@ -38,11 +50,14 @@ impl ConfigWrapper {
             toml::from_str(&contents)
         }.map_err(|e| {
             panic!("Unable to read AAD/OpenID configuration: {}", e);
-        }).unwrap();
+        })
+            .unwrap();
 
         match hpas_conf.get_authn_provider().as_str() {
             "aad" => ConfigWrapper::AAD(conf.aad.expect("No Azure AD confiuration specified!")),
-            "openid" => ConfigWrapper::OpenID(conf.openid.expect("No OpenID configuration specified!")),
+            "openid" => {
+                ConfigWrapper::OpenID(conf.openid.expect("No OpenID configuration specified!"))
+            }
             _ => unreachable!(),
         }
     }
@@ -57,9 +72,9 @@ impl ConfigWrapper {
     pub fn get_discovery_uri(&self) -> String {
         match self {
             &ConfigWrapper::AAD(ref conf) => format!(
-                    "https://login.microsoftonline.com/{}/.well-known/openid-configuration",
-                    conf.tenant,
-                ),
+                "https://login.microsoftonline.com/{}/.well-known/openid-configuration",
+                conf.tenant,
+            ),
             &ConfigWrapper::OpenID(ref conf) => conf.discovery_url.clone(),
         }
     }
@@ -106,7 +121,27 @@ struct JWK {
     pub x5c: Vec<String>,
 }
 
-#[derive(Debug)]
+// OpenID responses. See:
+// https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-protocols-openid-connect-code#sample-response
+// We merge this into one struct because Rocket is silly and won't allow different forms to the same endpoint.
+#[derive(FromForm, Deserialize, Debug)]
+struct OpenIDResponse {
+    pub id_token: Option<String>,
+    pub state: Option<String>,
+    pub error: Option<String>,
+    pub error_description: Option<String>,
+}
+
+/// OpenID claims relevant to this application.
+#[derive(Deserialize, Debug)]
+struct OpenIDClaims {
+    pub sub: String,
+    pub given_name: String,
+    pub family_name: String,
+    pub upn: String,
+}
+
+#[derive(Clone, Debug)]
 struct OpenIDCSRFSession {
     created: Instant,
     state_token: String,
@@ -115,9 +150,11 @@ struct OpenIDCSRFSession {
 
 #[derive(Debug)]
 pub struct OpenIDAuthnBackend {
-    redirect_url_base: String,
-    jwks_update_url: String,
-    logout_url_base: Option<String>,
+    redirect_url_base: url::Url,
+    jwks_update_url: url::Url,
+    server_url_base: url::Url,
+    logout_url_base: Option<url::Url>,
+    client_id: Option<String>,
     jwt_validator: jwt::Validation,
     jwks_keys: RwLock<HashMap<String, JWK>>, // kid (Key ID) -> JWK struct
     csrf_sessions: RwLock<HashMap<String, OpenIDCSRFSession>>, // Cookie token -> CSRF session metadata
@@ -129,8 +166,10 @@ impl OpenIDAuthnBackend {
         let conf = ConfigWrapper::new(conf_loc, hpas_conf);
 
         let mut res = http_fetch(&conf.get_discovery_uri(), "OpenID metadata");
-        let meta: OpenIDDiscoveryDocument = res.json().expect("Unable to parse OpenID metadata response!");
-        let jwks_keys = jwks_fetch(&meta.jwks_uri).expect("Unable to load initial JSON Web Key Set");
+        let meta: OpenIDDiscoveryDocument = res.json()
+            .expect("Unable to parse OpenID metadata response!");
+        let jwks_keys =
+            jwks_fetch(&meta.jwks_uri).expect("Unable to load initial JSON Web Key Set");
 
         let mut allowed_algos: Vec<jwt::Algorithm> = Vec::new();
         for alg in meta.id_token_signing_alg_values_supported {
@@ -161,9 +200,13 @@ impl OpenIDAuthnBackend {
         debug!("{:?}", validation);
 
         let backend = Arc::new(OpenIDAuthnBackend {
-            redirect_url_base: meta.authorization_endpoint,
-            jwks_update_url: meta.jwks_uri,
-            logout_url_base: meta.end_session_endpoint,
+            redirect_url_base: url::Url::parse(&meta.authorization_endpoint).unwrap(),
+            jwks_update_url: url::Url::parse(&meta.jwks_uri).unwrap(),
+            server_url_base: url::Url::parse(&hpas_conf.get_server_address())
+                .expect("Invalid server address!"),
+            logout_url_base: meta.end_session_endpoint
+                .map(|it| url::Url::parse(&it).unwrap()),
+            client_id: conf.get_audience(),
             jwt_validator: validation,
             jwks_keys: RwLock::new(jwks_keys),
             csrf_sessions: RwLock::new(HashMap::new()),
@@ -212,14 +255,16 @@ impl OpenIDAuthnBackend {
                     // This only runs every so often, so we only execute every JWKS_REFRESH iterations.
                     if iter_count >= JWKS_REFRESH {
                         iter_count = 0;
-                        match jwks_fetch(&backend.jwks_update_url) {
+                        match jwks_fetch(backend.jwks_update_url.as_str()) {
                             Ok(set) => {
                                 let mut keys = backend.jwks_keys.write().unwrap();
                                 *keys = set;
                                 info!("JSON Web Key Set updated successfully.");
-                            },
+                            }
                             Err(_) => {
-                                warn!("Unable to perform regular JWK set update. Using old values.");
+                                warn!(
+                                    "Unable to perform regular JWK set update. Using old values."
+                                );
                             }
                         }
                     }
@@ -230,11 +275,48 @@ impl OpenIDAuthnBackend {
             })
             .expect("maintenance thread creation");
     }
+
+    fn new_csrf_session(&self, cookies: &mut Cookies) -> OpenIDCSRFSession {
+        let cookie_val = util::generate_rand_string(32);
+        let nonce = util::generate_rand_string(32);
+
+        let session = OpenIDCSRFSession {
+            created: Instant::now(),
+            state_token: cookie_val.clone(),
+            nonce_token: nonce.clone(),
+        };
+
+        let ret_session = session.clone();
+
+        {
+            let mut sessions = self.csrf_sessions.write().unwrap();
+            sessions.insert(cookie_val.clone(), session);
+        }
+
+        let mut cookie_builder = Cookie::build("openid_csrf", cookie_val)
+            .secure(SECURED)
+            .http_only(true);
+
+        if let Ok(duration) = time::Duration::from_std(*CSRF_DURATION) {
+            cookie_builder = cookie_builder.expires(time::now() + duration);
+        }
+
+        let cookie = cookie_builder.finish();
+        cookies.add_private(cookie);
+
+        ret_session
+    }
+
+    fn pull_csrf_session(&self, cookies: &mut Cookies) -> Result<OpenIDCSRFSession, ()> {
+        let csrf_cookie = cookies.get_private("openid_csrf").ok_or(())?;
+        let mut sessions = self.csrf_sessions.write().unwrap();
+        sessions.remove(csrf_cookie.value()).ok_or(())
+    }
 }
 
 impl<'a> AuthnBackend for OpenIDAuthnBackend {
     fn get_rocket_routes(&self) -> Vec<Route> {
-        routes![]
+        routes![get_redirect, post_response]
     }
 
     fn authenticate(&self, _username: &str, _password: &str) -> Result<String, AuthnFailure> {
@@ -242,22 +324,23 @@ impl<'a> AuthnBackend for OpenIDAuthnBackend {
     }
 
     fn add_to_client_meta(&self, meta: &mut Value) {
-        meta["openid_url"] = Value::String("/api/authn/oauth2".to_string());
+        meta["openid_url"] = Value::String("/api/authn/openid".to_string());
     }
 }
 
 fn http_fetch(url: &str, type_name: &str) -> reqwest::Response {
     info!("Fetching {} from: {}", type_name, url);
-    let res = HTTP
-            .get(url)
-            .send()
-            .map_err(|e| panic!("Error fetching {}: {}", type_name, e))
-            .unwrap();
+    let res = HTTP.get(url)
+        .send()
+        .map_err(|e| panic!("Error fetching {}: {}", type_name, e))
+        .unwrap();
     if res.status() != reqwest::StatusCode::Ok {
-        panic!("Unable to fetch {}; server returned HTTP {}: {}",
-                type_name,
-                res.status().as_u16(),
-                res.status().canonical_reason().unwrap_or("(unknown)"));
+        panic!(
+            "Unable to fetch {}; server returned HTTP {}: {}",
+            type_name,
+            res.status().as_u16(),
+            res.status().canonical_reason().unwrap_or("(unknown)")
+        );
     }
     res
 }
@@ -280,4 +363,86 @@ fn jwks_fetch(url: &str) -> Result<HashMap<String, JWK>, ()> {
     }
 
     Ok(jwks_keys)
+}
+
+fn decode(backend: &OpenIDAuthnBackend, token: &str) -> Result<OpenIDClaims, Failure> {
+    let header = jwt::decode_header(&token).map_err(|e| {
+        warn!("Error parsing JWT header: {}", e);
+        Failure(Status::BadRequest)
+    })?;
+    match header.kid {
+        Some(ref kid) => decode_with_kid(backend, token, kid), // TODO
+        None => decode_without_kid(backend, token), // TODO
+    }
+}
+
+fn decode_with_kid(backend: &OpenIDAuthnBackend, token: &str, kid: &str) -> Result<OpenIDClaims, Failure> {
+    let key: String;
+    {
+        let keys = backend.jwks_keys.read().unwrap();
+        let jwk = keys.get(kid).ok_or(Failure(Status::BadRequest))?;
+        key = jwk.x5c.get(0).ok_or(Failure(Status::InternalServerError))?.clone();
+    }
+
+    Ok(jwt::decode::<OpenIDClaims>(token, /* TODO */, &backend.jwt_validator).map_err(|e| {
+        // TODO
+        panic!("Validation error: {}", e);
+    })?.claims)
+}
+
+fn decode_without_kid(backend: &OpenIDAuthnBackend, token: &str) -> Result<OpenIDClaims, Failure> {
+    unimplemented!()
+}
+
+#[get("/openid")]
+fn get_redirect(auth: State<AuthnHolder>, mut cookies: Cookies) -> util::RedirectWithBody {
+    let auth = (*auth.inner())
+        .0
+        .downcast_ref::<OpenIDAuthnBackend>()
+        .expect("Downcast to OpenID provider");
+    let session = auth.new_csrf_session(&mut cookies);
+
+    let mut redirect = auth.redirect_url_base.clone();
+    let mut redir_uri = auth.server_url_base.clone();
+    redir_uri.set_path("api/authn/openid");
+
+    redirect
+        .query_pairs_mut()
+        .append_pair("scope", "openid")
+        .append_pair("response_type", "id_token")
+        .append_pair("nonce", &session.nonce_token)
+        .append_pair("redirect_uri", redir_uri.as_str())
+        .append_pair("response_mode", "form_post")
+        .append_pair("state", &session.state_token);
+
+    if let Some(ref id) = auth.client_id {
+        // Required for Azure AD. Not sure about others.
+        redirect.query_pairs_mut().append_pair("client_id", id);
+    }
+
+    util::RedirectWithBody::to(redirect.as_str())
+}
+
+#[post("/openid", data = "<res>")]
+fn post_response(
+    res: LenientForm<OpenIDResponse>,
+    auth: State<AuthnHolder>,
+    mut cookies: Cookies,
+) -> Result<util::RedirectWithBody, Failure> {
+    let auth = (*auth.inner())
+        .0
+        .downcast_ref::<OpenIDAuthnBackend>()
+        .expect("Downcast to OpenID provider");
+    let csrf_sesion = auth.pull_csrf_session(&mut cookies).map_err(|_| Failure(Status::BadRequest))?;
+    let response = res.into_inner();
+    if let (Some(id_token), Some(state)) = (response.id_token, response.state) {
+        // Decode and verify JSON Web Token
+        let decoded = decode(auth, &id_token);
+        Err(Failure(Status::NotImplemented))
+    } else if let Some(error) = response.error {
+        // TODO
+        Err(Failure(Status::NotImplemented))
+    } else {
+        Err(Failure(Status::BadRequest))
+    }
 }

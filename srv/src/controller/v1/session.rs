@@ -2,7 +2,7 @@ v1_imports!();
 
 use rocket::Route;
 
-use db::{project, session, user, staff};
+use db::{project, session, staff, user};
 
 pub fn get_routes() -> Vec<Route> {
     routes![get_sessions_full, new_session, archive_session, rm_session]
@@ -14,10 +14,13 @@ fn get_sessions_full(usr: user::User, conn: DatabaseConnection) -> V1Response<Se
         user::User::Staff(_) => session::get_all(&conn),
         user::User::Student(_) => session::get_latest_session(&conn).map(|it| vec![(true, it)]),
     }.map_err(select_error_handler!("no sessions found"))?;
-    let sessions = sessions_fetch.into_iter().map(|(current, sess)| SessionEntry {
-        session: sess,
-        is_current: current,
-    }).collect();
+    let sessions = sessions_fetch
+        .into_iter()
+        .map(|(current, sess)| SessionEntry {
+            session: sess,
+            is_current: current,
+        })
+        .collect();
 
     let projects = match usr {
         user::User::Staff(_) => project::get_all(&conn),
@@ -46,8 +49,13 @@ fn new_session(
 }
 
 #[post("/sessions/<id>/archive")]
-fn archive_session(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1Response<GenericMessage> {
-    let (_, mut sess) = session::get_session(&conn, id).map_err(select_error_handler!("no such session"))?;
+fn archive_session(
+    id: i32,
+    _usr: staff::Admin,
+    conn: DatabaseConnection,
+) -> V1Response<GenericMessage> {
+    let (_, mut sess) =
+        session::get_session(&conn, id).map_err(select_error_handler!("no such session"))?;
     sess.force_archive = true;
     let sess = sess;
     session::update(&conn, &sess).map_err(|e| diesel_error_handler!(e))?;
@@ -56,9 +64,12 @@ fn archive_session(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1R
 
 #[delete("/sessions/<id>")]
 fn rm_session(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1Response<GenericMessage> {
-    let (active, sess) = session::get_session(&conn, id).map_err(select_error_handler!("no such session"))?;
+    let (active, sess) =
+        session::get_session(&conn, id).map_err(select_error_handler!("no such session"))?;
     if active {
-        return Err(bad_request!("cannot delete active sessions; archive it first."));
+        return Err(bad_request!(
+            "cannot delete active sessions; archive it first."
+        ));
     }
     // TODO: Also purge assosciated student records.
     session::delete(&conn, &sess).map_err(|e| diesel_error_handler!(e))?;

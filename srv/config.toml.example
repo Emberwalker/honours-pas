@@ -2,6 +2,7 @@
 database_string="username:password@pghost/database"
 secret_key="(output of 'openssl rand -base64 32')"
 authn_provider="(simple, aad, openid or ldap)"
+server_address="http://localhost:8888 (replace this with the deployment address)"
 
 [aad]
 tenant="(a valid tenant id or domain e.g. 'azure.example.com')"

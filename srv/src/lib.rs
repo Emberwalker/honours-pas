@@ -1,38 +1,40 @@
 #![feature(conservative_impl_trait)]
+#![feature(custom_derive)] // TODO: Remove this when Rocket switches fully to `proc_macro`
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
 
 #[macro_use]
+extern crate downcast_rs;
+#[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate downcast_rs;
 extern crate rand;
 extern crate regex;
 
-extern crate time;
-extern crate num_traits;
 extern crate bigdecimal;
 extern crate chrono;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
+extern crate num_traits;
 extern crate r2d2;
 extern crate r2d2_diesel;
+extern crate time;
 
+extern crate jsonwebtoken;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate toml;
-extern crate jsonwebtoken;
+extern crate url;
 
 extern crate ldap3;
-extern crate ring_pwhash;
 extern crate reqwest;
+extern crate ring_pwhash;
 extern crate rocket;
 extern crate rocket_contrib;
 
@@ -75,11 +77,15 @@ fn get_rocket_config(conf: &config::Config) -> Config {
     b.finalize().expect("Config builder")
 }
 
-fn get_authn_provider(conf_loc: &str, conf: &config::Config, pool: Arc<db::Pool>) -> Arc<AuthnBackend> {
+fn get_authn_provider(
+    conf_loc: &str,
+    conf: &config::Config,
+    pool: Arc<db::Pool>,
+) -> Arc<AuthnBackend> {
     match conf.get_authn_provider().as_str() {
         "simple" => Arc::new(authn::simple::SimpleAuthnBackend::new(conf_loc, pool)),
         "ldap" => Arc::new(authn::ldap::LdapAuthnBackend::new(conf_loc, pool)),
-        "aad"|"openid" => authn::openid::OpenIDAuthnBackend::new(conf_loc, conf),
+        "aad" | "openid" => authn::openid::OpenIDAuthnBackend::new(conf_loc, conf),
         s => {
             error!("No such authn backend: {}", s);
             panic!("No such authn backend: {}", s);
@@ -132,12 +138,17 @@ pub fn add_user(conf_loc: &str, uname: &str, passwd: &str, fname: &str) -> Resul
     let pool = Arc::new(db::init_pool(&conf));
     let auth_provider = get_authn_provider(conf_loc, &conf, Arc::clone(&pool));
 
-    auth_provider.create_user(uname, passwd).map_err(|e| format!("{:?}", e))?;
-    staff::create(&db::DatabaseConnection(pool.get().unwrap()), &NewStaff {
-        email: uname.to_string(),
-        full_name: fname.to_string(),
-        is_admin: true,
-    }).map_err(|e| format!("{:?}", e))?;
+    auth_provider
+        .create_user(uname, passwd)
+        .map_err(|e| format!("{:?}", e))?;
+    staff::create(
+        &db::DatabaseConnection(pool.get().unwrap()),
+        &NewStaff {
+            email: uname.to_string(),
+            full_name: fname.to_string(),
+            is_admin: true,
+        },
+    ).map_err(|e| format!("{:?}", e))?;
 
     Ok(())
 }

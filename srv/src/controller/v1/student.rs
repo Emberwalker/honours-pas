@@ -14,14 +14,9 @@ pub fn get_routes() -> Vec<Route> {
 }
 
 #[get("/students")]
-fn get_students(
-    _usr: staff::Admin,
-    conn: DatabaseConnection,
-) -> V1Response<StudentList> {
+fn get_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StudentList> {
     match student::get_all(&conn) {
-        Ok(v) => Ok(Json(StudentList {
-            students: v,
-        })),
+        Ok(v) => Ok(Json(StudentList { students: v })),
         Err(e) => {
             error!("Unable to fetch students: {:?}", e);
             Err(internal_server_error!("database error"))
@@ -32,9 +27,7 @@ fn get_students(
 #[get("/students/current")]
 fn get_curr_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StudentList> {
     match student::get_all_current(&conn) {
-        Ok(v) => Ok(Json(StudentList {
-            students: v,
-        })),
+        Ok(v) => Ok(Json(StudentList { students: v })),
         Err(e) => {
             error!("Unable to fetch students: {:?}", e);
             Err(internal_server_error!("database error"))
@@ -50,14 +43,12 @@ fn rm_student(
     auth: State<AuthnHolder>,
     manager: State<Arc<SessionManager>>,
 ) -> V1Response<GenericMessage> {
-    let target = student::get(&conn, id).map_err(|e| {
-        match e {
-            SelectError::NoSuchValue() => not_found!("no such student"),
-            SelectError::DieselError(e) => {
-                error!("Diesel error fetching student: {}", e);
-                debug!("Additional information: {:?}", e);
-                internal_server_error!("database error")
-            }
+    let target = student::get(&conn, id).map_err(|e| match e {
+        SelectError::NoSuchValue() => not_found!("no such student"),
+        SelectError::DieselError(e) => {
+            error!("Diesel error fetching student: {}", e);
+            debug!("Additional information: {:?}", e);
+            internal_server_error!("database error")
         }
     })?;
     student::delete(&conn, &target).map_err(|e| {

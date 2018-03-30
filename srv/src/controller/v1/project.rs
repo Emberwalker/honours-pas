@@ -2,11 +2,17 @@ v1_imports!();
 
 use rocket::Route;
 
-use db::{project, staff, student, session, user};
+use db::{project, session, staff, student, user};
 use session::Session;
 
 pub fn get_routes() -> Vec<Route> {
-    routes![get_projs, new_proj, update_proj, rm_proj, get_project_students]
+    routes![
+        get_projs,
+        new_proj,
+        update_proj,
+        rm_proj,
+        get_project_students
+    ]
 }
 
 #[get("/projects")]
@@ -17,11 +23,10 @@ fn get_projs(conn: DatabaseConnection, session: Session) -> V1Response<ProjectLi
         None => panic!("A session exists for a user which does not exist!"),
     }.map_err(select_error_handler!("no projects found"))?;
 
-    let projs = project::attach_staff(&conn, res).map_err(select_error_handler!("error fetching staff"))?;
-    
-    Ok(Json(ProjectList {
-        projects: projs,
-    }))
+    let projs =
+        project::attach_staff(&conn, res).map_err(select_error_handler!("error fetching staff"))?;
+
+    Ok(Json(ProjectList { projects: projs }))
 }
 
 #[post("/projects", data = "<body>")]
@@ -53,19 +58,16 @@ fn update_proj(
     }
 
     if body.id != id {
-        return Err(bad_request!("project ID does not match ID in body"))
+        return Err(bad_request!("project ID does not match ID in body"));
     }
 
-    let current_proj = project::get_project(&conn, id).map_err(|e| {
-        match e {
-            SelectError::NoSuchValue() => not_found!("no such project"),
-            SelectError::DieselError(e) => diesel_error_handler!(e),
-        }
+    let current_proj = project::get_project(&conn, id).map_err(|e| match e {
+        SelectError::NoSuchValue() => not_found!("no such project"),
+        SelectError::DieselError(e) => diesel_error_handler!(e),
     })?;
 
-    let (is_curr, _) = session::get_session(&conn, current_proj.session).map_err(|_e| {
-        internal_server_error!("database error")
-    })?;
+    let (is_curr, _) = session::get_session(&conn, current_proj.session)
+        .map_err(|_e| internal_server_error!("database error"))?;
 
     if !is_curr {
         return Err(bad_request!("cannot edit an archived project"));
@@ -84,11 +86,13 @@ fn rm_proj(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1Response<
 }
 
 #[get("/projects/<id>/students")]
-fn get_project_students(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StudentList> {
+fn get_project_students(
+    id: i32,
+    _usr: staff::Admin,
+    conn: DatabaseConnection,
+) -> V1Response<StudentList> {
     let students = student::selection::get_students_for_project(&conn, id)
         .map_err(select_error_handler!("database error"))?;
 
-    Ok(Json(StudentList {
-        students: students,
-    }))
+    Ok(Json(StudentList { students: students }))
 }

@@ -16,6 +16,7 @@ struct ConfigHPAS {
     database_string: String,
     secret_key: Option<String>,
     authn_provider: Option<String>,
+    server_address: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -47,6 +48,10 @@ impl Config {
             None => "simple".to_string(),
             Some(ref prov) => prov.to_lowercase(),
         }
+    }
+
+    pub fn get_server_address(&self) -> String {
+        self.hpas.server_address.trim_right_matches('/').to_string()
     }
 }
 
@@ -112,6 +117,7 @@ pub fn default_config() -> Config {
             database_string: "postgres:banana@postgres/postgres".to_string(),
             secret_key: None,
             authn_provider: None,
+            server_address: "http://localhost:8888".to_string(),
         },
         session: None,
     }

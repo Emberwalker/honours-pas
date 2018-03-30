@@ -25,7 +25,7 @@ pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<Staff>, SelectError> {
     generate_select_body!(multi, conn, staff, Staff)
 }
 
-impl<'a,'r> FromRequest<'a,'r> for Staff {
+impl<'a, 'r> FromRequest<'a, 'r> for Staff {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Staff, ()> {
@@ -54,7 +54,7 @@ impl Deref for Admin {
     }
 }
 
-impl<'a,'r> FromRequest<'a,'r> for Admin {
+impl<'a, 'r> FromRequest<'a, 'r> for Admin {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Admin, ()> {

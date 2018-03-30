@@ -36,7 +36,8 @@ impl<'a> AuthnBackend for SimpleAuthnBackend {
     fn authenticate(&self, username: &str, passwd: &str) -> Result<String, AuthnFailure> {
         use schema::authn_credentials::dsl::*;
 
-        let login = util::sanitise_email(&username.to_lowercase()).map_err(|_| AuthnFailure::InvalidUser())?;
+        let login = util::sanitise_email(&username.to_lowercase())
+            .map_err(|_| AuthnFailure::InvalidUser())?;
 
         let conn = self.pool.get().map_err(|e| {
             error!("Error fetching connection from pool: {}", e);
@@ -75,7 +76,8 @@ impl<'a> AuthnBackend for SimpleAuthnBackend {
             AuthnCreateError::Other()
         })?;
 
-        let login = util::sanitise_email(&username.to_lowercase()).map_err(|_| AuthnCreateError::Other())?;
+        let login =
+            util::sanitise_email(&username.to_lowercase()).map_err(|_| AuthnCreateError::Other())?;
         let username = username.to_lowercase();
 
         let new_user = NewAuthnCredential {
@@ -100,4 +102,3 @@ impl<'a> AuthnBackend for SimpleAuthnBackend {
         Ok(())
     }
 }
-

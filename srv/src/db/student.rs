@@ -36,7 +36,7 @@ pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<Student>, SelectError> {
     generate_select_body!(multi, conn, students, Student)
 }
 
-impl<'a,'r> FromRequest<'a,'r> for Student {
+impl<'a, 'r> FromRequest<'a, 'r> for Student {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Student, ()> {
@@ -66,8 +66,17 @@ pub mod selection {
 
     generate_crud_fns!(student_selections, NewStudentSelection, StudentSelection, (student, project -> weight));
 
-    pub fn _get_all_for_student(conn: &DatabaseConnection, id: i32) -> Result<Vec<(i32, BigDecimal)>, SelectError> {
-        let vals = generate_select_body!(multi, conn, student_selections, StudentSelection, (student, id))?;
+    pub fn _get_all_for_student(
+        conn: &DatabaseConnection,
+        id: i32,
+    ) -> Result<Vec<(i32, BigDecimal)>, SelectError> {
+        let vals = generate_select_body!(
+            multi,
+            conn,
+            student_selections,
+            StudentSelection,
+            (student, id)
+        )?;
         Ok(vals.into_iter().map(|it| (it.project, it.weight)).collect())
     }
 
@@ -75,7 +84,8 @@ pub mod selection {
         use diesel;
         use diesel::prelude::*;
         use schema::student_selections;
-        diesel::delete(student_selections::table.filter(student_selections::student.eq(id))).execute(conn.raw())?;
+        diesel::delete(student_selections::table.filter(student_selections::student.eq(id)))
+            .execute(conn.raw())?;
         Ok(())
     }
 
@@ -84,18 +94,16 @@ pub mod selection {
         proj: i32,
     ) -> Result<Vec<student::Student>, SelectError> {
         use diesel::prelude::*;
-        use schema::{students, student_selections};
+        use schema::{student_selections, students};
 
         let students = student_selections::table
             .inner_join(students::table)
             .filter(student_selections::project.eq(proj))
             .select(students::table::all_columns())
             .load::<student::Student>(conn.raw())
-            .map_err(|e| {
-                match e {
-                    diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-                    e => SelectError::DieselError(e),
-                }
+            .map_err(|e| match e {
+                diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+                e => SelectError::DieselError(e),
             })?;
 
         Ok(students)
@@ -109,7 +117,10 @@ pub mod mark {
 
     generate_crud_fns!(student_marks, NewStudentMark, StudentMark, noupdate);
 
-    pub fn get_all_for_student(conn: &DatabaseConnection, id: i32) -> Result<Vec<i32>, SelectError> {
+    pub fn get_all_for_student(
+        conn: &DatabaseConnection,
+        id: i32,
+    ) -> Result<Vec<i32>, SelectError> {
         let vals = generate_select_body!(multi, conn, student_marks, StudentMark, (student, id))?;
         Ok(vals.into_iter().map(|it| it.project).collect())
     }
@@ -123,9 +134,19 @@ pub mod comment {
 
     generate_crud_fns!(student_comments, NewStudentComment, StudentComment, (student, session -> comment));
 
-    pub fn _get_current_for_student(conn: &DatabaseConnection, id: i32) -> Result<Option<String>, SelectError> {
+    pub fn _get_current_for_student(
+        conn: &DatabaseConnection,
+        id: i32,
+    ) -> Result<Option<String>, SelectError> {
         let s = session::get_latest_session(conn)?.id;
-        let comm = generate_select_body!(single, conn, student_comments, StudentComment, (student, id), (session, s))?;
+        let comm = generate_select_body!(
+            single,
+            conn,
+            student_comments,
+            StudentComment,
+            (student, id),
+            (session, s)
+        )?;
         Ok(comm.comment)
     }
 }

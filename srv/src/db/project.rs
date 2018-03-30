@@ -6,22 +6,27 @@ pub use super::models::new::ProjectWithStaff as NewProjectWithStaff;
 use super::models::ProjectStaff;
 use super::models::new::ProjectStaff as NewProjectStaff;
 
-use super::{DatabaseConnection, SelectError, session};
+use super::{session, DatabaseConnection, SelectError};
 
 generate_crud_fns!(projects, NewProject, Project);
 
-pub fn attach_staff(conn: &DatabaseConnection, projs: Vec<Project>) -> Result<Vec<ProjectWithStaff>, SelectError> {
+pub fn attach_staff(
+    conn: &DatabaseConnection,
+    projs: Vec<Project>,
+) -> Result<Vec<ProjectWithStaff>, SelectError> {
     use diesel::prelude::*;
     let staff_ents = ProjectStaff::belonging_to(&projs)
         .load::<ProjectStaff>(conn.raw())
-        .map_err(|e| {
-            match e {
-                diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-                e => SelectError::DieselError(e),
-            }
+        .map_err(|e| match e {
+            diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+            e => SelectError::DieselError(e),
         })?
         .grouped_by(&projs);
-    Ok(projs.into_iter().zip(staff_ents).map(move |(p, s)| ProjectWithStaff::from_project(p, s)).collect())
+    Ok(projs
+        .into_iter()
+        .zip(staff_ents)
+        .map(move |(p, s)| ProjectWithStaff::from_project(p, s))
+        .collect())
 }
 
 pub fn create_with_staff(
@@ -30,13 +35,11 @@ pub fn create_with_staff(
 ) -> Result<ProjectWithStaff, diesel::result::Error> {
     use diesel::prelude::*;
     use diesel::insert_into;
-    use schema::{projects, project_staff};
+    use schema::{project_staff, projects};
 
-    let sess = session::get_latest_session(&conn).map_err(|e| {
-        match e {
-            SelectError::DieselError(e) => e,
-            SelectError::NoSuchValue() => diesel::result::Error::NotFound,
-        }
+    let sess = session::get_latest_session(&conn).map_err(|e| match e {
+        SelectError::DieselError(e) => e,
+        SelectError::NoSuchValue() => diesel::result::Error::NotFound,
     })?;
 
     // Insert projects - this works like the macro, but we need the ID back!
@@ -45,10 +48,13 @@ pub fn create_with_staff(
         .get_result::<Project>(conn.raw())?;
 
     // Merge the new project ID with its staff members, and insert all of them into project_staff.
-    let staff = ps.additional_staff.iter().map(|s| NewProjectStaff {
-        project: res.id,
-        staff: s.clone(),
-    }).collect();
+    let staff = ps.additional_staff
+        .iter()
+        .map(|s| NewProjectStaff {
+            project: res.id,
+            staff: s.clone(),
+        })
+        .collect();
 
     let staff_res = insert_into(project_staff::table)
         .values::<&Vec<NewProjectStaff>>(&staff)
@@ -64,33 +70,34 @@ pub fn _create_with_staff_batch(
 ) -> Result<(), diesel::result::Error> {
     use diesel::prelude::*;
     use diesel::insert_into;
-    use schema::{projects, project_staff};
-    
-    let sess = session::get_latest_session(&conn).map_err(|e| {
-        match e {
-            SelectError::DieselError(e) => e,
-            SelectError::NoSuchValue() => diesel::result::Error::NotFound,
-        }
+    use schema::{project_staff, projects};
+
+    let sess = session::get_latest_session(&conn).map_err(|e| match e {
+        SelectError::DieselError(e) => e,
+        SelectError::NoSuchValue() => diesel::result::Error::NotFound,
     })?;
 
     // Insert projects - this works like the macro, but we need the IDs back!
-    let projs: Vec<NewProject> = ps.iter().map(|it| NewProject::from_with_staff(it.clone(), sess.id)).collect();
+    let projs: Vec<NewProject> = ps.iter()
+        .map(|it| NewProject::from_with_staff(it.clone(), sess.id))
+        .collect();
     let res = insert_into(projects::table)
         .values::<&Vec<NewProject>>(&projs)
         .returning(projects::id)
         .get_results(conn.raw())?;
 
     // Merge the new project IDs with their staff members, and insert all of them into project_staff.
-    let staff = res
-        .into_iter()
+    let staff = res.into_iter()
         .zip(ps)
-        .flat_map(|(id, p)| p.additional_staff
-            .into_iter()
-            .map(move |s| NewProjectStaff {
-                project: id,
-                staff: s,
-            })
-        ).collect();
+        .flat_map(|(id, p)| {
+            p.additional_staff
+                .into_iter()
+                .map(move |s| NewProjectStaff {
+                    project: id,
+                    staff: s,
+                })
+        })
+        .collect();
 
     insert_into(project_staff::table)
         .values::<&Vec<NewProjectStaff>>(&staff)
@@ -103,7 +110,7 @@ pub fn get_all_current(conn: &DatabaseConnection) -> Result<Vec<Project>, Select
     let sess = session::get_latest_session(conn)?;
     let id: i32 = sess.id;
     let projs = generate_select_body!(multi, conn, projects, Project, (session, id))?;
-    
+
     Ok(projs)
 }
 

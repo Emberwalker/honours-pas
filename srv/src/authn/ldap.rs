@@ -94,7 +94,8 @@ impl LdapAuthnBackend {
         }
 
         let mut username = match self.normalize_logins {
-            true => util::sanitise_email(&uname.to_lowercase()).map_err(|_e| LdapAuthnError::InvalidLogin())?,
+            true => util::sanitise_email(&uname.to_lowercase())
+                .map_err(|_e| LdapAuthnError::InvalidLogin())?,
             false => uname.to_string(),
         };
         let mut uid = username.clone();
@@ -116,16 +117,18 @@ impl LdapAuthnBackend {
             LdapAuthnError::ConnectionError()
         })?;
 
-        conn
-            .simple_bind(&username, passwd)
+        conn.simple_bind(&username, passwd)
             .map_err(|_e| LdapAuthnError::InvalidLogin())?
             .success()
             .map_err(|_e| LdapAuthnError::InvalidLogin())?;
 
         let filter = format!("({}={})", self.filter_field, ldap_escape(uid));
-        let (results, _meta) = conn
-            .search(&self.search_base, Scope::Subtree, &filter, vec!(self.email_field.clone()))
-            .map_err(|e| {
+        let (results, _meta) = conn.search(
+            &self.search_base,
+            Scope::Subtree,
+            &filter,
+            vec![self.email_field.clone()],
+        ).map_err(|e| {
                 warn!("Error fetching user row: {}", e);
                 LdapAuthnError::Other()
             })?
@@ -147,10 +150,13 @@ impl LdapAuthnBackend {
         let raw_res = results.get(0).unwrap();
         let res = SearchEntry::construct(raw_res.clone());
 
-        res.attrs[&self.email_field].get(0).ok_or_else(|| {
-            error!("LDAP record didn't contain a mail field.");
-            LdapAuthnError::Other()
-        }).map(|it| it.clone())
+        res.attrs[&self.email_field]
+            .get(0)
+            .ok_or_else(|| {
+                error!("LDAP record didn't contain a mail field.");
+                LdapAuthnError::Other()
+            })
+            .map(|it| it.clone())
     }
 }
 

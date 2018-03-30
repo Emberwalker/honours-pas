@@ -24,11 +24,12 @@ v1_imports!();
 
 pub fn get_routes(conf: &HPASConfig) -> Vec<Route> {
     // Disable login route for OpenID/Azure AD provider.
-    let mut mod_routes = if conf.get_authn_provider() == "openid" || conf.get_authn_provider() == "aad" {
-        routes![whoami]
-    } else {
-        routes![login, whoami]
-    };
+    let mut mod_routes =
+        if conf.get_authn_provider() == "openid" || conf.get_authn_provider() == "aad" {
+            routes![whoami]
+        } else {
+            routes![login, whoami]
+        };
 
     concat_vec![
         mod_routes,
@@ -73,7 +74,7 @@ fn login(
         Some(u) => {
             debug!("User login: {:?}", u);
             u
-        },
+        }
     };
 
     debug!(

@@ -45,7 +45,7 @@ impl User {
     }
 }
 
-impl<'a,'r> FromRequest<'a,'r> for User {
+impl<'a, 'r> FromRequest<'a, 'r> for User {
     type Error = ();
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<User, ()> {
@@ -53,7 +53,7 @@ impl<'a,'r> FromRequest<'a,'r> for User {
         let conn = request.guard::<DatabaseConnection>()?;
         match find_user(&conn, &s.email) {
             Some(u) => Outcome::Success(u),
-            None => Outcome::Failure((Status::Forbidden, ()))
+            None => Outcome::Failure((Status::Forbidden, ())),
         }
     }
 }

@@ -34,6 +34,7 @@ time = "~0.1"
 downcast-rs = "~1"
 reqwest = "~0.8"
 jsonwebtoken = "~4.0"
+url = "1.7"
 
 [patch.crates-io]
 rocket = { path = "rocket/lib" }
