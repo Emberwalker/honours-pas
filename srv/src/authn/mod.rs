@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use rocket::Route;
 use serde_json::Value;
+use downcast_rs::Downcast;
 
 // `simple` is the default database-backed provider. It does nothing fancy.
 pub mod simple;
@@ -34,7 +35,7 @@ pub enum AuthnCreateError {
     Other(),
 }
 
-pub trait AuthnBackend: Send + Sync {
+pub trait AuthnBackend: Downcast + Send + Sync {
     /// Provides a set of Rocket routes. These will be mounted at "/api/authn", for tasks such as e.g. email
     /// verification endpoints. On success, ideally redirect back to "/". Only implement if needing routes.
     /// When generating the vector, it's probably best to use the Rocket `routes![]` macro.
@@ -59,12 +60,13 @@ pub trait AuthnBackend: Send + Sync {
 }
 
 // Enable (safe) downcasting to implementing types.
-// See https://github.com/fkoep/downcast-rs
-downcast!(AuthnBackend);
+// See https://crates.io/crates/downcast-rs
+#[allow(dead_code)]
+impl_downcast!(AuthnBackend);
 
-pub struct AuthnHolder<'a>(pub Arc<AuthnBackend + 'a>);
+pub struct AuthnHolder(pub Arc<AuthnBackend>);
 
-impl<'a> AuthnBackend for AuthnHolder<'a> {
+impl AuthnBackend for AuthnHolder {
     fn get_rocket_routes(&self) -> Vec<Route> {
         self.0.get_rocket_routes()
     }

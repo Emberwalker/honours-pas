@@ -7,7 +7,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 #[macro_use]
-extern crate downcast;
+extern crate downcast_rs;
 extern crate rand;
 extern crate regex;
 
