@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
 use rocket::{Catcher, Route, State};
-use rocket::http::Cookies;
+use rocket::http::{Cookie, Cookies};
+use rocket::response::content;
 
 use config::Config as HPASConfig;
 use db::user;
 use authn::{AuthnBackend, AuthnFailure, AuthnHolder};
-use session::SessionManager;
+use session::{Session, SessionManager};
+use util;
 
 mod types;
 
@@ -22,13 +24,23 @@ mod meta;
 
 v1_imports!();
 
+const LOGGED_OUT_HTML: &'static str = r#"
+    <head>
+        <title>Honours Project Allocation System</title>
+    </head>
+    <body>
+        <h1>Logged out</h1>
+        <p>You have been logged out. <a href="/">Click here</a> to return home and log back in.</p>
+    </body>
+"#;
+
 pub fn get_routes(conf: &HPASConfig) -> Vec<Route> {
     // Disable login route for OpenID/Azure AD provider.
     let mut mod_routes =
         if conf.get_authn_provider() == "openid" || conf.get_authn_provider() == "aad" {
-            routes![whoami]
+            routes![logout, logged_out, whoami]
         } else {
-            routes![login, whoami]
+            routes![login, logout, logged_out, whoami]
         };
 
     concat_vec![
@@ -117,4 +129,24 @@ fn whoami(usr: user::User) -> Json<WhoAmIMessage> {
         name: usr.full_name(),
         user_type: utype.to_string(),
     })
+}
+
+#[get("/logout")]
+fn logout(
+    sess: Session,
+    authn_manager: State<AuthnHolder>,
+    session_manager: State<Arc<SessionManager>>,
+    mut cookies: Cookies,
+) -> Result<content::Html<&'static str>, util::RedirectWithBody> {
+    cookies.remove_private(Cookie::named("session"));
+    // Redirect if asked by the auth provider (e.g. Azure AD uses this to provide Single Sign Out)
+    if let Some(ref redir) = session_manager.remove_session(&sess.email, &authn_manager) {
+        return Err(util::RedirectWithBody::to(redir));
+    }
+    Ok(content::Html(LOGGED_OUT_HTML))
+}
+
+#[get("/logout", rank = 2)]
+fn logged_out() -> content::Html<&'static str> {
+    content::Html(LOGGED_OUT_HTML)
 }

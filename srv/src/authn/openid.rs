@@ -10,13 +10,17 @@ use url;
 use rocket::{Route, State};
 use rocket::http::{Cookie, Cookies, Status};
 use rocket::request::LenientForm;
-use rocket::response::Failure;
+use rocket::response::{status, content};
 use serde_json::Value;
 use toml;
 use reqwest;
 use jsonwebtoken as jwt;
+use base64;
+use openssl::x509;
 
 use util;
+use session::SessionManager;
+use db::{user, DatabaseConnection};
 use config::Config as HPASConfig;
 use super::{AuthnBackend, AuthnFailure, AuthnHolder};
 
@@ -121,24 +125,32 @@ struct JWK {
     pub x5c: Vec<String>,
 }
 
+struct ParsedJWK {
+    pub kid: String,
+    pub key: Vec<u8>,
+}
+
 // OpenID responses. See:
 // https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-protocols-openid-connect-code#sample-response
-// We merge this into one struct because Rocket is silly and won't allow different forms to the same endpoint.
 #[derive(FromForm, Deserialize, Debug)]
-struct OpenIDResponse {
-    pub id_token: Option<String>,
-    pub state: Option<String>,
-    pub error: Option<String>,
-    pub error_description: Option<String>,
+struct OpenIDSuccess {
+    pub id_token: String,
+    pub state: String,
+}
+
+#[derive(FromForm, Deserialize, Debug)]
+struct OpenIDError {
+    pub error: String,
+    pub error_description: String,
 }
 
 /// OpenID claims relevant to this application.
 #[derive(Deserialize, Debug)]
 struct OpenIDClaims {
     pub sub: String,
-    pub given_name: String,
-    pub family_name: String,
-    pub upn: String,
+    pub name: String,
+    pub email: String,
+    pub nonce: String,
 }
 
 #[derive(Clone, Debug)]
@@ -148,7 +160,6 @@ struct OpenIDCSRFSession {
     nonce_token: String,
 }
 
-#[derive(Debug)]
 pub struct OpenIDAuthnBackend {
     redirect_url_base: url::Url,
     jwks_update_url: url::Url,
@@ -156,9 +167,8 @@ pub struct OpenIDAuthnBackend {
     logout_url_base: Option<url::Url>,
     client_id: Option<String>,
     jwt_validator: jwt::Validation,
-    jwks_keys: RwLock<HashMap<String, JWK>>, // kid (Key ID) -> JWK struct
+    jwks_keys: RwLock<HashMap<String, ParsedJWK>>, // kid (Key ID) -> JWK struct
     csrf_sessions: RwLock<HashMap<String, OpenIDCSRFSession>>, // Cookie token -> CSRF session metadata
-    sub_email_map: RwLock<HashMap<String, String>>, // 'sub' OpenID field (Section 2, Core 1.0) -> email
 }
 
 impl OpenIDAuthnBackend {
@@ -210,7 +220,6 @@ impl OpenIDAuthnBackend {
             jwt_validator: validation,
             jwks_keys: RwLock::new(jwks_keys),
             csrf_sessions: RwLock::new(HashMap::new()),
-            sub_email_map: RwLock::new(HashMap::new()),
         });
 
         OpenIDAuthnBackend::start_cleanup_thread(Arc::clone(&backend));
@@ -310,13 +319,15 @@ impl OpenIDAuthnBackend {
     fn pull_csrf_session(&self, cookies: &mut Cookies) -> Result<OpenIDCSRFSession, ()> {
         let csrf_cookie = cookies.get_private("openid_csrf").ok_or(())?;
         let mut sessions = self.csrf_sessions.write().unwrap();
-        sessions.remove(csrf_cookie.value()).ok_or(())
+        let ret = sessions.remove(csrf_cookie.value()).ok_or(());
+        cookies.remove_private(csrf_cookie);
+        ret
     }
 }
 
 impl<'a> AuthnBackend for OpenIDAuthnBackend {
     fn get_rocket_routes(&self) -> Vec<Route> {
-        routes![get_redirect, post_response]
+        routes![get_redirect, post_success, post_error]
     }
 
     fn authenticate(&self, _username: &str, _password: &str) -> Result<String, AuthnFailure> {
@@ -325,6 +336,13 @@ impl<'a> AuthnBackend for OpenIDAuthnBackend {
 
     fn add_to_client_meta(&self, meta: &mut Value) {
         meta["openid_url"] = Value::String("/api/authn/openid".to_string());
+    }
+
+    fn on_logout(&self, _email: &str) -> Option<String> {
+        match self.logout_url_base {
+            Some(ref url) => Some(url.clone().to_string()),
+            None => None,
+        }
     }
 }
 
@@ -345,7 +363,7 @@ fn http_fetch(url: &str, type_name: &str) -> reqwest::Response {
     res
 }
 
-fn jwks_fetch(url: &str) -> Result<HashMap<String, JWK>, ()> {
+fn jwks_fetch(url: &str) -> Result<HashMap<String, ParsedJWK>, ()> {
     let mut jwks_res = http_fetch(url, "JSON Web Key Set");
     let mut jwks: JWKSet = jwks_res.json().map_err(|e| {
         error!("Unable to parse JWKS response from '{}': {}", url, e);
@@ -356,19 +374,34 @@ fn jwks_fetch(url: &str) -> Result<HashMap<String, JWK>, ()> {
         return Err(());
     }
 
-    let mut jwks_keys: HashMap<String, JWK> = HashMap::new();
+    let mut jwks_keys: HashMap<String, ParsedJWK> = HashMap::new();
     for jwk in jwks.keys.drain(..) {
         let k = jwk.kid.clone();
-        jwks_keys.insert(k, jwk);
+        // We ignore the return from this, since we insert from in the chain.
+        let _ = jwk.x5c.get(0).ok_or("No certs in x5c chain!".to_string())
+            .and_then(|raw| base64::decode(&raw).map_err(|e| e.to_string()))
+            .and_then(|b64| x509::X509::from_der(&b64).map_err(|e| e.to_string()))
+            .and_then(|crt| crt.public_key().map_err(|e| e.to_string()))
+            .and_then(|pk| pk.rsa().map_err(|e| e.to_string()))
+            .and_then(|pk| pk.public_key_to_der_pkcs1().map_err(|e| e.to_string()))
+            .and_then(|bytes| {
+                jwks_keys.insert(k, ParsedJWK {
+                    kid: jwk.kid,
+                    key: bytes,
+                });
+                Ok(())
+            })
+            .map_err(|e| warn!("Error parsing x5c chain: {}", e));
     }
 
     Ok(jwks_keys)
 }
 
-fn decode(backend: &OpenIDAuthnBackend, token: &str) -> Result<OpenIDClaims, Failure> {
+#[inline]
+fn decode(backend: &OpenIDAuthnBackend, token: &str) -> Result<OpenIDClaims, ()> {
     let header = jwt::decode_header(&token).map_err(|e| {
         warn!("Error parsing JWT header: {}", e);
-        Failure(Status::BadRequest)
+        ()
     })?;
     match header.kid {
         Some(ref kid) => decode_with_kid(backend, token, kid), // TODO
@@ -376,22 +409,46 @@ fn decode(backend: &OpenIDAuthnBackend, token: &str) -> Result<OpenIDClaims, Fai
     }
 }
 
-fn decode_with_kid(backend: &OpenIDAuthnBackend, token: &str, kid: &str) -> Result<OpenIDClaims, Failure> {
-    let key: String;
+#[inline]
+fn decode_with_kid(backend: &OpenIDAuthnBackend, token: &str, kid: &str) -> Result<OpenIDClaims, ()> {
+    let key: Vec<u8>;
     {
         let keys = backend.jwks_keys.read().unwrap();
-        let jwk = keys.get(kid).ok_or(Failure(Status::BadRequest))?;
-        key = jwk.x5c.get(0).ok_or(Failure(Status::InternalServerError))?.clone();
+        let jwk = keys.get(kid).ok_or(())?;
+        key = jwk.key.clone();
     }
 
-    Ok(jwt::decode::<OpenIDClaims>(token, /* TODO */, &backend.jwt_validator).map_err(|e| {
-        // TODO
-        panic!("Validation error: {}", e);
-    })?.claims)
+    Ok(jwt::decode::<OpenIDClaims>(token, &key, &backend.jwt_validator).map_err(|_| ())?.claims)
 }
 
-fn decode_without_kid(backend: &OpenIDAuthnBackend, token: &str) -> Result<OpenIDClaims, Failure> {
-    unimplemented!()
+#[inline]
+fn decode_without_kid(backend: &OpenIDAuthnBackend, token: &str) -> Result<OpenIDClaims, ()> {
+    for ref k in backend.jwks_keys.read().unwrap().keys() {
+        let res = decode_with_kid(backend, token, k);
+        if let Ok(claims) = res {
+            return Ok(claims);
+        }
+    }
+    Err(())
+}
+
+// Helper to generate more informative error pages (since these can be served to humans directly)
+#[inline]
+fn get_failure(stat: Status, body: &str) -> status::Custom<content::Html<String>> {
+    status::Custom(stat, content::Html(format!(r#"
+        <head>
+            <title>Honours Project Allocation System</title>
+        </head>
+        <body>
+            <h1>Login Error</h1>
+            <p>
+                An error occurred when logging you in. Please try again. If this keeps occuring, ask your system
+                administrator for assistance. Additional information may be available below. Click <a href="/">here</a>
+                to return to the home page and retry.
+            </p>
+            <p><i>{}</i></p>
+        </body>
+    "#, body)))
 }
 
 #[get("/openid")]
@@ -424,25 +481,58 @@ fn get_redirect(auth: State<AuthnHolder>, mut cookies: Cookies) -> util::Redirec
 }
 
 #[post("/openid", data = "<res>")]
-fn post_response(
-    res: LenientForm<OpenIDResponse>,
+fn post_success(
+    res: LenientForm<OpenIDSuccess>,
     auth: State<AuthnHolder>,
+    session_manager: State<Arc<SessionManager>>,
+    conn: DatabaseConnection,
     mut cookies: Cookies,
-) -> Result<util::RedirectWithBody, Failure> {
+) -> Result<util::RedirectWithBody, status::Custom<content::Html<String>>> {
     let auth = (*auth.inner())
         .0
         .downcast_ref::<OpenIDAuthnBackend>()
         .expect("Downcast to OpenID provider");
-    let csrf_sesion = auth.pull_csrf_session(&mut cookies).map_err(|_| Failure(Status::BadRequest))?;
+
+    let csrf_session = auth.pull_csrf_session(&mut cookies).map_err(|_| get_failure(
+        Status::BadRequest,
+        "No matching CSRF session found. Please try logging in again."
+    ))?;
+
     let response = res.into_inner();
-    if let (Some(id_token), Some(state)) = (response.id_token, response.state) {
-        // Decode and verify JSON Web Token
-        let decoded = decode(auth, &id_token);
-        Err(Failure(Status::NotImplemented))
-    } else if let Some(error) = response.error {
-        // TODO
-        Err(Failure(Status::NotImplemented))
-    } else {
-        Err(Failure(Status::BadRequest))
+    // Decode and verify JSON Web Token
+    let decoded = decode(auth, &response.id_token).map_err(|_|
+        get_failure(Status::BadRequest, "Unable to decode or verify token."))?;
+
+    // Check nonce & state - this is required by the Azure documentation for security purposes.
+    if csrf_session.nonce_token != decoded.nonce || csrf_session.state_token != response.state {
+        return Err(get_failure(Status::BadRequest, "Nonce or state mismatch (CSRF violation)."));
     }
+
+    // Check this is actually a valid user here (not just in e.g. an AD Forest)
+    let _usr = match user::find_user(&conn, &decoded.email) {
+        None => {
+            return Err(get_failure(Status::Forbidden, "Your chosen credentials are not valid for this system."));
+        }
+        Some(u) => {
+            debug!("User login: {:?}", u);
+            u
+        }
+    };
+
+    debug!(
+        "New session: {:?}",
+        session_manager.new_session(&decoded.email, &mut cookies)
+    );
+
+    Ok(util::RedirectWithBody::to("/"))
+}
+
+#[post("/openid", data = "<res>", rank = 2)]
+fn post_error(res: LenientForm<OpenIDError>) -> status::Custom<content::Html<String>> {
+    let response = res.into_inner();
+    get_failure(Status::Forbidden, &format!(
+        "Authentication error: {} ({})",
+        &response.error_description,
+        &response.error
+    ))
 }

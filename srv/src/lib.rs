@@ -31,6 +31,8 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate toml;
 extern crate url;
+extern crate base64;
+extern crate openssl;
 
 extern crate ldap3;
 extern crate reqwest;

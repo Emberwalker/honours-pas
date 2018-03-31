@@ -56,7 +56,7 @@ pub trait AuthnBackend: Downcast + Send + Sync {
     fn add_to_client_meta(&self, _meta: &mut Value) {}
 
     /// Allows custom on-logout functionality in providers.
-    fn on_logout(&self, _email: &str) {}
+    fn on_logout(&self, _email: &str) -> Option<String> { None }
 }
 
 // Enable (safe) downcasting to implementing types.
@@ -83,7 +83,7 @@ impl AuthnBackend for AuthnHolder {
         self.0.add_to_client_meta(meta);
     }
 
-    fn on_logout(&self, email: &str) {
-        self.0.on_logout(email);
+    fn on_logout(&self, email: &str) -> Option<String> {
+        self.0.on_logout(email)
     }
 }

@@ -101,11 +101,11 @@ impl SessionManager {
         session_cloned
     }
 
-    pub fn remove_session(&self, email: &str, auth_backend: &AuthnHolder) {
+    pub fn remove_session(&self, email: &str, auth_backend: &AuthnHolder) -> Option<String> {
         info!("Expiring active sessions for {}", email);
         let mut sessions = self.sessions.write().unwrap();
         sessions.retain(|_k, v| v.email != email);
-        auth_backend.on_logout(email);
+        auth_backend.on_logout(email)
     }
 }
 

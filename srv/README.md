@@ -24,6 +24,11 @@ or just giving up and using Windows Subsystem for Linux to build, run and use Di
     8. Use Diesel CLI and Cargo as normal in a WSL session.
       - If generating the schema with `diesel print-schema`, remember to run `unix2dos` on the resulting file.
       `unix2dos` can be installed with `sudo apt install dos2unix` (yes, the name is flipped).
+- Building on Windows also requires OpenSSL, which is just as annoying. For vcpkg:
+  1. Install vcpkg as documented, and `vcpkg install openssl:x64-windows`
+  2. Edit your user environment variables to have:
+    - `VCPKG_ROOT`, set to your vcpkg directory (where vcpkg.exe is located)
+    - `VCPKGRS_DYNAMIC` = `1` (enables vcpkg-rs to locate packages such as OpenSSL)
 
 ## Updating Notes
 
