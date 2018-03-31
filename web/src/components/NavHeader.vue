@@ -11,6 +11,7 @@
             <router-link class="nav-link" to="/admin">Administration</router-link>
           </li>
         </ul>
+        <a v-if="isLoggedIn" href="/api/v1/logout" class="text-white"><feather alt="logout" icon="log-out"/></a>
       </div>
     </div>
   </nav>
@@ -24,6 +25,9 @@
     computed: {
       isAdmin(): boolean {
         return this.$store.state.user && this.$store.state.user.user_type === UserType.Administrator;
+      },
+      isLoggedIn(): boolean {
+        return true && this.$store.state.user;
       },
     },
     data() {

@@ -32,7 +32,7 @@ pub struct SessionManager {
 }
 
 impl SessionManager {
-    pub fn new(conf: &Config) -> Arc<Self> {
+    pub fn new(conf: &Config, auth: Arc<AuthnBackend>) -> Arc<Self> {
         let expiry = conf.get_session_expiry();
         let arc = Arc::new(SessionManager {
             max_age: ChronoDuration::minutes(i64::from(expiry))
@@ -64,7 +64,9 @@ impl SessionManager {
                         info!("Purging {} expired sessions.", vec.len());
                         let mut sessions = arc_clone.sessions.write().unwrap();
                         for id in vec.drain(..) {
-                            sessions.remove(&id);
+                            if let Some(sess) = sessions.remove(&id) {
+                                auth.on_logout(&sess.email); // Allows auth providers to perform cleanup.
+                            }
                         }
                     }
                 }

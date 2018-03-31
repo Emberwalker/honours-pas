@@ -169,6 +169,7 @@ pub struct OpenIDAuthnBackend {
     jwt_validator: jwt::Validation,
     jwks_keys: RwLock<HashMap<String, ParsedJWK>>, // kid (Key ID) -> JWK struct
     csrf_sessions: RwLock<HashMap<String, OpenIDCSRFSession>>, // Cookie token -> CSRF session metadata
+    old_tokens: RwLock<HashMap<String, String>>, // Email -> old id_token (for logout id_token_hint)
 }
 
 impl OpenIDAuthnBackend {
@@ -220,6 +221,7 @@ impl OpenIDAuthnBackend {
             jwt_validator: validation,
             jwks_keys: RwLock::new(jwks_keys),
             csrf_sessions: RwLock::new(HashMap::new()),
+            old_tokens: RwLock::new(HashMap::new()),
         });
 
         OpenIDAuthnBackend::start_cleanup_thread(Arc::clone(&backend));
@@ -338,9 +340,19 @@ impl<'a> AuthnBackend for OpenIDAuthnBackend {
         meta["openid_url"] = Value::String("/api/authn/openid".to_string());
     }
 
-    fn on_logout(&self, _email: &str) -> Option<String> {
+    fn on_logout(&self, email: &str) -> Option<String> {
+        let old_token = {
+            let mut token_bag = self.old_tokens.write().unwrap();
+            token_bag.remove(email)
+        };
         match self.logout_url_base {
-            Some(ref url) => Some(url.clone().to_string()),
+            Some(ref url) => {
+                let mut url = url.clone();
+                if let Some(ref token) = old_token {
+                    url.query_pairs_mut().append_pair("id_token_hint", token);
+                }
+                Some(url.to_string())
+            },
             None => None,
         }
     }
@@ -518,6 +530,11 @@ fn post_success(
             u
         }
     };
+
+    {
+        let mut token_bag = auth.old_tokens.write().unwrap();
+        token_bag.insert(decoded.email.clone(), response.id_token.clone());
+    }
 
     debug!(
         "New session: {:?}",

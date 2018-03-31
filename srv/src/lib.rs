@@ -115,7 +115,7 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
 
     let pool = Arc::new(db::init_pool(&conf));
     let auth_provider = get_authn_provider(conf_loc, &conf, Arc::clone(&pool));
-    let session_provider = session::SessionManager::new(&conf);
+    let session_provider = session::SessionManager::new(&conf, Arc::clone(&auth_provider));
 
     rocket::custom(get_rocket_config(&conf), true)
         .attach(fairing::ServerHeader())
