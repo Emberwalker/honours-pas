@@ -148,7 +148,7 @@ pub fn add_user(conf_loc: &str, uname: &str, passwd: &str, fname: &str) -> Resul
         &NewStaff {
             email: uname.to_string(),
             full_name: fname.to_string(),
-            is_admin: true,
+            is_admin: Some(true),
         },
     ).map_err(|e| format!("{:?}", e))?;
 

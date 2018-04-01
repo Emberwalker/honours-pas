@@ -112,7 +112,7 @@ pub mod new {
     pub struct Staff {
         pub email: String,
         pub full_name: String,
-        pub is_admin: bool,
+        pub is_admin: Option<bool>,
     }
 
     #[derive(Deserialize, Insertable, PartialEq, Debug)]
