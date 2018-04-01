@@ -102,7 +102,6 @@ const router = new Router({
 
 router.beforeEach((to, from, next) => {
   if (to.path !== "/login" && !store.state.user) {
-    console.debug("PRENAV: Redirect to Login");
     return next("/login");
   }
   next();

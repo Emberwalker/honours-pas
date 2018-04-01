@@ -34,7 +34,7 @@
                   </div>
                 </div>
               </div>
-              <button v-if="session.is_current" @click="generateReport(session)" type="button" class="btn btn-sm btn-primary">Generate Report</button>
+              <button @click="generateReport(session)" type="button" class="btn btn-sm btn-primary">Generate Report</button>
               <button v-if="session.is_current" type="button" data-toggle="modal" data-target="#archiveModal" :data-session="session.id" class="float-md-right btn btn-sm btn-danger stripes-sm">Archive Session</button>
               <button v-else type="button" data-toggle="modal" data-target="#purgeModal" :data-session="session.id" class="float-md-right btn btn-sm btn-danger stripes-sm">Delete Permanently</button>
             </div>
@@ -92,8 +92,8 @@
             </div>
             <div class="modal-body">
               <p>
-                Archiving a session will destroy all assosciated student data, and prevent staff from editing any
-                projects in this session.
+                Archiving a session will prevent staff from editing any projects in this session and deactivate all
+                current student logins, making this session immutable.
               </p>
               <span class="font-weight-bold">
                 Are you sure you wish to archive this session?
@@ -132,7 +132,7 @@
         </div>
       </div>
       <!-- Sessions END, Staff START -->
-      <div class="row">
+      <div class="row row-break">
         <div class="col">
           <h2 class="h1">Staff</h2>
         </div>
@@ -160,17 +160,39 @@
                 <td>{{s.email}}</td>
                 <td v-if="s.is_admin" class="text-weight-bold">&#10003;</td>
                 <td v-else class="text-weight-bold">&#10007;</td>
-                <td><!-- TODO --></td>
+                <td>
+                  <button @click="onRmStaff(s.id)" type="button" class="btn btn-sm btn-danger stripes">Delete</button>
+                  <button @click="onToggleAdmin(s)" :disabled="currentUser(s)" type="button" class="btn btn-sm btn-primary">Toggle Admin</button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
       <div class="row">
-        <!-- TODO: File selection for Papa Parse -->
+        <div class="col">
+          <h3>Upload New Staff</h3>
+          <p class="h5 font-weight-normal">Any entries which match an email address that already exists will be updated, not duplicated.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <form @submit.prevent="onNewStaff()">
+            <div class="form-group">
+              <label for="staffInputFile">CSV File</label>
+              <input type="file" class="form-control h-auto" id="staffInputFile" aria-describedby="staffFileHelp" ref="staffInputFile" accept=".csv,text/csv">
+              <small id="staffFileHelp">Please only have two columns - email address and full name</small>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="staffInputHasHeaders" v-model="staffHasHeaders">
+              <label for="staffInputHasHeaders">Has Header Row? (If checked, this will drop the first line of input.)</label>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Upload</button>
+          </form>
+        </div>
       </div>
       <!-- Staff END, Students START -->
-      <div class="row">
+      <div class="row row-break">
         <div class="col">
           <h2 class="h1">Students</h2>
           <p class="h4 text-muted">
@@ -198,14 +220,33 @@
                 <th scope="row">{{s.id}}</th>
                 <td>{{s.full_name}}</td>
                 <td>{{s.email}}</td>
-                <td><!-- TODO --></td>
+                <td><button @click="onRmStudent(s.id)" type="button" class="btn btn-sm btn-danger stripes">Delete</button></td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
       <div class="row">
-        <!-- TODO: File selection for Papa Parse -->
+        <div class="col">
+          <h3>Upload New Students</h3>
+          <p class="h5 font-weight-normal">Any entries which match an email address that already exists will be updated, not duplicated.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <form @submit.prevent="onNewStudents()">
+            <div class="form-group">
+              <label for="studentsInputFile">CSV File</label>
+              <input type="file" class="form-control h-auto" id="studentsInputFile" aria-describedby="studentsFileHelp" ref="studentInputFile" accept=".csv,text/csv">
+              <small id="studentsFileHelp">Please only have two columns - email address and full name</small>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="studentsInputHasHeaders" v-model="studentsHasHeaders">
+              <label for="studentsInputHasHeaders">Has Header Row? (If checked, this will drop the first line of input.)</label>
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Upload</button>
+          </form>
+        </div>
       </div>
       <!-- Students END -->
     </div>
@@ -215,14 +256,20 @@
 <script lang="ts">
 import $ from "jquery";
 import _ from "lodash";
+import Papa from "papaparse";
 import Vue from "vue";
 import {mapState} from "vuex";
 import Actions from "../lib/Actions";
 import HTTP from "../lib/HTTP";
 import {INewSession, IProject, ISession, ISupervisorCounter, IUserEntry} from "../lib/Types";
+import { COMMIT_NOT_WORKING, COMMIT_WORKING } from "../stores/index";
 
 export default Vue.extend({
   computed: {
+    admins(): string[] {
+      const admins = this.staff.filter((it) => it.is_admin);
+      return admins.map((it) => it.email);
+    },
     projectsBySupervisor() {
       const sessions: ISession[] = this.$store.getters.sessions_for_user;
       const out = _.map(sessions, (session: ISession) => {
@@ -254,12 +301,17 @@ export default Vue.extend({
       newSessionSuperEmail: this.$store.state.user.email.slice(0), // Force a copy
       newSessionSuperName: this.$store.state.user.name.slice(0),
       staff: [] as IUserEntry[],
+      staffHasHeaders: false,
       staffLoaded: false,
       students: [] as IUserEntry[],
+      studentsHasHeaders: false,
       studentsLoaded: false,
     };
   },
   methods: {
+    currentUser(ent: IUserEntry): boolean {
+      return ent.email === this.$store.state.user.email;
+    },
     generateReport(session: ISession) {
       // TODO
       console.error("Report requested; not implemented! Session:", session.name);
@@ -284,6 +336,34 @@ export default Vue.extend({
         this.updateStudents();
       });
     },
+    onRmStaff(id: number) {
+      this.$store.commit(COMMIT_WORKING);
+      // TODO: Error handling
+      HTTP.delete("/staff/" + id).then((res) => {
+        this.updateStaff();
+      }).finally(() => {
+        this.$store.commit(COMMIT_NOT_WORKING);
+      });
+    },
+    onRmStudent(id: number) {
+      this.$store.commit(COMMIT_WORKING);
+      // TODO: Error handling
+      HTTP.delete("/students/" + id).then((res) => {
+        this.updateStudents();
+      }).finally(() => {
+        this.$store.commit(COMMIT_NOT_WORKING);
+      });
+    },
+    onToggleAdmin(entry: IUserEntry) {
+      this.$store.commit(COMMIT_WORKING);
+      const modified = $.extend({}, entry) as IUserEntry;
+      modified.is_admin = !modified.is_admin;
+      HTTP.post("/staff", { staff: [modified] }).then((res) => {
+        this.updateStaff();
+      }).finally(() => {
+        this.$store.commit(COMMIT_NOT_WORKING);
+      });
+    },
     onNewSubmit() {
       if (this.newSessionName === "" || this.newSessionSuperEmail === "" || this.newSessionSuperName === "") {
         this.newSessionInputError = true;
@@ -306,12 +386,102 @@ export default Vue.extend({
         this.updateStudents();
       });
     },
+    onNewStaff() {
+      const input = ($(this.$refs.staffInputFile) as any)[0];
+      if (input.files.length === 0) {
+        alert("No file provided. Please select a CSV file to upload first.");
+        return;
+      }
+      this.$store.commit(COMMIT_WORKING);
+      const file = input.files[0];
+      Papa.parse(file, {
+        complete: this.onNewStaffCallback,
+        delimiter: ",",
+        skipEmptyLines: true,
+      });
+    },
+    onNewStaffCallback(parsed: Papa.ParseResult) {
+      const raws = this.verifyParse(this.staffHasHeaders, parsed);
+      if (!raws) { return; }
+
+      const built = raws.map((row) => {
+        return {
+          email: row[0],
+          full_name: row[1],
+          is_admin: _.find(this.admins, (it) => it === row[0]) !== undefined,
+        };
+      });
+
+      // TODO: Error handling
+      HTTP.post("/staff", { staff: built }).then((res) => {
+        this.updateStaff();
+      }).finally(() => {
+        this.$store.commit(COMMIT_NOT_WORKING);
+      });
+    },
+    onNewStudents() {
+      const input = ($(this.$refs.studentInputFile) as any)[0];
+      if (input.files.length === 0) {
+        alert("No file provided. Please select a CSV file to upload first.");
+        return;
+      }
+      this.$store.commit(COMMIT_WORKING);
+      const file = input.files[0];
+      Papa.parse(file, {
+        complete: this.onNewStudentsCallback,
+        delimiter: ",",
+        skipEmptyLines: true,
+      });
+    },
+    onNewStudentsCallback(parsed: Papa.ParseResult) {
+      const raws = this.verifyParse(this.studentsHasHeaders, parsed);
+      if (!raws) { return; }
+
+      const built = raws.map((row) => {
+        return {
+          email: row[0],
+          full_name: row[1],
+        };
+      });
+
+      // TODO: Error handling
+      HTTP.post("/students", { students: built }).then((res) => {
+        this.updateStudents();
+      }).finally(() => {
+        this.$store.commit(COMMIT_NOT_WORKING);
+      });
+    },
+    updateStaff() {
+      // TODO: Error handling
+      this.staffLoaded = false;
+      HTTP.get("/staff").then((res) => {
+        this.staff = _.sortBy(res.data.staff as IUserEntry[], "id");
+        this.staffLoaded = true;
+      });
+    },
     updateStudents() {
+      // TODO: Error handling
       this.studentsLoaded = false;
-      HTTP.get("/students").then((res) => {
-        this.students = res.data.students as IUserEntry[];
+      HTTP.get("/students/current").then((res) => {
+        this.students = _.sortBy(res.data.students as IUserEntry[], "id");
         this.studentsLoaded = true;
       });
+    },
+    verifyParse(dropFirst: boolean, parsed: Papa.ParseResult): string[] | null {
+      if (parsed.errors.length !== 0) {
+        this.$store.commit(COMMIT_NOT_WORKING);
+        parsed.errors.forEach((it) => {
+          console.error(it);
+        });
+        alert(parsed.errors.length + " errors occured during parsing.");
+        return null;
+      }
+
+      let raws = parsed.data;
+      if (dropFirst) {
+        raws = _.drop(raws, 1); // Drop header
+      }
+      return raws;
     },
   },
   mounted() {
@@ -322,11 +492,7 @@ export default Vue.extend({
     $(this.$refs.purgeModal).on("show.bs.modal", evtHandler);
 
     // Kick off loading of staff and students
-    // TODO: Error handling
-    HTTP.get("/staff").then((res) => {
-      this.staff = res.data.staff as IUserEntry[];
-      this.staffLoaded = true;
-    });
+    this.updateStaff();
     this.updateStudents();
   },
   name: "AdminRoot",
@@ -344,5 +510,13 @@ export default Vue.extend({
 
 .loading-text {
   vertical-align: top;
+}
+
+.row-break {
+  margin-top: 2rem;
+}
+
+.h-auto {
+  height: auto;
 }
 </style>

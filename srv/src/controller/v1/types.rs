@@ -4,7 +4,7 @@ use rocket_contrib::Json;
 use db::session::Session;
 use db::project::ProjectWithStaff;
 use db::staff::{NewStaff, Staff};
-use db::student::{NewStudent, Student};
+use db::student::Student;
 
 pub type ErrorResponse = status::Custom<Json<GenericMessage>>;
 pub type V1Response<T> = Result<Json<T>, ErrorResponse>;
@@ -61,7 +61,13 @@ pub struct StudentList {
 
 #[derive(Deserialize, Debug)]
 pub struct NewStudentList {
-    pub students: Vec<NewStudent>,
+    pub students: Vec<NewStudentEntry>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct NewStudentEntry {
+    pub email: String,
+    pub full_name: String,
 }
 
 #[derive(Deserialize, Debug)]

@@ -4,8 +4,7 @@ use std::sync::Arc;
 
 use rocket::{Route, State};
 
-use db::staff;
-use db::student;
+use db::{staff, student, session};
 use session::SessionManager;
 use authn::AuthnHolder;
 
@@ -28,6 +27,7 @@ fn get_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<Stud
 fn get_curr_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StudentList> {
     match student::get_all_current(&conn) {
         Ok(v) => Ok(Json(StudentList { students: v })),
+        Err(SelectError::NoSuchValue()) => Ok(Json(StudentList { students: Vec::new() })),
         Err(e) => {
             error!("Unable to fetch students: {:?}", e);
             Err(internal_server_error!("database error"))
@@ -62,11 +62,26 @@ fn rm_student(
 
 #[post("/students", data = "<body>")]
 fn new_students(
-    body: Json<NewStudentList>,
+    mut body: Json<NewStudentList>,
     _usr: staff::Admin,
     conn: DatabaseConnection,
 ) -> V1Response<GenericMessage> {
-    student::create_batch(&conn, &body.students).map_err(|e| {
+    let sess = match session::get_latest_session(&conn) {
+        Ok(s) => s,
+        Err(SelectError::NoSuchValue()) => return Err(bad_request!("no current session")),
+        Err(SelectError::DieselError(e)) => {
+            error!("Unable to fetch latest session: {}", e);
+            return Err(internal_server_error!("database error"));
+        }
+    };
+
+    let students = body.students.drain(..).map(move |s| student::NewStudent {
+        email: s.email,
+        full_name: s.full_name,
+        last_session: sess.id,
+    }).collect::<Vec<student::NewStudent>>();
+
+    student::create_batch(&conn, &students).map_err(|e| {
         error!("Diesel error creating students: {}", e);
         debug!("Additional information: {:?}", e);
         internal_server_error!("database error")
