@@ -5,10 +5,9 @@ use std::fs::File;
 use std::io::Read;
 use std::thread;
 
-use time;
 use url;
 use rocket::{Route, State};
-use rocket::http::{Cookie, Cookies, Status};
+use rocket::http::{Cookies, Status};
 use rocket::request::LenientForm;
 use rocket::response::{status, content};
 use serde_json::Value;
@@ -31,12 +30,6 @@ lazy_static! {
 }
 
 const JWKS_REFRESH: u32 = 60; // 60 x 30s iterations = 30mins
-
-#[cfg(feature = "insecure")]
-const SECURED: bool = false;
-
-#[cfg(not(feature = "insecure"))]
-const SECURED: bool = true;
 
 #[derive(Debug)]
 enum ConfigWrapper {
@@ -287,13 +280,13 @@ impl OpenIDAuthnBackend {
             .expect("maintenance thread creation");
     }
 
-    fn new_csrf_session(&self, cookies: &mut Cookies) -> OpenIDCSRFSession {
-        let cookie_val = util::generate_rand_string(32);
+    fn new_csrf_session(&self) -> OpenIDCSRFSession {
+        let state = util::generate_rand_string(32);
         let nonce = util::generate_rand_string(32);
 
         let session = OpenIDCSRFSession {
             created: Instant::now(),
-            state_token: cookie_val.clone(),
+            state_token: state.clone(),
             nonce_token: nonce.clone(),
         };
 
@@ -301,29 +294,15 @@ impl OpenIDAuthnBackend {
 
         {
             let mut sessions = self.csrf_sessions.write().unwrap();
-            sessions.insert(cookie_val.clone(), session);
+            sessions.insert(state.clone(), session);
         }
-
-        let mut cookie_builder = Cookie::build("openid_csrf", cookie_val)
-            .secure(SECURED)
-            .http_only(true);
-
-        if let Ok(duration) = time::Duration::from_std(*CSRF_DURATION) {
-            cookie_builder = cookie_builder.expires(time::now() + duration);
-        }
-
-        let cookie = cookie_builder.finish();
-        cookies.add_private(cookie);
 
         ret_session
     }
 
-    fn pull_csrf_session(&self, cookies: &mut Cookies) -> Result<OpenIDCSRFSession, ()> {
-        let csrf_cookie = cookies.get_private("openid_csrf").ok_or(())?;
+    fn pull_csrf_session(&self, state: &str) -> Result<OpenIDCSRFSession, ()> {
         let mut sessions = self.csrf_sessions.write().unwrap();
-        let ret = sessions.remove(csrf_cookie.value()).ok_or(());
-        cookies.remove_private(csrf_cookie);
-        ret
+        sessions.remove(state).ok_or(())
     }
 }
 
@@ -464,12 +443,12 @@ fn get_failure(stat: Status, body: &str) -> status::Custom<content::Html<String>
 }
 
 #[get("/openid")]
-fn get_redirect(auth: State<AuthnHolder>, mut cookies: Cookies) -> util::RedirectWithBody {
+fn get_redirect(auth: State<AuthnHolder>) -> util::RedirectWithBody {
     let auth = (*auth.inner())
         .0
         .downcast_ref::<OpenIDAuthnBackend>()
         .expect("Downcast to OpenID provider");
-    let session = auth.new_csrf_session(&mut cookies);
+    let session = auth.new_csrf_session();
 
     let mut redirect = auth.redirect_url_base.clone();
     let mut redir_uri = auth.server_url_base.clone();
@@ -505,12 +484,13 @@ fn post_success(
         .downcast_ref::<OpenIDAuthnBackend>()
         .expect("Downcast to OpenID provider");
 
-    let csrf_session = auth.pull_csrf_session(&mut cookies).map_err(|_| get_failure(
+    let response = res.into_inner();
+
+    let csrf_session = auth.pull_csrf_session(&response.state).map_err(|_| get_failure(
         Status::BadRequest,
         "No matching CSRF session found. Please try logging in again."
     ))?;
 
-    let response = res.into_inner();
     // Decode and verify JSON Web Token
     let decoded = decode(auth, &response.id_token).map_err(|_|
         get_failure(Status::BadRequest, "Unable to decode or verify token."))?;
