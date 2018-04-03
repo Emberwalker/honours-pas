@@ -11,6 +11,11 @@
                 "kind": "build",
                 "isDefault": true
             },
+            "options": {
+                "env": {
+                    "RUST_BACKTRACE": "0"
+                }
+            },
             "problemMatcher": []
         },
         {

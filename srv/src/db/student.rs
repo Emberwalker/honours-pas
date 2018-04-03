@@ -108,6 +108,23 @@ pub mod selection {
 
         Ok(students)
     }
+
+    pub fn get_all_for_session(conn: &DatabaseConnection, sess: i32) -> Result<Vec<StudentSelection>, SelectError> {
+        use diesel::prelude::*;
+        use schema::{student_selections, students};
+
+        let sels = student_selections::table
+            .inner_join(students::table)
+            .filter(students::last_session.eq(sess))
+            .select(student_selections::table::all_columns())
+            .load::<StudentSelection>(conn.raw())
+            .map_err(|e| match e {
+                diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+                e => SelectError::DieselError(e),
+            })?;
+
+        Ok(sels)
+    }
 }
 
 pub mod mark {

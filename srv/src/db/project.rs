@@ -118,6 +118,10 @@ pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<Project>, SelectError> {
     generate_select_body!(multi, conn, projects, Project)
 }
 
+pub fn get_all_by_session(conn: &DatabaseConnection, id: i32) -> Result<Vec<Project>, SelectError> {
+    generate_select_body!(multi, conn, projects, Project, (session, id))
+}
+
 pub fn get_project(conn: &DatabaseConnection, id: i32) -> Result<Project, SelectError> {
     generate_select_body!(single, conn, projects, Project, (id, id))
 }
