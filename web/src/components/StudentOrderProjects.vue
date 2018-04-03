@@ -9,29 +9,44 @@
           Toggle the equals button between projects to state that two projects are equal.
         </p>
         <div class="container projlist-section">
-          <project-card :project="p0" :key="p0.id">
-            <!-- Add extra buttons for bottom of the card here. -->
-            <button type="button" class="btn btn-sm btn-primary" v-on:click="swap(0)"><feather nopad icon="arrow-down"/></button>
-          </project-card>
+          <div class="row">
+            <div class="col-1 align-self-center rank-text">1.</div>
+            <div class="col">
+              <project-card :project="p0" :key="p0.id">
+                <!-- Add extra buttons for bottom of the card here. -->
+                <button type="button" class="btn btn-sm btn-primary" v-on:click="swap(0)"><feather nopad icon="arrow-down"/></button>
+              </project-card>
+            </div>
+          </div>
           <div class="row justify-content-center">
             <button type="button" class="btn" v-on:click="toggleFirstSecond" :class="equalFirstSecond ? 'btn-success' : 'btn-danger'">
-              {{ equalFirstSecond ? '=' : '=/=' }}
+              {{ equalFirstSecond ? '==' : '=/=' }}
             </button>
           </div>
-          <project-card :project="p1" :key="p1.id">
-            <!-- Add extra buttons for bottom of the card here. -->
-            <button type="button" class="btn btn-sm btn-primary" v-on:click="swap(0)"><feather nopad icon="arrow-up"/></button>
-            <button type="button" class="btn btn-sm btn-primary" v-on:click="swap(1)"><feather nopad icon="arrow-down"/></button>
-          </project-card>
+          <div class="row">
+            <div class="col-1 align-self-center rank-text">2.</div>
+            <div class="col">
+              <project-card :project="p1" :key="p1.id">
+                <!-- Add extra buttons for bottom of the card here. -->
+                <button type="button" class="btn btn-sm btn-primary" v-on:click="swap(0)"><feather nopad icon="arrow-up"/></button>
+                <button type="button" class="btn btn-sm btn-primary" v-on:click="swap(1)"><feather nopad icon="arrow-down"/></button>
+              </project-card>
+            </div>
+          </div>
           <div class="row justify-content-center">
             <button type="button" class="btn" v-on:click="toggleSecondThird" :class="equalSecondThird ? 'btn-success' : 'btn-danger'">
-              {{ equalSecondThird ? '=' : '=/=' }}
+              {{ equalSecondThird ? '==' : '=/=' }}
             </button>
           </div>
-          <project-card :project="p2" :key="p2.id">
-            <!-- Add extra buttons for bottom of the card here. -->
-            <button type="button" class="btn btn-sm btn-primary" v-on:click="swap(1)"><feather nopad icon="arrow-up"/></button>
-          </project-card>
+          <div class="row">
+            <div class="col-1 align-self-center rank-text">3.</div>
+            <div class="col">
+              <project-card :project="p2" :key="p2.id">
+                <!-- Add extra buttons for bottom of the card here. -->
+                <button type="button" class="btn btn-sm btn-primary" v-on:click="swap(1)"><feather nopad icon="arrow-up"/></button>
+              </project-card>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -147,6 +162,10 @@
 
   .submit-btn {
     margin-top: 1.5rem;
+  }
+
+  .rank-text {
+    font-size: 3rem;
   }
 
 </style>
