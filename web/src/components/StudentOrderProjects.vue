@@ -62,6 +62,27 @@
         <button type="submit" class=" submit-btn btn btn-lg btn-success" @click="submit">Submit</button>
       </div>
     </div>
+    <!-- Finished Modal -->
+    <div class="modal fade" ref="doneModal" id="doneModal" tabindex="-1" role="dialog" aria-labelledby="doneModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="doneModalLabel">Finished</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Cancel">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p><b>Your choices have been submitted.</b> You can now close this window.</p>
+            <p>If you need to change the order or comment on your selection, close this dialog and resubmit.</p>
+            <p>If you want to change any of your selections entirely, return to the home page by clicking 'Honours Projects' in the navigation bar.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" data-dismiss="modal" aria-label="Cancel" class="btn btn-sm btn-primary">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -141,7 +162,7 @@
             type: Actions.SET_SELECTION_COMMENT,
           });
         }).then(() => {
-          this.$router.push("/");
+          ($(this.$refs.doneModal) as any).modal("show");
         });
       },
       swap(fst: number) {
