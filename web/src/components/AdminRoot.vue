@@ -65,16 +65,16 @@
                 </div>
                 <div class="form-group">
                   <label for="new-session-super-name-field">Supervisor Name</label>
-                  <input type="text" class="form-control form-control-sm" id="new-session-super-name-field" placeholder="Supeervisor Name" v-model="newSessionSuperName">
+                  <input type="text" class="form-control form-control-sm" id="new-session-super-name-field" placeholder="Supervisor Name" v-model="newSessionSuperName">
                 </div>
                 <div class="form-group">
                   <label for="new-session-super-email-field">Supervisor Email</label>
-                  <input type="email" autocomplete="email" class="form-control form-control-sm" id="new-session-super-email-field" placeholder="Supeervisor Email" v-model="newSessionSuperEmail">
+                  <input type="email" autocomplete="email" class="form-control form-control-sm" id="new-session-super-email-field" placeholder="Supervisor Email" v-model="newSessionSuperEmail">
                 </div>
                 <button hidden="hidden" type="submit"></button>
               </form>
             </div>
-            <div class="modal-footer arcpurge-footer">
+            <div class="modal-footer">
               <button type="button" data-dismiss="modal" aria-label="Cancel" class="btn btn-sm btn-primary">Cancel</button>
               <button type="button" @click="onNewSubmit" class="float-md-right btn btn-sm btn-success">Create</button>
             </div>
@@ -99,7 +99,7 @@
                 Are you sure you wish to archive this session?
               </span>
             </div>
-            <div class="modal-footer arcpurge-footer">
+            <div class="modal-footer">
               <button type="button" data-dismiss="modal" aria-label="Cancel" class="btn btn-sm btn-primary">Cancel</button>
               <button type="button" @click="onArchiveSubmit" data-dismiss="modal" class="float-md-right btn btn-sm btn-danger">Archive</button>
             </div>
@@ -124,7 +124,7 @@
                 Are you sure you wish to delete this session permanently?
               </span>
             </div>
-            <div class="modal-footer arcpurge-footer">
+            <div class="modal-footer">
               <button type="button" data-dismiss="modal" aria-label="Cancel" class="btn btn-sm btn-primary">Cancel</button>
               <button type="button" @click="onPurgeSubmit" data-dismiss="modal" class="float-md-right btn btn-sm btn-danger">Delete Permanently</button>
             </div>
@@ -134,7 +134,10 @@
       <!-- Sessions END, Staff START -->
       <div class="row row-break">
         <div class="col">
-          <h2 class="h1">Staff</h2>
+          <h2 class="h1">
+            Staff
+            <button type="button" class="btn btn-sm btn-primary ml-2" @click="openStaffEdit(null)">New Staff</button>
+          </h2>
         </div>
       </div>
       <div class="row">
@@ -161,8 +164,9 @@
                 <td v-if="s.is_admin" class="text-weight-bold">&#10003;</td>
                 <td v-else class="text-weight-bold">&#10007;</td>
                 <td>
-                  <button @click="onRmStaff(s.id)" type="button" class="btn btn-sm btn-danger stripes">Delete</button>
-                  <button @click="onToggleAdmin(s)" :disabled="currentUser(s)" type="button" class="btn btn-sm btn-primary">Toggle Admin</button>
+                  <button @click="openStaffEdit(s)" type="button" class="btn btn-sm btn-primary">Edit</button>
+                  <button @click="onToggleAdmin(s)" :disabled="currentUser(s)" type="button" class="btn btn-sm btn-warning stripes-sm">Toggle Admin</button>
+                  <button @click="onRmStaff(s.id)" type="button" class="btn btn-sm btn-danger stripes-sm">Delete</button>
                 </td>
               </tr>
             </tbody>
@@ -191,13 +195,55 @@
           </form>
         </div>
       </div>
+      <!-- New/Edit staff modal -->
+      <div class="modal fade" ref="staffModal" id="staffModal" tabindex="-1" role="dialog" aria-labelledby="staffModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title" id="staffModalLabel">New/Edit Staff</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Cancel">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-warning" role="alert">
+                Using an existing email address will <i>update</i> the existing staff member.
+              </div>
+              <div class="alert alert-danger" role="alert" :hidden="!editStaffInputError">
+                One of the fields below is unspecified. Fill all fields and try again.
+              </div>
+              <form @submit.prevent="onStaffEdit()">
+                <div class="form-group">
+                  <label for="new-staff-email-field">Staff Email</label>
+                  <input type="email" autocomplete="email" class="form-control form-control-sm" id="new-session-super-email-field" placeholder="Staff Email" v-model="staffEditEmail">
+                </div>
+                <div class="form-group">
+                  <label for="new-session-name-field">Full Name</label>
+                  <input type="text" class="form-control form-control-sm" id="new-session-name-field" placeholder="Name" v-model="staffEditName">
+                </div>
+                <button hidden="hidden" type="submit"></button>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" data-dismiss="modal" aria-label="Cancel" class="btn btn-sm btn-primary">Cancel</button>
+              <button type="button" @click="onStaffEdit" class="float-md-right btn btn-sm btn-success">Create/Edit</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Staff END, Students START -->
       <div class="row row-break">
         <div class="col">
-          <h2 class="h1">Students</h2>
+          <h2 class="h1">
+            Students
+            <button :disabled="!hasCurrentSession" type="button" class="btn btn-sm btn-primary ml-2" @click="openStudentEdit(null)">New Student</button>
+          </h2>
           <p class="h4 text-muted">
             Current Session
           </p>
+          <div class="alert alert-danger" role="alert" :hidden="hasCurrentSession">
+            There must be an active session to upload or add students. Create a new session to begin.
+          </div>
         </div>
       </div>
       <div class="row">
@@ -220,7 +266,10 @@
                 <th scope="row">{{s.id}}</th>
                 <td>{{s.full_name}}</td>
                 <td>{{s.email}}</td>
-                <td><button @click="onRmStudent(s.id)" type="button" class="btn btn-sm btn-danger stripes">Delete</button></td>
+                <td>
+                  <button @click="openStudentEdit(s)" type="button" class="btn btn-sm btn-primary">Edit</button>
+                  <button @click="onRmStudent(s.id)" type="button" class="btn btn-sm btn-danger stripes-sm">Delete</button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -237,15 +286,51 @@
           <form @submit.prevent="onNewStudents()">
             <div class="form-group">
               <label for="studentsInputFile">CSV File</label>
-              <input type="file" class="form-control h-auto" id="studentsInputFile" aria-describedby="studentsFileHelp" ref="studentInputFile" accept=".csv,text/csv">
+              <input :disabled="!hasCurrentSession" type="file" class="form-control h-auto" id="studentsInputFile" aria-describedby="studentsFileHelp" ref="studentInputFile" accept=".csv,text/csv">
               <small id="studentsFileHelp">Please only have two columns - email address and full name</small>
             </div>
             <div class="form-check">
-              <input type="checkbox" class="form-check-input" id="studentsInputHasHeaders" v-model="studentsHasHeaders">
+              <input :disabled="!hasCurrentSession" type="checkbox" class="form-check-input" id="studentsInputHasHeaders" v-model="studentsHasHeaders">
               <label for="studentsInputHasHeaders">Has Header Row? (If checked, this will drop the first line of input.)</label>
             </div>
-            <button type="submit" class="btn btn-sm btn-primary">Upload</button>
+            <button :disabled="!hasCurrentSession" type="submit" class="btn btn-sm btn-primary">Upload</button>
           </form>
+        </div>
+      </div>
+      <!-- New/Edit student modal -->
+      <div class="modal fade" ref="studentModal" id="studentModal" tabindex="-1" role="dialog" aria-labelledby="studentModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title" id="studentModalLabel">New/Edit Student</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Cancel">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-warning" role="alert">
+                Using an existing email address will <i>update</i> the existing staff member.
+              </div>
+              <div class="alert alert-danger" role="alert" :hidden="!editStudentInputError">
+                One of the fields below is unspecified. Fill all fields and try again.
+              </div>
+              <form @submit.prevent="onStudentEdit()">
+                <div class="form-group">
+                  <label for="new-staff-email-field">Student Email</label>
+                  <input type="email" autocomplete="email" class="form-control form-control-sm" id="new-session-super-email-field" placeholder="Student Email" v-model="studentEditEmail">
+                </div>
+                <div class="form-group">
+                  <label for="new-session-name-field">Full Name</label>
+                  <input type="text" class="form-control form-control-sm" id="new-session-name-field" placeholder="Name" v-model="studentEditName">
+                </div>
+                <button hidden="hidden" type="submit"></button>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" data-dismiss="modal" aria-label="Cancel" class="btn btn-sm btn-primary">Cancel</button>
+              <button type="button" @click="onStudentEdit" class="float-md-right btn btn-sm btn-success">Create/Edit</button>
+            </div>
+          </div>
         </div>
       </div>
       <!-- Students END -->
@@ -269,6 +354,9 @@ export default Vue.extend({
     admins(): string[] {
       const admins = this.staff.filter((it) => it.is_admin);
       return admins.map((it) => it.email);
+    },
+    hasCurrentSession(): boolean {
+      return _.some(this.$store.state.available_sessions, (it: ISession) => it.is_current);
     },
     projectsBySupervisor() {
       const sessions: ISession[] = this.$store.getters.sessions_for_user;
@@ -296,13 +384,19 @@ export default Vue.extend({
   data() {
     return {
       activeModalSession: "",
+      editStaffInputError: false,
+      editStudentInputError: false,
       newSessionInputError: false,
       newSessionName: "",
       newSessionSuperEmail: this.$store.state.user.email.slice(0), // Force a copy
       newSessionSuperName: this.$store.state.user.name.slice(0),
       staff: [] as IUserEntry[],
+      staffEditEmail: "",
+      staffEditName: "",
       staffHasHeaders: false,
       staffLoaded: false,
+      studentEditEmail: "",
+      studentEditName: "",
       students: [] as IUserEntry[],
       studentsHasHeaders: false,
       studentsLoaded: false,
@@ -354,15 +448,38 @@ export default Vue.extend({
         this.$store.commit(COMMIT_NOT_WORKING);
       });
     },
+    onStaffEdit() {
+      if (this.staffEditEmail === "" || this.staffEditName === "") {
+        this.editStaffInputError = true;
+        return;
+      }
+
+      const staffer = {
+        email: this.staffEditEmail,
+        full_name: this.staffEditName,
+        is_admin: _.find(this.admins, (it) => it === this.staffEditEmail) !== undefined,
+      };
+      ($(this.$refs.staffModal) as any).modal("hide");
+      this.writeStaff([staffer]);
+    },
+    onStudentEdit() {
+      if (this.studentEditEmail === "" || this.studentEditName === "") {
+        this.editStudentInputError = true;
+        return;
+      }
+
+      const student = {
+        email: this.studentEditEmail,
+        full_name: this.studentEditName,
+      };
+      ($(this.$refs.studentModal) as any).modal("hide");
+      this.writeStudents([student]);
+    },
     onToggleAdmin(entry: IUserEntry) {
       this.$store.commit(COMMIT_WORKING);
       const modified = $.extend({}, entry) as IUserEntry;
       modified.is_admin = !modified.is_admin;
-      HTTP.post("/staff", { staff: [modified] }).then((res) => {
-        this.updateStaff();
-      }).finally(() => {
-        this.$store.commit(COMMIT_NOT_WORKING);
-      });
+      this.writeStaff([modified]);
     },
     onNewSubmit() {
       if (this.newSessionName === "" || this.newSessionSuperEmail === "" || this.newSessionSuperName === "") {
@@ -415,12 +532,7 @@ export default Vue.extend({
         };
       });
 
-      // TODO: Error handling
-      HTTP.post("/staff", { staff: built }).then((res) => {
-        this.updateStaff();
-      }).finally(() => {
-        this.$store.commit(COMMIT_NOT_WORKING);
-      });
+      this.writeStaff(built);
     },
     onNewStudents() {
       const input = ($(this.$refs.studentInputFile) as any)[0];
@@ -450,12 +562,31 @@ export default Vue.extend({
         };
       });
 
-      // TODO: Error handling
-      HTTP.post("/students", { students: built }).then((res) => {
-        this.updateStudents();
-      }).finally(() => {
-        this.$store.commit(COMMIT_NOT_WORKING);
-      });
+      this.writeStudents(built);
+    },
+    openStaffEdit(s: IUserEntry | null) {
+      this.editStaffInputError = false;
+      if (s !== null) {
+        this.staffEditEmail = s.email;
+        this.staffEditName = s.full_name;
+      } else {
+        this.staffEditEmail = "";
+        this.staffEditName = "";
+      }
+
+      ($(this.$refs.staffModal) as any).modal("show");
+    },
+    openStudentEdit(s: IUserEntry | null) {
+      this.editStudentInputError = false;
+      if (s !== null) {
+        this.studentEditEmail = s.email;
+        this.studentEditName = s.full_name;
+      } else {
+        this.studentEditEmail = "";
+        this.studentEditName = "";
+      }
+
+      ($(this.$refs.studentModal) as any).modal("show");
     },
     updateStaff() {
       // TODO: Error handling
@@ -489,6 +620,22 @@ export default Vue.extend({
       }
       return raws;
     },
+    writeStaff(staff: Array<{full_name: string, email: string, is_admin?: boolean}>) {
+      // TODO: Error handling
+      HTTP.post("/staff", { staff }).then((res) => {
+        this.updateStaff();
+      }).finally(() => {
+        this.$store.commit(COMMIT_NOT_WORKING);
+      });
+    },
+    writeStudents(students: Array<{full_name: string, email: string}>) {
+      // TODO: Error handling
+      HTTP.post("/students", { students }).then((res) => {
+        this.updateStudents();
+      }).finally(() => {
+        this.$store.commit(COMMIT_NOT_WORKING);
+      });
+    },
   },
   mounted() {
     const evtHandler = (evt: any) => {
@@ -506,7 +653,7 @@ export default Vue.extend({
 </script>
 
 <style scoped lang="scss">
-.arcpurge-footer {
+.modal-footer {
   display: block;
 }
 
