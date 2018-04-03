@@ -404,6 +404,9 @@ export default Vue.extend({
       const raws = this.verifyParse(this.staffHasHeaders, parsed);
       if (!raws) { return; }
 
+      // Remove blank entries (Excel leaves these if a line is deleted)
+      _.remove(raws, (it) => it[0] === "" || it[1] === "");
+
       const built = raws.map((row) => {
         return {
           email: row[0],
@@ -436,6 +439,9 @@ export default Vue.extend({
     onNewStudentsCallback(parsed: Papa.ParseResult) {
       const raws = this.verifyParse(this.studentsHasHeaders, parsed);
       if (!raws) { return; }
+
+      // Remove blank entries (Excel leaves these if a line is deleted)
+      _.remove(raws, (it) => it[0] === "" || it[1] === "");
 
       const built = raws.map((row) => {
         return {

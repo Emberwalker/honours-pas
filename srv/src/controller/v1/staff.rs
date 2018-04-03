@@ -39,10 +39,11 @@ fn rm_staff(
 
 #[post("/staff", data = "<body>")]
 fn new_staff(
-    body: Json<NewStaffList>,
+    mut body: Json<NewStaffList>,
     _usr: staff::Admin,
     conn: DatabaseConnection,
 ) -> V1Response<GenericMessage> {
+    body.staff.retain(|s| s.email != "" && s.full_name != "");
     staff::create_batch(&conn, &body.staff).map_err(|e| diesel_error_handler!(e))?;
     Ok(generic_message!("ok"))
 }

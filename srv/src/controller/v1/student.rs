@@ -45,17 +45,9 @@ fn rm_student(
 ) -> V1Response<GenericMessage> {
     let target = student::get(&conn, id).map_err(|e| match e {
         SelectError::NoSuchValue() => not_found!("no such student"),
-        SelectError::DieselError(e) => {
-            error!("Diesel error fetching student: {}", e);
-            debug!("Additional information: {:?}", e);
-            internal_server_error!("database error")
-        }
+        SelectError::DieselError(e) => diesel_error_handler!(e),
     })?;
-    student::delete(&conn, &target).map_err(|e| {
-        error!("Diesel error deleting student: {}", e);
-        debug!("Additional information: {:?}", e);
-        internal_server_error!("database error")
-    })?;
+    student::delete(&conn, &target).map_err(|e| diesel_error_handler!(e))?;
     manager.remove_session(&target.email, &auth);
     Ok(generic_message!("ok"))
 }
@@ -75,16 +67,15 @@ fn new_students(
         }
     };
 
-    let students = body.students.drain(..).map(move |s| student::NewStudent {
-        email: s.email,
-        full_name: s.full_name,
-        last_session: sess.id,
-    }).collect::<Vec<student::NewStudent>>();
+    let students = body.students.drain(..)
+        .filter(|s| s.email != "" && s.full_name != "")
+        .map(move |s| student::NewStudent {
+            email: s.email,
+            full_name: s.full_name,
+            last_session: sess.id,
+        })
+        .collect::<Vec<student::NewStudent>>();
 
-    student::create_batch(&conn, &students).map_err(|e| {
-        error!("Diesel error creating students: {}", e);
-        debug!("Additional information: {:?}", e);
-        internal_server_error!("database error")
-    })?;
+    student::create_batch(&conn, &students).map_err(|e| diesel_error_handler!(e))?;
     Ok(generic_message!("ok"))
 }
