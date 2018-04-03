@@ -9,6 +9,7 @@ import Login from "../components/Login.vue";
 import NewProject from "../components/NewProject.vue";
 import NotFound from "../components/NotFound.vue";
 import ProjectList from "../components/ProjectList.vue";
+import ReportView from "../components/ReportView.vue";
 import StudentOrderProjects from "../components/StudentOrderProjects.vue";
 import StudentPickProjects from "../components/StudentPickProjects.vue";
 import store from "../stores";
@@ -91,6 +92,13 @@ const router = new Router({
       component: AdminRoot,
       name: "admin_root",
       path: "/admin",
+    },
+    {
+      beforeEnter: isAdminGuard,
+      component: ReportView,
+      name: "generate_report",
+      path: "/report/:id",
+      props: true,
     },
     {
       component: NotFound,

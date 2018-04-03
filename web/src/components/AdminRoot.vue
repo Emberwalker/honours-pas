@@ -407,8 +407,7 @@ export default Vue.extend({
       return ent.email === this.$store.state.user.email;
     },
     generateReport(session: ISession) {
-      // TODO
-      console.error("Report requested; not implemented! Session:", session.name);
+      this.$router.push("/report/" + session.id);
     },
     onArchiveSubmit() {
       if (this.activeModalSession === "") { return; }
