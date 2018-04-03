@@ -28,7 +28,7 @@
     <div class="projlist-section" v-for="session in sessions" :key="session.id">
       <h3>{{ session.name }}</h3>
       <p class="h5 font-weight-normal text-muted" v-if="!session || session.projects.length === 0">No projects in this session.</p>
-      <project-card v-if="session" v-for="project in session.projects" :project="project" :key="project.id" :isCurrent="session.is_current">
+      <project-card v-if="session" v-for="project in sortProjects(session.projects)" :project="project" :key="project.id" :isCurrent="session.is_current">
         <!-- Add extra buttons for bottom of the card here. -->
         <router-link v-if="session.is_current && canEdit(project)" :to="'/edit/' + project.id">
           <button type="button" class="btn btn-sm btn-primary">Edit</button>
@@ -127,9 +127,9 @@ export default Vue.extend({
       if (usr && session) {
         // For staff/admins, show their own projects instead
         if (usr.user_type === UserType.Staff || usr.user_type === UserType.Administrator) {
-          return session.projects.filter((it: IProject) => it.supervisor_email === usr.email);
+          return this.sortProjects(session.projects.filter((it: IProject) => it.supervisor_email === usr.email));
         }
-        return session.projects.filter((it: IProject) => _.includes(usr.marked_projects, it.id));
+        return this.sortProjects(session.projects.filter((it: IProject) => _.includes(usr.marked_projects, it.id)));
       } else {
         return [];
       }
@@ -186,6 +186,9 @@ export default Vue.extend({
         project: project.id,
         type: Actions.RM_PROJECT,
       });
+    },
+    sortProjects(ps: IProject[]): IProject[] {
+      return _.sortBy(ps, ["supervisor_name", "name"]);
     },
     unmark(project: IProject) {
       this.$store.dispatch({

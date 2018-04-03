@@ -372,7 +372,7 @@ export default Vue.extend({
           }
           currSess[proj.supervisor_email].count += 1;
         });
-        const sessSorted = _.reverse(_.sortBy(_.values(currSess), ["count"]));
+        const sessSorted = _.sortBy(_.values(currSess), (it) => [1 / it.count, it.name]);
         return [session.name, sessSorted];
       });
       return _.fromPairs(out);
