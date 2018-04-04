@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use rocket::response::status;
 use rocket_contrib::Json;
 
@@ -122,7 +124,8 @@ pub struct SessionReport {
     pub by_student: Vec<SessionReportByStudent>,
     pub by_project: Vec<SessionReportByProject>,
     pub students: Vec<Student>,
-    pub projects: Vec<ProjectStripped>
+    pub projects: Vec<ProjectStripped>,
+    pub comments: HashMap<i32, String>,
 }
 
 #[derive(Serialize, Debug)]

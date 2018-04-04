@@ -166,4 +166,8 @@ pub mod comment {
         )?;
         Ok(comm.comment)
     }
+
+    pub fn get_all_for_session(conn: &DatabaseConnection, id: i32) -> Result<Vec<StudentComment>, SelectError> {
+        generate_select_body!(multi, conn, student_comments, StudentComment, (session, id))
+    }
 }

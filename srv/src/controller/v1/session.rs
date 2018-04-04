@@ -4,7 +4,6 @@ use std::collections::HashMap;
 
 use rocket::Route;
 use bigdecimal::BigDecimal;
-use num_traits::ToPrimitive;
 
 use db::{project, session, staff, student, user};
 
@@ -143,11 +142,24 @@ fn get_session_report(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> 
         is_eq: vs.iter().map(|it| it.iter().map(|ref it| it.1).collect::<Vec<bool>>()).collect::<Vec<Vec<bool>>>(),
     }).collect::<Vec<SessionReportByProject>>();
 
+    // Fetch comments
+    let mut comments_raw = student::comment::get_all_for_session(&conn, sess.id)
+        .map_err(select_error_handler!("unable to find comments"))?;
+
+    let mut comments: HashMap<i32, String> = HashMap::new();
+    for c in comments_raw.drain(..) {
+        match c.comment {
+            Some(comm) => comments.insert(c.student, comm),
+            None => continue,
+        };
+    }
+
     Ok(Json(SessionReport {
         session: sess,
         by_student: by_student,
         by_project: by_project,
         students: students,
         projects: projects,
+        comments: comments,
     }))
 }
