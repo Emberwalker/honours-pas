@@ -129,7 +129,6 @@ fn get_session_report(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> 
             //   `idx = student.is_eq.iter().take(i).rposition(|it| !*it).unwrap_or(i);`, which doesn't work due to
             // `DoubleEndedIterator` bounds. It then ensures there's no gaps in choices (2 first choices, and 1 _second_
             // choice rather than 2 firsts and a third choice).
-            debug!("i: {}, proj {:?}, student {:?}", i, proj, student);
             let mut idx = i - student.is_eq.iter().rev().skip(eq_count - i).position(|it| !*it).unwrap_or(i);
 
             // Catch if the previous was equal as well as if this one is.
