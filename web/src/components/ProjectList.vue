@@ -201,7 +201,7 @@ export default Vue.extend({
     $(this.$refs.rmModal).on("show.bs.modal", (evt: any) => {
       this.rmProjectId = $(evt.relatedTarget).data("project");
       this.$store.commit(COMMIT_WORKING);
-      HTTP.get("/projects/" + this.rmProjectId + "/students").then((res) => {
+      HTTP().get("/projects/" + this.rmProjectId + "/students").then((res) => {
         this.affectedStudents = res.data.students;
       }).catch((e) => {
         this.$store.commit(getErrorCommit("unable to fetch affected students.", e));

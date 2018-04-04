@@ -59,7 +59,7 @@ export default Vue.extend({
       if (this.server_opts) {
         // First check if we've already got a valid session.
         this.$store.commit(COMMIT_WORKING);
-        HTTP.get("/whoami").then((res) => {
+        HTTP().get("/whoami", true).then((res) => {
           this.onSuccess(res.data);
         }).catch((err) => {
           // Need to make a new session.
@@ -77,7 +77,7 @@ export default Vue.extend({
     },
     login() {
       this.$store.commit(COMMIT_WORKING);
-      HTTP.post("/auth", {
+      HTTP().post("/auth", {
         password: this.password,
         username: this.username,
       }).then((res) => {
@@ -101,7 +101,7 @@ export default Vue.extend({
           break;
       }
 
-      HTTP.get("/sessions/complete").then((sRes) => {
+      HTTP().get("/sessions/complete").then((sRes) => {
         const sessionsRaw: any[] = sRes.data.sessions;
         const projectsRaw: any[] = sRes.data.projects;
 
@@ -124,7 +124,7 @@ export default Vue.extend({
         });
 
         if (utype === UserType.Student) {
-          return HTTP.get("/me/marks").then((res) => {
+          return HTTP().get("/me/marks").then((res) => {
             const user: IUser = {
               email: whoami.email as string,
               marked_projects: res.data.projects as number[],

@@ -125,7 +125,7 @@ export const COMMIT_NOT_WORKING = {
 };
 
 export interface IReadableError {
-  src: Error | null;
+  src: string | Error | null;
   human: string;
 }
 
@@ -133,15 +133,17 @@ let initialServerOpts: any | null = null;
 let initialWorking: boolean = true;
 
 if (!DEMO_MODE) {
-  HTTP.get("/meta").then((response) => {
+  // We skip using HTTP() here due to circular dependency issues.
+  Axios.get("/api/v1/meta").then((response) => {
     const opts = response.data;
     STORE.commit({
       opts,
       type: _Mutations.SET_SERVER_OPS,
     });
-    STORE.commit(COMMIT_NOT_WORKING);
   }).catch((err) => {
     STORE.commit(getErrorCommit("Unable to fetch client metadata. Is the API server running?", err));
+  }).finally(() => {
+    STORE.commit(COMMIT_NOT_WORKING);
   });
 } else {
   initialWorking = false;
@@ -151,7 +153,7 @@ if (!DEMO_MODE) {
   };
 }
 
-export function getErrorCommit(human: string, err: Error | null): {type: string, err: IReadableError} {
+export function getErrorCommit(human: string, err: string | Error | null): {type: string, err: IReadableError} {
   return {
     err: {
       human,
@@ -272,7 +274,7 @@ const STORE = new Vuex.Store({
   actions: {
     async [Actions.ADD_MARKED_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.post("/me/marks", { id: payload.project }).then((res) => {
+      const promise = HTTP().post("/me/marks", { id: payload.project }).then((res) => {
         ctx.commit({
           type: _Mutations.ADD_MARKED_PROJECT,
           project: payload.project,
@@ -287,7 +289,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.RM_MARKED_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.delete("/me/marks/" + payload.project).then((res) => {
+      const promise = HTTP().delete("/me/marks/" + payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.RM_MARKED_PROJECT,
           project: payload.project,
@@ -302,7 +304,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.SET_SELECTED_PROJECTS](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.put("/me/selections", { selections: payload.projects }).then((res) => {
+      const promise = HTTP().put("/me/selections", { selections: payload.projects }).then((res) => {
         ctx.commit({
           type: _Mutations.SET_SELECTED_PROJECTS,
           projects: payload.projects,
@@ -317,7 +319,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.SET_SELECTION_COMMENT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.put("/me/comment", { comment: payload.comment }).then((res) => {
+      const promise = HTTP().put("/me/comment", { comment: payload.comment }).then((res) => {
         ctx.commit({
           type: _Mutations.SET_SELECTION_COMMENT,
           comment: payload.comment,
@@ -332,7 +334,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.NEW_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.post("/projects", payload.project).then((res) => {
+      const promise = HTTP().post("/projects", payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.NEW_PROJECT,
           project: res.data,
@@ -347,7 +349,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.EDIT_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.put("/projects/" + payload.project.id, payload.project).then((res) => {
+      const promise = HTTP().put("/projects/" + payload.project.id, payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.EDIT_PROJECT,
           project: payload.project,
@@ -362,7 +364,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.RM_PROJECT](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.delete("/projects/" + payload.project).then((res) => {
+      const promise = HTTP().delete("/projects/" + payload.project).then((res) => {
         ctx.commit({
           type: _Mutations.RM_PROJECT,
           project: payload.project,
@@ -377,7 +379,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.ARCHIVE_SESSION](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.post("/sessions/" + payload.session + "/archive", {}).then((res) => {
+      const promise = HTTP().post("/sessions/" + payload.session + "/archive", {}).then((res) => {
         ctx.commit({
           type: _Mutations.ARCHIVE_SESSION,
           session: payload.session,
@@ -392,7 +394,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.PURGE_SESSION](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.delete("/sessions/" + payload.session).then((res) => {
+      const promise = HTTP().delete("/sessions/" + payload.session).then((res) => {
         ctx.commit({
           type: _Mutations.PURGE_SESSION,
           session: payload.session,
@@ -407,7 +409,7 @@ const STORE = new Vuex.Store({
     },
     async [Actions.NEW_SESSION](ctx, payload) {
       ctx.commit(COMMIT_WORKING);
-      const promise = HTTP.post("/sessions", payload.session).then((res) => {
+      const promise = HTTP().post("/sessions", payload.session).then((res) => {
         const sess: any = res.data;
         sess.projects = [] as IProject[];
         sess.is_current = true;

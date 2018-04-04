@@ -432,7 +432,7 @@ export default Vue.extend({
     onRmStaff(id: number) {
       this.$store.commit(COMMIT_WORKING);
       // TODO: Error handling
-      HTTP.delete("/staff/" + id).then((res) => {
+      HTTP().delete("/staff/" + id).then((res) => {
         this.updateStaff();
       }).finally(() => {
         this.$store.commit(COMMIT_NOT_WORKING);
@@ -441,7 +441,7 @@ export default Vue.extend({
     onRmStudent(id: number) {
       this.$store.commit(COMMIT_WORKING);
       // TODO: Error handling
-      HTTP.delete("/students/" + id).then((res) => {
+      HTTP().delete("/students/" + id).then((res) => {
         this.updateStudents();
       }).finally(() => {
         this.$store.commit(COMMIT_NOT_WORKING);
@@ -590,7 +590,7 @@ export default Vue.extend({
     updateStaff() {
       // TODO: Error handling
       this.staffLoaded = false;
-      HTTP.get("/staff").then((res) => {
+      HTTP().get("/staff").then((res) => {
         this.staff = _.sortBy(res.data.staff as IUserEntry[], "id");
         this.staffLoaded = true;
       });
@@ -598,7 +598,7 @@ export default Vue.extend({
     updateStudents() {
       // TODO: Error handling
       this.studentsLoaded = false;
-      HTTP.get("/students/current").then((res) => {
+      HTTP().get("/students/current").then((res) => {
         this.students = _.sortBy(res.data.students as IUserEntry[], "id");
         this.studentsLoaded = true;
       });
@@ -621,7 +621,7 @@ export default Vue.extend({
     },
     writeStaff(staff: Array<{full_name: string, email: string, is_admin?: boolean}>) {
       // TODO: Error handling
-      HTTP.post("/staff", { staff }).then((res) => {
+      HTTP().post("/staff", { staff }).then((res) => {
         this.updateStaff();
       }).finally(() => {
         this.$store.commit(COMMIT_NOT_WORKING);
@@ -629,7 +629,7 @@ export default Vue.extend({
     },
     writeStudents(students: Array<{full_name: string, email: string}>) {
       // TODO: Error handling
-      HTTP.post("/students", { students }).then((res) => {
+      HTTP().post("/students", { students }).then((res) => {
         this.updateStudents();
       }).finally(() => {
         this.$store.commit(COMMIT_NOT_WORKING);
