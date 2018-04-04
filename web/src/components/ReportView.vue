@@ -1,7 +1,10 @@
 <template>
   <div class="report-root">
     <h1 class="display-4">Session Report: {{ this.sessionName }}</h1>
-    <h2>By Project</h2>
+    <h2>
+      By Project
+      <button type="button" @click="toggleInitials" class="btn btn-sm btn-primary">Toggle ID/Initials</button>
+    </h2>
     <p class="h6">
       '=' before an ID means this choice is tied with another.
       '*' after an ID means a comment has been left by this student.
@@ -21,7 +24,7 @@
           <td>{{ row.name }}</td>
           <td><a :href="'mailto:' + row.supervisor_email">{{ row.supervisor_name }}</a></td>
           <td v-for="i in choicesRange">
-            {{ renderStudentsByProject(row.choices[i]) }}
+            <span v-html="renderStudentsByProject(row.choices[i])"></span>
           </td>
         </tr>
       </tbody>
@@ -143,12 +146,9 @@ export default Vue.extend({
       if (!this.report) { return []; }
 
       const out = _.map(this.report.by_project, (it: IRawByProject) => {
-        console.debug("proj", it.is_eq, it.selections);
         return {
           choices: _.map(_.zip(it.selections, it.is_eq), (outerEntry: [number[], boolean[]]) => {
-            console.debug("outer", outerEntry);
             return _.map(_.zip(outerEntry[0], outerEntry[1]), (entry: [number, boolean]) => {
-              console.debug(entry, this.students[entry[0]]);
               const res: IStudentProjectChoice = {
                 isEq: entry[1],
                 ...this.students[entry[0]],
@@ -196,6 +196,7 @@ export default Vue.extend({
   },
   data() {
     return {
+      renderInitials: false,
       report: undefined as ISessionReportRaw | undefined,
     };
   },
@@ -222,10 +223,20 @@ export default Vue.extend({
       _.sortBy(sts, ["id"]).forEach((st, idx) => {
         if (idx !== 0) { out += ", "; }
         if (st.isEq) { out += "="; }
-        out += st.id;
+        if (this.renderInitials) {
+          out += "<abbr title=\"" + st.id + "\">";
+          _.words(st.full_name).forEach((word) => { out += word[0]; });
+          out += "</abbr>";
+        } else {
+          out += st.id;
+        }
         if (st.comment) { out += "*"; }
       });
       return out;
+    },
+    toggleInitials() {
+      this.renderInitials = !this.renderInitials;
+      this.$forceUpdate();
     },
   },
   mounted() {
