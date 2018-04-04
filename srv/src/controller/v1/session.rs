@@ -130,17 +130,20 @@ fn get_session_report(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> 
             // `DoubleEndedIterator` bounds. It then ensures there's no gaps in choices (2 first choices, and 1 _second_
             // choice rather than 2 firsts and a third choice).
             let mut idx = i - student.is_eq.iter().rev().skip(eq_count - i).position(|it| !*it).unwrap_or(i);
-            let was_eq = idx == 0;
+            let was_eq = student.is_eq.get(i).map(|it| *it).unwrap_or(false);
             if idx - prev > 1 { idx = prev + 1; }
             prev = idx;
             build_up_to(project_sel_map.entry(*proj).or_insert_with(Vec::new), idx).push((student.student, was_eq));
         }
     }
-    let by_project = project_sel_map.drain().map(move |(k, vs)| SessionReportByProject {
-        project: k,
-        selections: vs.iter().map(|it| it.iter().map(|ref it| it.0).collect::<Vec<i32>>()).collect::<Vec<Vec<i32>>>(),
-        is_eq: vs.iter().map(|it| it.iter().map(|ref it| it.1).collect::<Vec<bool>>()).collect::<Vec<Vec<bool>>>(),
-    }).collect::<Vec<SessionReportByProject>>();
+    let by_project = project_sel_map.drain()
+        //.inspect(|&(ref k, ref vs)| debug!("P: {:?} -> {:?}", k, vs))
+        .map(move |(k, vs)| SessionReportByProject {
+            project: k,
+            selections: vs.iter().map(|it| it.iter().map(|ref it| it.0).collect::<Vec<i32>>()).collect::<Vec<Vec<i32>>>(),
+            is_eq: vs.iter().map(|it| it.iter().map(|ref it| it.1).collect::<Vec<bool>>()).collect::<Vec<Vec<bool>>>(),
+        })
+        .collect::<Vec<SessionReportByProject>>();
 
     // Fetch comments
     let mut comments_raw = student::comment::get_all_for_session(&conn, sess.id)
