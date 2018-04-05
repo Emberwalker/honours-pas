@@ -18,11 +18,15 @@ macro_rules! known_media_types {
         JPEG (is_jpeg): "JPEG", "image", "jpeg",
         WEBP (is_webp): "WEBP", "image", "webp",
         SVG (is_svg): "SVG", "image", "svg+xml",
+        WEBM (is_webm): "WEBM", "video", "webm",
+        OGG (is_ogg): "OGG", "video", "ogg",
+        WAV (is_wav): "WAV", "audio", "wav",
         PDF (is_pdf): "PDF", "application", "pdf",
         TTF (is_ttf): "TTF", "application", "font-sfnt",
         OTF (is_otf): "OTF", "application", "font-sfnt",
         WOFF (is_woff): "WOFF", "application", "font-woff",
         WOFF2 (is_woff2): "WOFF2", "font", "woff2",
+        WASM (is_wasm): "WASM", "application", "wasm",
         JsonApi (is_json_api): "JSON API", "application", "vnd.api+json"
     })
 }
@@ -44,10 +48,14 @@ macro_rules! known_extensions {
         "jpg" => JPEG,
         "webp" => WEBP,
         "svg" => SVG,
+        "wav" => WAV,
+        "webm" => WEBM,
+        "ogg" => OGG,
         "pdf" => PDF,
         "ttf" => TTF,
         "otf" => OTF,
         "woff" => WOFF,
+        "wasm" => WASM,
         "woff2" => WOFF2
     })
 }

@@ -1,4 +1,3 @@
-#![feature(conservative_impl_trait)]
 #![feature(custom_derive)] // TODO: Remove this when Rocket switches fully to `proc_macro`
 #![feature(plugin)]
 #![plugin(rocket_codegen)]

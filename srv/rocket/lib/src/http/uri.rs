@@ -36,7 +36,8 @@ impl<'a> URI<'a> {
 
         let end = uri.len();
         let (path, query, fragment) = match (qmark, hmark) {
-            (Some(i), Some(j)) => ((0, i), Some((i+1, j)), Some((j+1, end))),
+            (Some(i), Some(j)) if i < j => ((0, i), Some((i+1, j)), Some((j+1, end))),
+            (Some(_i), Some(j)) => ((0, j), None, Some((j+1, end))),
             (Some(i), None) => ((0, i), Some((i+1, end)), None),
             (None, Some(j)) => ((0, j), None, Some((j+1, end))),
             (None, None) => ((0, end), None, None),
@@ -544,6 +545,9 @@ mod tests {
         test_query("/a/b/c/d/e", None);
         test_query("/////", None);
         test_query("//a///", None);
+        test_query("/a/b/c#a?123", None);
+        test_query("/#", None);
+        test_query("/#?", None);
     }
 
     #[test]
@@ -562,7 +566,10 @@ mod tests {
     fn fragment_exists() {
         test_fragment("/test#abc", Some("abc"));
         test_fragment("/#abc", Some("abc"));
+        test_fragment("/#ab?c", Some("ab?c"));
         test_fragment("/a/b/c?123#a", Some("a"));
+        test_fragment("/a/b/c#a?123", Some("a?123"));
+        test_fragment("/a/b/c?123#a?b", Some("a?b"));
         test_fragment("/#a", Some("a"));
     }
 
@@ -585,5 +592,6 @@ mod tests {
         assert_eq!(uri_to_string("//a"), "/a".to_string());
         assert_eq!(uri_to_string("/a/b///c"), "/a/b/c".to_string());
         assert_eq!(uri_to_string("/a///b/c/d///"), "/a/b/c/d".to_string());
+        assert_eq!(uri_to_string("/a/b/c#a?123"), "/a/b/c#a?123".to_string());
     }
 }
