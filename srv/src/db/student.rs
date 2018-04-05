@@ -100,11 +100,7 @@ pub mod selection {
             .inner_join(students::table)
             .filter(student_selections::project.eq(proj))
             .select(students::table::all_columns())
-            .load::<student::Student>(conn.raw())
-            .map_err(|e| match e {
-                diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-                e => SelectError::DieselError(e),
-            })?;
+            .load::<student::Student>(conn.raw())?;
 
         Ok(students)
     }
@@ -117,11 +113,7 @@ pub mod selection {
             .inner_join(students::table)
             .filter(students::last_session.eq(sess))
             .select(student_selections::table::all_columns())
-            .load::<StudentSelection>(conn.raw())
-            .map_err(|e| match e {
-                diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-                e => SelectError::DieselError(e),
-            })?;
+            .load::<StudentSelection>(conn.raw())?;
 
         Ok(sels)
     }

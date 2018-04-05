@@ -168,6 +168,15 @@ pub enum SelectError {
     DieselError(diesel::result::Error),
 }
 
+impl From<diesel::result::Error> for SelectError {
+    fn from(err: diesel::result::Error) -> Self {
+        match err {
+            diesel::result::Error::NotFound => SelectError::NoSuchValue(),
+            e => SelectError::DieselError(e),
+        }
+    }
+}
+
 pub mod models;
 pub mod staff;
 pub mod student;

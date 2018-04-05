@@ -16,11 +16,7 @@ pub fn attach_staff(
 ) -> Result<Vec<ProjectWithStaff>, SelectError> {
     use diesel::prelude::*;
     let staff_ents = ProjectStaff::belonging_to(&projs)
-        .load::<ProjectStaff>(conn.raw())
-        .map_err(|e| match e {
-            diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-            e => SelectError::DieselError(e),
-        })?
+        .load::<ProjectStaff>(conn.raw())?
         .grouped_by(&projs);
     Ok(projs
         .into_iter()

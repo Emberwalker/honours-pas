@@ -25,11 +25,7 @@ pub fn get_latest_session(conn: &DatabaseConnection) -> Result<Session, SelectEr
     let res = sessions
         .filter(force_archive.eq(false))
         .order(created.desc())
-        .first::<Session>(conn.raw())
-        .map_err(|e| match e {
-            diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-            e => SelectError::DieselError(e),
-        })?;
+        .first::<Session>(conn.raw())?;
 
     Ok(res)
 }
@@ -40,11 +36,7 @@ pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<(bool, Session)>, Select
 
     let res = sessions
         .order(created.desc())
-        .load::<Session>(conn.raw())
-        .map_err(|e| match e {
-            diesel::result::Error::NotFound => SelectError::NoSuchValue(),
-            e => SelectError::DieselError(e),
-        })?;
+        .load::<Session>(conn.raw())?;
 
     let mut first = true;
     Ok(res.into_iter()

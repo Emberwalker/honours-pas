@@ -63,9 +63,6 @@ import { COMMIT_NOT_WORKING, COMMIT_WORKING } from "../stores/index";
 
 export default Vue.extend({
   computed: {
-    allStudents(): IFaces.IStudent[] {
-      return this.report.students;
-    },
     choicesRange(): number[] {
       return this.report.choicesRange();
     },
@@ -75,17 +72,11 @@ export default Vue.extend({
     projectRows(): IFaces.IProjectRow[] {
       return this.report.projectRows;
     },
-    projects(): IFaces.IProjectMap {
-      return this.report.projectMap;
-    },
     report(): IFaces.SessionReport {
       return new IFaces.SessionReport(this.report_raw);
     },
     sessionName(): string {
       return this.report.session().name;
-    },
-    students(): IFaces.IStudentMap {
-      return this.report.studentMap;
     },
     studentRows(): IFaces.IStudentRow[] {
       return this.report.studentRows;
