@@ -58,156 +58,53 @@ import $ from "jquery";
 import _ from "lodash";
 import Vue from "vue";
 import HTTP from "../lib/HTTP";
+import * as IFaces from "../lib/SessionReports";
 import { COMMIT_NOT_WORKING, COMMIT_WORKING } from "../stores/index";
-
-interface ISessionReportRaw {
-  session: { name: string, supervisor_name: string, supervisor_email: string };
-  by_student: IRawByStudent[];
-  by_project: IRawByProject[];
-  students: IStudent[];
-  projects: IProject[];
-  comments: string[number];
-}
-
-interface IRawByStudent {
-  student: number;
-  choices: number[];
-  is_eq: boolean[];
-}
-
-interface IRawByProject {
-  project: number;
-  selections: number[];
-  is_eq: boolean[];
-}
-
-interface IRawStudent {
-  id: number;
-  email: string;
-  full_name: string;
-}
-
-interface IStudent extends IRawStudent {
-  comment?: string;
-}
-
-interface IStudentMap {
-  [key: number]: IStudent;
-}
-
-interface IStudentProjectChoice extends IStudent {
-  isEq: boolean;
-}
-
-interface IProject {
-  id: number;
-  name: string;
-  supervisor_name: string;
-  supervisor_email: string;
-}
-
-interface IProjectMap {
-  [key: number]: IProject;
-}
-
-interface IProjectRow extends IProject {
-  choices: IStudentProjectChoice[][];
-}
-
-interface IStudentRow extends IStudent {
-  choices: Array<{ project: number, eq_last: boolean }>;
-}
 
 export default Vue.extend({
   computed: {
-    allStudents(): IStudent[] {
-      if (!this.report) { return []; }
-      const all = _.map(this.report.students, (it: IRawStudent) => {
-        let comment: string | undefined = this.report!.comments[it.id];
-        if (comment === "") { comment = undefined; }
-        const out = {
-          ...it,
-          comment,
-        } as IStudent;
-        return out;
-      }) as any as IStudent[];
-      return _.sortBy(all, ["id"]);
+    allStudents(): IFaces.IStudent[] {
+      return this.report.students;
     },
     choicesRange(): number[] {
-      return _.range(0, this.maxChoices);
+      return this.report.choicesRange();
     },
     maxChoices(): number {
-      return _.reduce(this.projectRows, (curr: number, it: IProjectRow) => {
-        if (it.choices.length > curr) { return it.choices.length; }
-        return curr;
-      }, 0);
+      return this.report.maxChoices;
     },
-    projectRows(): IProjectRow[] {
-      if (!this.report) { return []; }
-
-      const out = _.map(this.report.by_project, (it: IRawByProject) => {
-        return {
-          choices: _.map(_.zip(it.selections, it.is_eq), (outerEntry: [number[], boolean[]]) => {
-            return _.map(_.zip(outerEntry[0], outerEntry[1]), (entry: [number, boolean]) => {
-              const res: IStudentProjectChoice = {
-                isEq: entry[1],
-                ...this.students[entry[0]],
-              };
-              return res;
-            });
-          }),
-          ...this.projects[it.project],
-        };
-      }) as any as IProjectRow[]; // Completely overrule Typescript here - for some reason it gets this totally wrong.
-
-      return _.sortBy(out, ["supervisor", "name", "id"]);
+    projectRows(): IFaces.IProjectRow[] {
+      return this.report.projectRows;
     },
-    projects(): IProjectMap {
-      if (!this.report) { return {}; }
-      return _.fromPairs(_.map(this.report.projects, (it: IProject) => [it.id, it]));
+    projects(): IFaces.IProjectMap {
+      return this.report.projectMap;
+    },
+    report(): IFaces.SessionReport {
+      return new IFaces.SessionReport(this.report_raw);
     },
     sessionName(): string {
-      if (!this.report) { return "..."; }
-      return this.report.session.name;
+      return this.report.session().name;
     },
-    students(): IStudentMap {
-      return _.fromPairs(_.map(this.allStudents, (it) => [it.id, it]));
+    students(): IFaces.IStudentMap {
+      return this.report.studentMap;
     },
-    studentRows(): IStudentRow[] {
-      if (!this.report) { return []; }
-
-      const out = _.map(this.report.by_student, (it: IRawByStudent) => {
-        const clonedEq = it.is_eq.slice(0);
-        clonedEq.unshift(false); // Make the arrays equal length for convenience
-        const choices = _.map(_.zip(it.choices, clonedEq), (inner: [number, boolean]) => {
-          return {
-            eq_last: inner[1],
-            project: inner[0],
-          };
-        });
-        return {
-          choices,
-          ...this.students[it.student],
-        };
-      }) as any as IStudentRow[]; // Completely overrule Typescript here - for some reason it gets this totally wrong.
-
-      return _.sortBy(out, ["id"]);
+    studentRows(): IFaces.IStudentRow[] {
+      return this.report.studentRows;
     },
   },
   data() {
     return {
       renderInitials: false,
-      report: undefined as ISessionReportRaw | undefined,
+      report_raw: undefined as IFaces.ISessionReportRaw | undefined,
     };
   },
   methods: {
-    renderStudentComment(st: IStudentRow): string {
+    renderStudentComment(st: IFaces.IStudentRow): string {
       if (st.comment) {
         return "\"" + st.comment + "\"";
       }
       return "";
     },
-    renderStudentChoices(st: IStudentRow): string {
+    renderStudentChoices(st: IFaces.IStudentRow): string {
       let out = "";
       st.choices.forEach((choice, idx) => {
         if (idx !== 0) {
@@ -217,7 +114,7 @@ export default Vue.extend({
       });
       return out;
     },
-    renderStudentsByProject(sts: IStudentProjectChoice[] | undefined): string {
+    renderStudentsByProject(sts: IFaces.IStudentProjectChoice[] | undefined): string {
       if (!sts) { return ""; }
       let out = "";
       _.sortBy(sts, ["id"]).forEach((st, idx) => {
@@ -242,7 +139,7 @@ export default Vue.extend({
   mounted() {
     this.$store.commit(COMMIT_WORKING);
     HTTP().get("/sessions/" + this.id + "/report").then((res) => {
-      this.report = res.data as ISessionReportRaw;
+      this.report_raw = res.data as IFaces.ISessionReportRaw;
     }).finally(() => {
       this.$store.commit(COMMIT_NOT_WORKING);
     });
@@ -254,12 +151,6 @@ export default Vue.extend({
           type: String,
       },
   },
-  /*(watch: {
-    report(newVal: ISessionReportRaw | undefined) {
-      if (!newVal) { return; }
-      // TODO
-    },
-  },*/
 });
 </script>
 
