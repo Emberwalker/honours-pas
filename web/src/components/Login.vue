@@ -152,7 +152,11 @@ export default Vue.extend({
             type: Mutations.SET_USER,
             user,
           });
-          this.$router.replace("/");
+          if (this.$route.query.next) {
+            this.$router.replace(this.$route.query.next);
+          } else {
+            this.$router.replace("/");
+          }
         }
       }).catch((err) => {
         this.$store.commit(getErrorCommit("An error occurred fetching user/project information.", err));
@@ -163,7 +167,11 @@ export default Vue.extend({
   },
   mounted() {
     if (this.$store.state.user) {
-      this.$router.replace("/");
+      if (this.$route.query.next) {
+        this.$router.replace(this.$route.query.next);
+      } else {
+        this.$router.replace("/");
+      }
       return;
     }
     this.update_opts();

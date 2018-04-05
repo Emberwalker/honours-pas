@@ -110,7 +110,7 @@ const router = new Router({
 
 router.beforeEach((to, from, next) => {
   if (to.path !== "/login" && !store.state.user) {
-    return next("/login");
+    return next({ path: "/login", query: { next: to.path } });
   }
   next();
 });
