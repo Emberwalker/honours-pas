@@ -1,11 +1,11 @@
-use ring_pwhash::scrypt::{scrypt_check, scrypt_simple, ScryptParams};
-use std::io;
 use rand::{OsRng, Rng};
-use rocket::response::{Responder, Response};
-use rocket::response::content::Html;
+use ring_pwhash::scrypt::{scrypt_check, scrypt_simple, ScryptParams};
+use rocket::Request;
 use rocket::http::Status;
 use rocket::http::hyper::header;
-use rocket::Request;
+use rocket::response::content::Html;
+use rocket::response::{Responder, Response};
+use std::io;
 
 lazy_static! {
     // Based on https://blog.filippo.io/the-scrypt-parameters/ for 2017
@@ -31,7 +31,7 @@ pub fn hash_password(passwd: &str) -> io::Result<String> {
 
 pub fn sanitise_email(uname: &str) -> Result<String, ()> {
     let username = uname.to_string();
-    let mut matches = username.splitn(2, "@");
+    let mut matches = username.splitn(2, '@');
     let err_closure = || {
         warn!("Error parsing username as email: '{}'", username);
         ()

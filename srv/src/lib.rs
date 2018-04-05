@@ -1,6 +1,11 @@
 #![feature(custom_derive)] // TODO: Remove this when Rocket switches fully to `proc_macro`
 #![feature(plugin)]
 #![plugin(rocket_codegen)]
+#![cfg_attr(feature = "clippy", feature(plugin))]
+#![cfg_attr(feature = "clippy", plugin(clippy))]
+#![allow(unknown_lints)]
+#![warn(clippy)]
+#![allow(print_literal)]
 
 #[macro_use]
 extern crate downcast_rs;
@@ -28,10 +33,10 @@ extern crate serde;
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
-extern crate toml;
-extern crate url;
 extern crate base64;
 extern crate openssl;
+extern crate toml;
+extern crate url;
 
 extern crate ldap3;
 extern crate reqwest;
@@ -39,20 +44,20 @@ extern crate ring_pwhash;
 extern crate rocket;
 extern crate rocket_contrib;
 
-use std::sync::Arc;
-use rocket::config::{Config, Environment, LoggingLevel};
 use authn::AuthnBackend;
+use rocket::config::{Config, Environment, LoggingLevel};
+use std::sync::Arc;
 
 #[macro_use]
 mod util;
-mod config;
-mod schema;
-mod migrate;
-mod db;
-mod controller;
 mod authn;
-mod session;
+mod config;
+mod controller;
+mod db;
 mod fairing;
+mod migrate;
+mod schema;
+mod session;
 
 #[cfg(feature = "insecure")]
 fn get_rocket_config(conf: &config::Config) -> Config {
@@ -96,7 +101,7 @@ fn get_authn_provider(
 
 fn get_conf(conf_loc: &str) -> config::Config {
     // TODO: More nuanced config error handling (like logging what keys had to be defaulted)
-    config::load_config(conf_loc).unwrap_or(config::default_config())
+    config::load_config(conf_loc).unwrap_or_else(|_| config::default_config())
 }
 
 fn run_migrations(conf: &config::Config) {
@@ -130,8 +135,8 @@ pub fn run(conf_loc: &str) -> Result<(), String> {
 }
 
 pub fn add_user(conf_loc: &str, uname: &str, passwd: &str, fname: &str) -> Result<(), String> {
-    use db::staff;
     use db::models::new::Staff as NewStaff;
+    use db::staff;
 
     let conf = get_conf(conf_loc);
     run_migrations(&conf);

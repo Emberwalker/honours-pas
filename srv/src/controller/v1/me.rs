@@ -1,8 +1,8 @@
 v1_imports!();
 
-use rocket::Route;
-use num_traits::cast::FromPrimitive;
 use bigdecimal::BigDecimal;
+use num_traits::cast::FromPrimitive;
+use rocket::Route;
 
 use db::student::{comment, mark, selection, Student};
 use db::{project, session};
@@ -11,6 +11,7 @@ pub fn get_routes() -> Vec<Route> {
     routes![get_marks, add_mark, rm_mark, set_selections, set_comment]
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/me/marks")]
 fn get_marks(usr: Student, conn: DatabaseConnection) -> V1Response<MarkList> {
     let marks =
@@ -18,6 +19,7 @@ fn get_marks(usr: Student, conn: DatabaseConnection) -> V1Response<MarkList> {
     Ok(Json(MarkList { projects: marks }))
 }
 
+#[allow(needless_pass_by_value)]
 #[post("/me/marks", data = "<body>")]
 fn add_mark(
     body: Json<MarkMessage>,
@@ -32,8 +34,8 @@ fn add_mark(
             project: body.id,
         },
     ).map_err(|e| {
-        use diesel::result::Error::DatabaseError;
         use diesel::result::DatabaseErrorKind;
+        use diesel::result::Error::DatabaseError;
         match e {
             DatabaseError(DatabaseErrorKind::UniqueViolation, _) => ok!("mark already exists"),
             _ => diesel_error_handler!(e),
@@ -42,6 +44,7 @@ fn add_mark(
     Ok(generic_message!("ok"))
 }
 
+#[allow(needless_pass_by_value)]
 #[delete("/me/marks/<id>")]
 fn rm_mark(id: i32, usr: Student, conn: DatabaseConnection) -> V1Response<GenericMessage> {
     mark::delete(
@@ -54,6 +57,7 @@ fn rm_mark(id: i32, usr: Student, conn: DatabaseConnection) -> V1Response<Generi
     Ok(generic_message!("ok"))
 }
 
+#[allow(needless_pass_by_value)]
 #[put("/me/selections", data = "<body>")]
 fn set_selections(
     body: Json<SelectionList>,
@@ -87,6 +91,7 @@ fn set_selections(
     Ok(generic_message!("ok"))
 }
 
+#[allow(needless_pass_by_value)]
 #[put("/me/comment", data = "<body>")]
 fn set_comment(
     body: Json<CommentMessage>,

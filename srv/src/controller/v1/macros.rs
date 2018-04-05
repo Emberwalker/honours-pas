@@ -1,22 +1,23 @@
 /// Used by all v1 modules to get required things in scope for macro expansion.
 macro_rules! v1_imports {
-    () => (
-        #[allow(unused_imports)]
-        use rocket::response::status;
+    () => {
         #[allow(unused_imports)]
         use rocket::http::Status;
+        #[allow(unused_imports)]
+        use rocket::response::status;
         #[allow(unused_imports)]
         use rocket_contrib::Json;
 
         #[allow(unused_imports)]
-        use db::{DatabaseConnection, SelectError};
-        #[allow(unused_imports)]
         use controller::v1::types::*;
-    )
+        #[allow(unused_imports)]
+        use db::{DatabaseConnection, SelectError};
+    };
 }
 
 macro_rules! generic_message {
     ($( $arg:tt )*) => (
+        #[allow(useless_format)]
         Json(GenericMessage {
             message: format!($($arg),*),
         })
@@ -58,11 +59,11 @@ macro_rules! not_implemented {
 }
 
 macro_rules! diesel_error_handler {
-    ($e:ident) => ({
+    ($e:ident) => {{
         error!("Diesel error: {}", $e);
         debug!("Additional information: {:?}", $e);
         internal_server_error!("database error")
-    })
+    }};
 }
 
 macro_rules! select_error_handler {

@@ -15,6 +15,7 @@ pub fn get_routes() -> Vec<Route> {
     ]
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/projects")]
 fn get_projs(conn: DatabaseConnection, session: Session) -> V1Response<ProjectList> {
     let res = match user::find_user(&conn, &session.email[..]) {
@@ -29,6 +30,7 @@ fn get_projs(conn: DatabaseConnection, session: Session) -> V1Response<ProjectLi
     Ok(Json(ProjectList { projects: projs }))
 }
 
+#[allow(needless_pass_by_value)]
 #[post("/projects", data = "<body>")]
 fn new_proj(
     mut body: Json<project::NewProjectWithStaff>,
@@ -46,6 +48,7 @@ fn new_proj(
     }
 }
 
+#[allow(needless_pass_by_value)]
 #[put("/projects/<id>", data = "<body>")]
 fn update_proj(
     id: i32,
@@ -78,6 +81,7 @@ fn update_proj(
     Ok(body)
 }
 
+#[allow(needless_pass_by_value)]
 #[delete("/projects/<id>")]
 fn rm_proj(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1Response<GenericMessage> {
     let p = project::get_project(&conn, id).map_err(select_error_handler!("no such project"))?;
@@ -85,6 +89,7 @@ fn rm_proj(id: i32, _usr: staff::Admin, conn: DatabaseConnection) -> V1Response<
     Ok(generic_message!("ok"))
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/projects/<id>/students")]
 fn get_project_students(
     id: i32,
@@ -94,5 +99,5 @@ fn get_project_students(
     let students = student::selection::get_students_for_project(&conn, id)
         .map_err(select_error_handler!("database error"))?;
 
-    Ok(Json(StudentList { students: students }))
+    Ok(Json(StudentList { students }))
 }

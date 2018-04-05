@@ -1,6 +1,6 @@
-use rocket::{Outcome, Request};
-use rocket::request::{self, FromRequest};
 use rocket::http::Status;
+use rocket::request::{self, FromRequest};
+use rocket::{Outcome, Request};
 
 pub use super::models::Student;
 pub use super::models::new::Student as NewStudent;
@@ -56,8 +56,8 @@ impl<'a, 'r> FromRequest<'a, 'r> for Student {
 }
 
 pub mod selection {
-    use diesel::result::Error;
     use bigdecimal::BigDecimal;
+    use diesel::result::Error;
 
     pub use super::super::models::StudentSelection;
     pub use super::super::models::new::StudentSelection as NewStudentSelection;
@@ -105,7 +105,10 @@ pub mod selection {
         Ok(students)
     }
 
-    pub fn get_all_for_session(conn: &DatabaseConnection, sess: i32) -> Result<Vec<StudentSelection>, SelectError> {
+    pub fn get_all_for_session(
+        conn: &DatabaseConnection,
+        sess: i32,
+    ) -> Result<Vec<StudentSelection>, SelectError> {
         use diesel::prelude::*;
         use schema::{student_selections, students};
 
@@ -159,7 +162,10 @@ pub mod comment {
         Ok(comm.comment)
     }
 
-    pub fn get_all_for_session(conn: &DatabaseConnection, id: i32) -> Result<Vec<StudentComment>, SelectError> {
+    pub fn get_all_for_session(
+        conn: &DatabaseConnection,
+        id: i32,
+    ) -> Result<Vec<StudentComment>, SelectError> {
         generate_select_body!(multi, conn, student_comments, StudentComment, (session, id))
     }
 }

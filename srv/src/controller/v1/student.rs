@@ -4,14 +4,15 @@ use std::sync::Arc;
 
 use rocket::{Route, State};
 
-use db::{staff, student, session};
-use session::SessionManager;
 use authn::AuthnHolder;
+use db::{session, staff, student};
+use session::SessionManager;
 
 pub fn get_routes() -> Vec<Route> {
     routes![get_students, get_curr_students, rm_student, new_students]
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/students")]
 fn get_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StudentList> {
     match student::get_all(&conn) {
@@ -23,11 +24,14 @@ fn get_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<Stud
     }
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/students/current")]
 fn get_curr_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StudentList> {
     match student::get_all_current(&conn) {
         Ok(v) => Ok(Json(StudentList { students: v })),
-        Err(SelectError::NoSuchValue()) => Ok(Json(StudentList { students: Vec::new() })),
+        Err(SelectError::NoSuchValue()) => Ok(Json(StudentList {
+            students: Vec::new(),
+        })),
         Err(e) => {
             error!("Unable to fetch students: {:?}", e);
             Err(internal_server_error!("database error"))
@@ -35,6 +39,7 @@ fn get_curr_students(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response
     }
 }
 
+#[allow(needless_pass_by_value)]
 #[delete("/students/<id>")]
 fn rm_student(
     id: i32,
@@ -52,6 +57,7 @@ fn rm_student(
     Ok(generic_message!("ok"))
 }
 
+#[allow(needless_pass_by_value)]
 #[post("/students", data = "<body>")]
 fn new_students(
     mut body: Json<NewStudentList>,
@@ -67,7 +73,8 @@ fn new_students(
         }
     };
 
-    let students = body.students.drain(..)
+    let students = body.students
+        .drain(..)
         .filter(|s| s.email != "" && s.full_name != "")
         .map(move |s| student::NewStudent {
             email: s.email,

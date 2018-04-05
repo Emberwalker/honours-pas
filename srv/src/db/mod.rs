@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use diesel;
 use diesel::pg::PgConnection;
 use r2d2;
@@ -6,6 +5,7 @@ use r2d2_diesel::ConnectionManager;
 use rocket::http::Status;
 use rocket::request::{self, FromRequest};
 use rocket::{Outcome, Request, State};
+use std::sync::Arc;
 
 use config::Config;
 
@@ -32,6 +32,7 @@ macro_rules! generate_crud_fns {
 
             debug!(target: concat!("macro_gen::db::", stringify!($table)), "INSERT/pre: {:?}", val);
 
+            #[allow(double_parens)] // Required for some evaluations of the macro
             let res = insert_into($table::table)
                 .values(val)
                 $(
@@ -57,7 +58,7 @@ macro_rules! generate_crud_fns {
         }
 
         #[allow(dead_code)]
-        pub fn create_batch(conn: &db::DatabaseConnection, val: &Vec<$new_type>) -> Result<(), diesel::result::Error> {
+        pub fn create_batch(conn: &db::DatabaseConnection, val: &[$new_type]) -> Result<(), diesel::result::Error> {
             use diesel::prelude::*;
             use diesel::insert_into;
             #[allow(unused_imports)] // This is only used if upserts are being used in this macro call.
@@ -66,6 +67,7 @@ macro_rules! generate_crud_fns {
 
             debug!(target: concat!("macro_gen::db::", stringify!($table), "::batch"), "INSERT/pre: {:?}", val);
 
+            #[allow(double_parens)] // Required for some evaluations of the macro
             let res = insert_into($table::table)
                 .values(val)
                 $(
@@ -122,7 +124,7 @@ macro_rules! generate_select_body {
                 $(
                     ($field, $val)
                 ),*)?;
-            match vals.get(0).map(|it| it.clone()) {
+            match vals.get(0).cloned() {
                 None => Err(SelectError::NoSuchValue()),
                 Some(e) => Ok(e.clone()),
             }
@@ -178,10 +180,10 @@ impl From<diesel::result::Error> for SelectError {
 }
 
 pub mod models;
+pub mod project;
+pub mod session;
 pub mod staff;
 pub mod student;
-pub mod session;
-pub mod project;
 pub mod user;
 
 // The following is based on Rocket's guide on integrating DB connection pooling.

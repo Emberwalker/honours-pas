@@ -9,8 +9,8 @@ extern crate lazy_static;
 extern crate log;
 extern crate regex;
 
-use regex::Regex;
 use clap::{App, Arg, SubCommand};
+use regex::Regex;
 use std::cmp;
 
 static CONF_LOC_ENV: &'static str = "HONOURS_PAS_CONF";
@@ -19,7 +19,8 @@ static DEFAULT_CONF_LOC: &'static str = "/var/run/pas_backend.json";
 // From https://docs.rs/console/0.6.1/src/console/utils.rs.html#12
 lazy_static! {
     static ref STRIP_ANSI_RE: Regex = Regex::new(
-        r"[\x1b\x9b][\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]").unwrap();
+        r"[\x1b\x9b][\[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]"
+    ).unwrap();
 }
 
 fn main() {
@@ -102,10 +103,8 @@ fn main() {
         ) {
             error!("Failed with error: {}", e);
         }
-    } else {
-        if let Err(e) = hpas::run(conf_loc) {
-            error!("Failed with error: {}", e);
-        }
+    } else if let Err(e) = hpas::run(conf_loc) {
+        error!("Failed with error: {}", e);
     }
 }
 
@@ -122,7 +121,7 @@ fn setup_logger(lvl: log::LevelFilter) -> Result<(), fern::InitError> {
                     record
                         .line()
                         .map(|it| it.to_string())
-                        .unwrap_or("???".to_string()),
+                        .unwrap_or_else(|| "???".to_string()),
                     message
                 ))
             } else {

@@ -1,6 +1,6 @@
-use diesel::prelude::*;
-use diesel::pg::PgConnection;
 use super::config::Config;
+use diesel::pg::PgConnection;
+use diesel::prelude::*;
 
 embed_migrations!();
 

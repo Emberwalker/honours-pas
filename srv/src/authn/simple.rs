@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use super::{AuthnBackend, AuthnCreateError, AuthnFailure};
+use db::Pool;
 use diesel;
 use diesel::prelude::*;
 use schema::authn_credentials;
-use db::Pool;
-use super::{AuthnBackend, AuthnCreateError, AuthnFailure};
+use std::sync::Arc;
 use util;
 
 // Diesel structs for authn_credentials
@@ -28,7 +28,7 @@ pub struct SimpleAuthnBackend {
 
 impl SimpleAuthnBackend {
     pub fn new(_config_location: &str, pool: Arc<Pool>) -> Self {
-        SimpleAuthnBackend { pool: pool }
+        SimpleAuthnBackend { pool }
     }
 }
 
@@ -58,7 +58,7 @@ impl<'a> AuthnBackend for SimpleAuthnBackend {
             }
 
             let srv_passwd = entry.password.as_ref().unwrap();
-            if util::check_password(passwd, &srv_passwd) {
+            if util::check_password(passwd, srv_passwd) {
                 return Ok(entry.email.clone());
             } else {
                 return Err(AuthnFailure::InvalidPassword());

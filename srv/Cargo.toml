@@ -37,6 +37,7 @@ jsonwebtoken = "~4.0"
 url = "1.7"
 base64 = "~0.9"
 openssl = "~0.9"
+clippy = { version = "*", optional = true }
 
 [patch.crates-io]
 rocket = { path = "rocket/lib" }

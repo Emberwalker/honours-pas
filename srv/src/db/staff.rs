@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
-use rocket::{Outcome, Request};
-use rocket::request::{self, FromRequest};
 use rocket::http::Status;
+use rocket::request::{self, FromRequest};
+use rocket::{Outcome, Request};
 
 pub use super::models::Staff;
 pub use super::models::new::Staff as NewStaff;

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
+use downcast_rs::Downcast;
 use rocket::Route;
 use serde_json::Value;
-use downcast_rs::Downcast;
 
 // `simple` is the default database-backed provider. It does nothing fancy.
 pub mod simple;
@@ -56,7 +56,9 @@ pub trait AuthnBackend: Downcast + Send + Sync {
     fn add_to_client_meta(&self, _meta: &mut Value) {}
 
     /// Allows custom on-logout functionality in providers.
-    fn on_logout(&self, _email: &str) -> Option<String> { None }
+    fn on_logout(&self, _email: &str) -> Option<String> {
+        None
+    }
 }
 
 // Enable (safe) downcasting to implementing types.

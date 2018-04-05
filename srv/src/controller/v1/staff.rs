@@ -4,14 +4,15 @@ use std::sync::Arc;
 
 use rocket::{Route, State};
 
+use authn::AuthnHolder;
 use db::staff;
 use session::SessionManager;
-use authn::AuthnHolder;
 
 pub fn get_routes() -> Vec<Route> {
     routes![get_staff, rm_staff, new_staff]
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/staff")]
 fn get_staff(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StaffList> {
     match staff::get_all(&conn) {
@@ -23,6 +24,7 @@ fn get_staff(_usr: staff::Admin, conn: DatabaseConnection) -> V1Response<StaffLi
     }
 }
 
+#[allow(needless_pass_by_value)]
 #[delete("/staff/<id>")]
 fn rm_staff(
     id: i32,
@@ -37,6 +39,7 @@ fn rm_staff(
     Ok(generic_message!("ok"))
 }
 
+#[allow(needless_pass_by_value)]
 #[post("/staff", data = "<body>")]
 fn new_staff(
     mut body: Json<NewStaffList>,

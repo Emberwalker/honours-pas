@@ -1,11 +1,11 @@
-use std::sync::Arc;
+use super::{AuthnBackend, AuthnCreateError, AuthnFailure};
+use db::Pool;
+use ldap3::{ldap_escape, LdapConn, Scope, SearchEntry};
+use regex::Regex;
 use std::fs::File;
 use std::io::Read;
-use regex::Regex;
-use ldap3::{ldap_escape, LdapConn, Scope, SearchEntry};
+use std::sync::Arc;
 use toml;
-use db::Pool;
-use super::{AuthnBackend, AuthnCreateError, AuthnFailure};
 use util;
 
 lazy_static! {
@@ -29,7 +29,7 @@ struct LdapConfig {
 }
 
 impl LdapConfig {
-    fn to_backend(self) -> LdapAuthnBackend {
+    fn into_backend(self) -> LdapAuthnBackend {
         let ad = self.is_ad.unwrap_or(false);
         if ad && self.domain.is_none() {
             error!("LDAP configuration specifies an AD server, but no AD domain.");
@@ -71,6 +71,7 @@ enum LdapAuthnError {
 }
 
 impl LdapAuthnBackend {
+    #[allow(needless_pass_by_value)] // Required for trait impl
     pub fn new(config_location: &str, _pool: Arc<Pool>) -> Self {
         let res: Result<ConfigRoot, toml::de::Error> = {
             info!("Loading LDAP configuration from {}", config_location);
@@ -85,7 +86,7 @@ impl LdapAuthnBackend {
             panic!(res.unwrap_err());
         }
 
-        res.unwrap().ldap.to_backend()
+        res.unwrap().ldap.into_backend()
     }
 
     fn attempt_authn(&self, uname: &str, passwd: &str) -> Result<String, LdapAuthnError> {
@@ -93,10 +94,11 @@ impl LdapAuthnBackend {
             return Err(LdapAuthnError::InvalidLogin());
         }
 
-        let mut username = match self.normalize_logins {
-            true => util::sanitise_email(&uname.to_lowercase())
-                .map_err(|_e| LdapAuthnError::InvalidLogin())?,
-            false => uname.to_string(),
+        let mut username = if self.normalize_logins {
+            util::sanitise_email(&uname.to_lowercase())
+                .map_err(|_e| LdapAuthnError::InvalidLogin())?
+        } else {
+            uname.to_string()
         };
         let mut uid = username.clone();
 
@@ -104,7 +106,7 @@ impl LdapAuthnBackend {
 
         if self.is_ad {
             if let Some(ref domain) = self.domain {
-                if let Some(pos) = username.find("@") {
+                if let Some(pos) = username.find('@') {
                     username = username[0..pos].to_string();
                     uid = username.clone();
                 }
@@ -138,7 +140,7 @@ impl LdapAuthnBackend {
                 LdapAuthnError::Other()
             })?;
 
-        if results.len() == 0 {
+        if results.is_empty() {
             error!("LDAP returned no user! {}", original_uname);
             return Err(LdapAuthnError::Other());
         }
@@ -147,7 +149,7 @@ impl LdapAuthnBackend {
             warn!("LDAP returned multiple entries; assuming first.");
         }
 
-        let raw_res = results.get(0).unwrap();
+        let raw_res = &results[0];
         let res = SearchEntry::construct(raw_res.clone());
 
         res.attrs[&self.email_field]

@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use rocket::{Catcher, Route, State};
 use rocket::http::{Cookie, Cookies};
 use rocket::response::content;
+use rocket::{Catcher, Route, State};
 
+use authn::{AuthnBackend, AuthnFailure, AuthnHolder};
 use config::Config as HPASConfig;
 use db::user;
-use authn::{AuthnBackend, AuthnFailure, AuthnHolder};
 use session::{Session, SessionManager};
 use util;
 
@@ -15,16 +15,16 @@ mod types;
 #[macro_use]
 mod macros;
 mod errors;
-mod session;
-mod project;
-mod staff;
-mod student;
 mod me;
 mod meta;
+mod project;
+mod session;
+mod staff;
+mod student;
 
 v1_imports!();
 
-const LOGGED_OUT_HTML: &'static str = r#"
+const LOGGED_OUT_HTML: &str = r#"
     <head>
         <title>Honours Project Allocation System</title>
     </head>
@@ -58,6 +58,7 @@ pub fn get_catchers(_conf: &HPASConfig) -> Vec<Catcher> {
     errors::get_catchers()
 }
 
+#[allow(needless_pass_by_value)]
 #[post("/auth", data = "<body>")]
 fn login(
     body: Json<LoginMessage>,
@@ -104,9 +105,10 @@ fn login(
         user::User::Staff(s) => WhoAmIMessage {
             email: s.email,
             name: s.full_name,
-            user_type: match s.is_admin {
-                true => "admin".to_string(),
-                false => "staff".to_string(),
+            user_type: if s.is_admin {
+                "admin".to_string()
+            } else {
+                "staff".to_string()
             },
         },
     };
@@ -114,12 +116,14 @@ fn login(
     Ok(Json(resp))
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/whoami")]
 fn whoami(usr: user::User) -> Json<WhoAmIMessage> {
     let utype = match usr {
-        user::User::Staff(ref s) => match s.is_admin {
-            true => "admin",
-            false => "staff",
+        user::User::Staff(ref s) => if s.is_admin {
+            "admin"
+        } else {
+            "staff"
         },
         user::User::Student(ref _s) => "student",
     };
@@ -131,6 +135,7 @@ fn whoami(usr: user::User) -> Json<WhoAmIMessage> {
     })
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/logout")]
 fn logout(
     sess: Session,

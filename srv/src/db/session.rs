@@ -34,9 +34,7 @@ pub fn get_all(conn: &DatabaseConnection) -> Result<Vec<(bool, Session)>, Select
     use diesel::prelude::*;
     use schema::sessions::dsl::*;
 
-    let res = sessions
-        .order(created.desc())
-        .load::<Session>(conn.raw())?;
+    let res = sessions.order(created.desc()).load::<Session>(conn.raw())?;
 
     let mut first = true;
     Ok(res.into_iter()

@@ -9,8 +9,8 @@ use rocket::http::{Cookie, Cookies, Status};
 use rocket::request::{self, FromRequest};
 use rocket::{Outcome, Request, State};
 
-use config::Config;
 use authn::{AuthnBackend, AuthnHolder};
+use config::Config;
 use util;
 
 #[cfg(feature = "insecure")]
@@ -60,7 +60,7 @@ impl SessionManager {
                             }
                         }
                     } // Read block END
-                    if vec.len() > 0 {
+                    if !vec.is_empty() {
                         info!("Purging {} expired sessions.", vec.len());
                         let mut sessions = arc_clone.sessions.write().unwrap();
                         for id in vec.drain(..) {

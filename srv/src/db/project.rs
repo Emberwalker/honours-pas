@@ -29,11 +29,11 @@ pub fn create_with_staff(
     conn: &DatabaseConnection,
     ps: &NewProjectWithStaff,
 ) -> Result<ProjectWithStaff, diesel::result::Error> {
-    use diesel::prelude::*;
     use diesel::insert_into;
+    use diesel::prelude::*;
     use schema::{project_staff, projects};
 
-    let sess = session::get_latest_session(&conn).map_err(|e| match e {
+    let sess = session::get_latest_session(conn).map_err(|e| match e {
         SelectError::DieselError(e) => e,
         SelectError::NoSuchValue() => diesel::result::Error::NotFound,
     })?;
@@ -64,11 +64,11 @@ pub fn _create_with_staff_batch(
     conn: &DatabaseConnection,
     ps: Vec<NewProjectWithStaff>,
 ) -> Result<(), diesel::result::Error> {
-    use diesel::prelude::*;
     use diesel::insert_into;
+    use diesel::prelude::*;
     use schema::{project_staff, projects};
 
-    let sess = session::get_latest_session(&conn).map_err(|e| match e {
+    let sess = session::get_latest_session(conn).map_err(|e| match e {
         SelectError::DieselError(e) => e,
         SelectError::NoSuchValue() => diesel::result::Error::NotFound,
     })?;

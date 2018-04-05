@@ -2,13 +2,14 @@ v1_imports!();
 
 use rocket::{Route, State};
 
-use config::Config;
 use authn::{AuthnBackend, AuthnHolder};
+use config::Config;
 
 pub fn get_routes() -> Vec<Route> {
     routes![get_meta]
 }
 
+#[allow(needless_pass_by_value)]
 #[get("/meta")]
 pub fn get_meta(auth: State<AuthnHolder>, conf: State<Config>) -> Result<String, ErrorResponse> {
     let authn_prov = conf.get_authn_provider();

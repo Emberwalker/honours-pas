@@ -1,5 +1,5 @@
-use chrono::naive::NaiveDateTime;
 use bigdecimal::BigDecimal;
+use chrono::naive::NaiveDateTime;
 use schema::*;
 
 // Models for returned table rows and updates.
@@ -103,8 +103,8 @@ pub struct StudentSelection {
 
 // Models for insertions.
 pub mod new {
-    use chrono::naive::NaiveDateTime;
     use bigdecimal::BigDecimal;
+    use chrono::naive::NaiveDateTime;
     use schema::*;
 
     #[derive(Deserialize, Insertable, PartialEq, Debug)]
@@ -200,7 +200,7 @@ impl ProjectWithStaff {
 impl new::Project {
     pub fn from_with_staff(p: new::ProjectWithStaff, session: i32) -> Self {
         new::Project {
-            session: session,
+            session,
             supervisor_name: p.supervisor_name,
             supervisor_email: p.supervisor_email,
             name: p.name,

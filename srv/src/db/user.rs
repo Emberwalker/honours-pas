@@ -1,9 +1,9 @@
-use rocket::{Outcome, Request};
-use rocket::request::{self, FromRequest};
 use rocket::http::Status;
+use rocket::request::{self, FromRequest};
+use rocket::{Outcome, Request};
 
-use session::Session;
 use super::{staff, student, DatabaseConnection, SelectError};
+use session::Session;
 
 #[derive(Debug)]
 pub enum User {

@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use rocket::response::status;
 use rocket_contrib::Json;
 
-use db::session::Session;
 use db::project::{Project, ProjectWithStaff};
+use db::session::Session;
 use db::staff::{NewStaff, Staff};
 use db::student::Student;
 
