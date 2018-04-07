@@ -19,6 +19,12 @@
         if (this.large) {
           out += " large";
         }
+        if (this.tiny) {
+          out += " tiny";
+        }
+        if (this.alignBottom) {
+          out += " align-bottom";
+        }
         return out;
       },
       getIcon(): string {
@@ -27,6 +33,11 @@
     },
     name: "Feather",
     props: {
+      alignBottom: {
+        default: false,
+        required: false,
+        type: Boolean,
+      },
       icon: {
         required: true,
         type: String,
@@ -46,11 +57,20 @@
         required: false,
         type: Boolean,
       },
+      tiny: {
+        default: false,
+        required: false,
+        type: Boolean,
+      },
     },
   });
 </script>
 
 <style>
+
+  span.feather-icon-svg.align-bottom > svg {
+    vertical-align: bottom;
+  }
 
   span.feather-icon-svg.no-pad {
     padding-right: 0;
@@ -61,19 +81,18 @@
     height: 4rem;
   }
 
+  span.feather-icon-svg.tiny > svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
   span.feather-icon-svg.spinning > svg {
-    /*animation-name: spin;
-    animation-duration: 4000ms;
-    animation-iteration-count: infinite;
-    animation-timing-function: linear;*/
     animation: featherspin 1s linear infinite;
     transform-origin: 50% 50%;
     display: inline-block;
   }
 
   @keyframes featherspin {
-    /*from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }*/
     100% {
       transform: rotate(360deg);
     }

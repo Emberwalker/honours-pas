@@ -9,6 +9,7 @@ import Login from "../components/Login.vue";
 import NewProject from "../components/NewProject.vue";
 import NotFound from "../components/NotFound.vue";
 import ProjectList from "../components/ProjectList.vue";
+import ReportEditor from "../components/ReportEditor.vue";
 import ReportView from "../components/ReportView.vue";
 import StudentOrderProjects from "../components/StudentOrderProjects.vue";
 import StudentPickProjects from "../components/StudentPickProjects.vue";
@@ -98,6 +99,13 @@ const router = new Router({
       component: ReportView,
       name: "generate_report",
       path: "/report/:id",
+      props: true,
+    },
+    {
+      beforeEnter: isAdminGuard,
+      component: ReportEditor,
+      name: "report_editor",
+      path: "/report/:id/editor",
       props: true,
     },
     {

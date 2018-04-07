@@ -1,5 +1,5 @@
 <template>
-  <div class="report-root">
+  <div class="report-root table-responsive-sm">
     <h1 class="display-4">Session Report: {{ this.sessionName }}</h1>
     <h2>
       By Project
@@ -91,7 +91,7 @@ export default Vue.extend({
   methods: {
     renderStudentComment(st: IFaces.IStudentRow): string {
       if (st.comment) {
-        return "\"" + st.comment + "\"";
+        return "\"" + _.escape(st.comment) + "\"";
       }
       return "";
     },

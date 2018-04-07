@@ -13,6 +13,7 @@ export interface ISession {
     name: string;
     supervisor_name: string;
     supervisor_email: string;
+    id: number;
 }
 
 export interface IRawByStudent {
@@ -93,6 +94,7 @@ export class SessionReport {
     public session(): ISession {
         if (!this.raw) {
             return {
+                id: -1,
                 name: "...",
                 supervisor_email: "",
                 supervisor_name: "",
