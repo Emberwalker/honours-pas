@@ -147,10 +147,7 @@ if (!DEMO_MODE) {
   });
 } else {
   initialWorking = false;
-  initialServerOpts = {
-    auth: "simple",
-    base_url: "",
-  };
+  initialServerOpts = null;
 }
 
 export function getErrorCommit(human: string, err: string | Error | null): {type: string, err: IReadableError} {

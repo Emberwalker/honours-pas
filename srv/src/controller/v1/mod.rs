@@ -90,9 +90,10 @@ fn login(
         }
     };
 
+    let sess = session_manager.new_session(&res, &mut cookies);
     debug!(
         "New session: {:?}",
-        session_manager.new_session(&res, &mut cookies)
+        sess
     );
 
     let resp = match usr {

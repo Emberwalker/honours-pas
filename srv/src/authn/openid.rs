@@ -541,9 +541,10 @@ fn post_success(
         token_bag.insert(decoded.email.clone(), response.id_token.clone());
     }
 
+    let sess = session_manager.new_session(&decoded.email, &mut cookies);
     debug!(
         "New session: {:?}",
-        session_manager.new_session(&decoded.email, &mut cookies)
+        sess
     );
 
     Ok(util::RedirectWithBody::to("/"))
