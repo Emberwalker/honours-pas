@@ -1,39 +1,81 @@
 <template>
   <div class="report-root table-responsive-sm" ref="htmlRoot">
     <h1 class="display-4">Session Editor: {{ this.sessionName }}</h1>
-    <h2>
-      By Project
-      <button type="button" @click="toggleInitials" class="btn btn-sm btn-primary">Toggle ID/Initials</button>
-    </h2>
-    <p class="h6">
-      '=' before an ID means this choice is tied with another.
-      '*' after an ID means a comment has been left by this student.
-      Click on a student ID/initials to toggle them as taking this project.
-      Hover over a student to see full name, ID and comment if one exists. Comments may be truncated.
-    </p>
-    <table class="table table-striped table-hover table-sm">
-      <thead>
-        <tr>
-          <th scope="col" class="table-cell-type">ID</th>
-          <th scope="col">Project</th>
-          <th scope="col">Supervisor</th>
-          <th v-for="i in choicesRange" :key="i" scope="col">Choice {{ i + 1 }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="row in projectRows" :key="row.id">
-          <th scope="row">{{ row.id }}</th>
-          <td>{{ row.name }}</td>
-          <td><a :href="'mailto:' + row.supervisor_email">{{ row.supervisor_name }}</a></td>
-          <td v-for="i in choicesRange" :key="i">
-            <!-- Only make a newline INSIDE a tag to avoid spacing issues. -->
-            <template v-for="entry in renderStudentsByProject(row.choices[i], row)">{{ entry.seperator }}<a data-html="true"
-              :data-title="entry.tooltip" @click="toggleChoice(entry.st, row)" :key="entry.tooltip"
-              :class="'has-tooltip ' + (entry.isSel ? 'font-weight-bold' : 'text-muted')">{{ entry.text }}</a></template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-if="showEditor">
+      <h2>
+        By Project
+        <button type="button" @click="toggleInitials" class="btn btn-sm btn-primary">Toggle ID/Initials</button>
+        <button type="button" @click="toggleEditor" class="btn btn-sm btn-success">Show Assignments</button>
+      </h2>
+      <p class="h6">
+        '=' before an ID means this choice is tied with another.
+        '*' after an ID means a comment has been left by this student.
+        Click on a student ID/initials to toggle them as taking this project.
+        Hover over a student to see full name, ID and comment if one exists. Comments may be truncated.
+      </p>
+      <table class="table table-striped table-hover table-sm">
+        <thead>
+          <tr>
+            <th scope="col" class="table-cell-type">ID</th>
+            <th scope="col">Project</th>
+            <th scope="col">Supervisor</th>
+            <th v-for="i in choicesRange" :key="i" scope="col">Choice {{ i + 1 }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in projectRows" :key="row.id">
+            <th scope="row">{{ row.id }}</th>
+            <td>{{ row.name }}</td>
+            <td><a :href="'mailto:' + row.supervisor_email">{{ row.supervisor_name }}</a></td>
+            <td v-for="i in choicesRange" :key="i">
+              <!-- Only make a newline INSIDE a tag to avoid spacing issues. -->
+              <template v-for="entry in renderStudentsByProject(row.choices[i], row)">{{ entry.seperator }}<a data-html="true"
+                :data-title="entry.tooltip" @click="toggleChoice(entry.st, row)" :key="entry.tooltip"
+                :class="'has-tooltip ' + (entry.isSel ? 'font-weight-bold' : 'text-muted')">{{ entry.text }}</a></template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div v-else>
+      <h2>
+        Project Assignments
+        <button type="button" @click="toggleInitials" class="btn btn-sm btn-primary">Toggle ID/Initials</button>
+        <button type="button" @click="toggleEditor" class="btn btn-sm btn-success">Back to Editor</button>
+      </h2>
+      <table class="table table-striped table-hover table-sm">
+        <thead>
+          <tr>
+            <th scope="col" class="table-cell-type">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Assignment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in assignmentRows" :key="row.id" :class="row.assignMsgType === 2 ? '' : 'table-' + msgTableClass(row.assignMsgType)">
+            <th scope="row">{{ row.id }}</th>
+            <td>{{ row.full_name }}</td>
+            <td>
+              <a :href="'mailto:' + row.email">{{ row.email }}</a>
+            </td>
+            <td v-if="row.assignments.length === 1">
+              {{ row.assignments[0].name }} -
+              <a :href="'mailto:' + row.assignments[0].supervisor_email">
+                {{ row.assignments[0].supervisor_name }}
+              </a>
+            </td>
+            <td v-else>
+              <a class="has-tooltip" :data-title="msgTypeName(row.assignMsgType)"><feather :icon="msgTypeIcon(row.assignMsgType)" :align-bottom="true"/></a>
+              {{ row.assignMsg }}
+              <template v-for="entry in renderAssignmentProjects(row.assignments)">{{ entry.seperator }}<a class="has-tooltip"
+              data-html="true" :data-title="entry.tooltip" :key="entry.tooltip">{{ entry.text }}</a></template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <h2>Messages</h2>
     <p class="h6">This section will show any informational messages, warnings or errors from the current selections.</p>
     <table class="table table-sm table-hover">
@@ -53,12 +95,12 @@
           <td>{{ msg.msg }}</td>
           <td>
             <!-- Only make a newline INSIDE a tag to avoid spacing issues. -->
-            <template v-for="entry in renderMsgProjects(msg)">{{ entry.seperator }}<a class="has-tooltip"
+            <template v-for="entry in renderMsgProjects(msg.projects)">{{ entry.seperator }}<a class="has-tooltip"
               data-html="true" :data-title="entry.tooltip" :key="entry.tooltip">{{ entry.text }}</a></template>
           </td>
           <td>
             <!-- Only make a newline INSIDE a tag to avoid spacing issues. -->
-            <template v-for="entry in renderMsgStudents(msg)">{{ entry.seperator }}<a class="has-tooltip"
+            <template v-for="entry in renderMsgStudents(msg.students)">{{ entry.seperator }}<a class="has-tooltip"
               data-html="true" :data-title="entry.tooltip" :key="entry.tooltip">{{ entry.text }}</a></template>
           </td>
         </tr>
@@ -110,6 +152,12 @@ interface ISelectionMap {
   [key: string]: number[];
 }
 
+interface IAssignmentRow extends IFaces.IStudent {
+  assignments: IFaces.IProject[];
+  assignMsg: string;
+  assignMsgType: MessageType;
+}
+
 export default Vue.extend({
   computed: {
     allStudents(): IFaces.IStudent[] {
@@ -117,6 +165,42 @@ export default Vue.extend({
     },
     allProjects(): IFaces.IProject[] {
       return this.report.projects;
+    },
+    assignmentRows(): IAssignmentRow[] {
+      const outArr: IAssignmentRow[] = [];
+      const selsByStudent: { [key: number]: IFaces.IProject[] } = {};
+
+      _.forIn(this.selections, (vs: number[], k: string) => {
+        const proj = this.projects[parseInt(k, 10)];
+        if (!proj) { console.error("Unable to fetch project:", k); return; }
+
+        vs.forEach((it: number) => {
+          const current = selsByStudent[it] || [];
+          current.push(proj);
+          selsByStudent[it] = current;
+        });
+      });
+
+      this.allStudents.forEach((it: IFaces.IStudent) => {
+        const choices = selsByStudent[it.id] || [];
+        let msg = "None";
+        let msgType = MessageType.WARNING;
+        if (choices.length > 1) {
+          msg = "Multiple projects:";
+          msgType = MessageType.ERROR;
+        } else if (choices.length === 1) {
+          msg = "Assigned:";
+          msgType = MessageType.INFO;
+        }
+        outArr.push({
+          ...it,
+          assignMsg: msg,
+          assignMsgType: msgType,
+          assignments: choices,
+        });
+      });
+
+      return _.sortBy(outArr, ["name", "id"]);
     },
     choicesRange(): number[] {
       return this.report.choicesRange();
@@ -231,9 +315,13 @@ export default Vue.extend({
       renderInitials: false,
       report_raw: undefined as IFaces.ISessionReportRaw | undefined,
       selections: {} as ISelectionMap,
+      showEditor: true,
     };
   },
   methods: {
+    renderAssignmentProjects(projects: IFaces.IProject[]): IRenderedProject[] {
+      return this.renderMsgProjects(_.map(projects, (it) => it.id));
+    },
     renderStudentsByProject(sts: IFaces.IStudentProjectChoice[] | undefined,
                             pr: IFaces.IProject): IStudentChoiceField[] {
       if (!sts) { return []; }
@@ -284,9 +372,9 @@ export default Vue.extend({
       });
       return outArr;
     },
-    renderMsgProjects(msg: ILogMessage): IRenderedProject[] {
+    renderMsgProjects(projects: number[]): IRenderedProject[] {
       let outArr = [] as IRenderedProject[];
-      _.map(msg.projects, (it) => this.projects[it]).forEach((it: IFaces.IProject | undefined, idx) => {
+      _.map(projects, (it) => this.projects[it]).forEach((it: IFaces.IProject | undefined, idx) => {
         if (!it) { return; }
         let seperator = "";
         if (idx !== 0) { seperator = ", "; }
@@ -316,8 +404,8 @@ export default Vue.extend({
 
       return outArr;
     },
-    renderMsgStudents(msg: ILogMessage): IRenderedStudent[] {
-      let students = this.renderStudents(_.map(msg.students, (it) => this.students[it]));
+    renderMsgStudents(sts: number[]): IRenderedStudent[] {
+      let students = this.renderStudents(_.map(sts, (it) => this.students[it]));
 
       if (students.length > 5) {
         const cut = students.length - 5;
@@ -373,6 +461,9 @@ export default Vue.extend({
         }
       }
     },
+    toggleEditor() {
+      this.showEditor = !this.showEditor;
+    },
     toggleInitials() {
       this.renderInitials = !this.renderInitials;
       this.$forceUpdate();
@@ -422,6 +513,12 @@ export default Vue.extend({
 
 .table-cell-type > a {
   padding-left: 0.5rem;
+}
+
+@media print {
+  .btn {
+    display: none;
+  }
 }
 </style>
 

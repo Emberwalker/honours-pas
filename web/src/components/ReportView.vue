@@ -4,6 +4,9 @@
     <h2>
       By Project
       <button type="button" @click="toggleInitials" class="btn btn-sm btn-primary">Toggle ID/Initials</button>
+      <router-link :to="'/report/' + sessionId + '/editor'" :hidden="!sessionId">
+        <button type="button" class="btn btn-sm btn-primary">To Editor...</button>
+      </router-link>
     </h2>
     <p class="h6">
       '=' before an ID means this choice is tied with another.
@@ -74,6 +77,9 @@ export default Vue.extend({
     },
     report(): IFaces.SessionReport {
       return new IFaces.SessionReport(this.report_raw);
+    },
+    sessionId(): number {
+      return this.report.session().id;
     },
     sessionName(): string {
       return this.report.session().name;
