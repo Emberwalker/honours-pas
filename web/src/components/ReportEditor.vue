@@ -10,8 +10,8 @@
       <p class="h6">
         '=' before an ID means this choice is tied with another.
         '*' after an ID means a comment has been left by this student.
-        Click on a student ID/initials to toggle them as taking this project.
-        Hover over a student to see full name, ID and comment if one exists. Comments may be truncated.
+        <span class="no-print">Click on a student ID/initials to toggle them as taking this project.
+        Hover over a student to see full name, ID and comment if one exists. Comments may be truncated.</span>
       </p>
       <table class="table table-striped table-hover table-sm">
         <thead>
@@ -42,7 +42,12 @@
         Project Assignments
         <button type="button" @click="toggleInitials" class="btn btn-sm btn-primary">Toggle ID/Initials</button>
         <button type="button" @click="toggleEditor" class="btn btn-sm btn-success">Back to Editor</button>
+        <button type="button" @click="dumpCsv" class="btn btn-sm btn-info">Export to CSV...</button>
       </h2>
+      <p class="h6 no-print">
+        CSV exports will <b>not</b> include rows flagged with warnings or errors, only rows with 1 assignment.
+        CSV export may only work in modern browsers (those supporting HTML5).
+      </p>
       <table class="table table-striped table-hover table-sm">
         <thead>
           <tr>
@@ -110,8 +115,10 @@
 </template>
 
 <script lang="ts">
+import FileSaver from "file-saver";
 import $ from "jquery";
 import _ from "lodash";
+import Papa from "papaparse";
 import Vue from "vue";
 import HTTP from "../lib/HTTP";
 import * as IFaces from "../lib/SessionReports";
@@ -319,6 +326,27 @@ export default Vue.extend({
     };
   },
   methods: {
+    dumpCsv() {
+      const outArr: Array<{ name: string, email: string, project: string, supervisor: string,
+                            supervisor_email: string }> = [];
+
+      this.assignmentRows.forEach((it: IAssignmentRow) => {
+        if (it.assignments.length !== 1) { return; } // Skip errored rows
+        const p: IFaces.IProject = it.assignments[0];
+        // tslint:disable:object-literal-sort-keys
+        outArr.push({
+          name: it.full_name,
+          email: it.email,
+          project: p.name,
+          supervisor: p.supervisor_name,
+          supervisor_email: p.supervisor_email,
+        });
+        // tslint:enable:object-literal-sort-keys
+      });
+      const csvStr = Papa.unparse(outArr);
+      const blob = new Blob([csvStr], { type: "text/csv" });
+      FileSaver.saveAs(blob, this.sessionName + "-assignments.csv");
+    },
     renderAssignmentProjects(projects: IFaces.IProject[]): IRenderedProject[] {
       return this.renderMsgProjects(_.map(projects, (it) => it.id));
     },
@@ -517,6 +545,10 @@ export default Vue.extend({
 
 @media print {
   .btn {
+    display: none;
+  }
+
+  .no-print {
     display: none;
   }
 }
