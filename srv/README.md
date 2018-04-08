@@ -11,12 +11,18 @@ Docker deployment is relatively simple:
     - Populate the database URL field with `postgres:POSTGRES_PASSWORD@POSTGRES_CONTAINER/postgres`, replacing `POSTGRES_PASSWORD`
       with the value specified in the `-e` flag of the Postgres container and `POSTGRES_CONTAINER` with the name specified
       in the Postgres container `--name` value.
-5. Deploy PAS container: `docker run -d --name hpas_backend --network hpas -v /etc/hpas:/opt/hpas/conf hpas_backend:latest`,
+5. Deploy PAS container: `docker run -d --name hpas_backend --network hpas -v /etc/hpas:/opt/hpas/conf:ro hpas_backend:latest`,
    replacing `/etc/hpas` with your chosen configuration directory, which should contain a `config.toml` file.
     - If deploying the frontend on an existing reverse proxy server rather than using its Dockerfile, you'll need to
       expose the port to the outside world by adding `-p YOUR_PORT_HERE:8080/tcp`, replacing `YOUR_PORT_HERE` with the
       desired external port number. If possible, expose the port to localhost only (by prepending `127.0.0.1:`) or
       firewall it off using your OS firewall (such as `iptables` or `ufw`).
+    - For advice on deploying the frontend, see the README in `web`.
+6. Add an initial admin user: `docker run -it --rm --network hpas -v /etc/hpas:/opt/hpas/conf:ro hpas_backend:latest add_user --username EMAIL_ADDR --password PASSWORD --name "FULL NAME"`
+    - Replace `EMAIL_ADDR` with the administrators email and `FULL NAME` with the administrators full name. `PASSWORD`
+      isn't used when using OpenID/Azure AD - it only exists for logging in with `simple` authentication. Use a dummy
+      value, but one must be specified.
+    - No output will appear if this is successful. This is normal.
 
 ## Building Notes
 

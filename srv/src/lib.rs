@@ -142,7 +142,7 @@ pub fn add_user(conf_loc: &str, uname: &str, passwd: &str, fname: &str) -> Resul
     run_migrations(&conf);
 
     let pool = Arc::new(db::init_pool(&conf));
-    let auth_provider = get_authn_provider(conf_loc, &conf, Arc::clone(&pool));
+    let auth_provider = Arc::new(authn::simple::SimpleAuthnBackend::new(conf_loc, Arc::clone(&pool)));
 
     auth_provider
         .create_user(uname, passwd)
