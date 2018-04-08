@@ -13,11 +13,12 @@ use authn::{AuthnBackend, AuthnHolder};
 use config::Config;
 use util;
 
-#[cfg(feature = "insecure")]
+// TODO: Work out how to do this well, cooperating with any reverse proxy.
+//#[cfg(feature = "insecure")]
 const SECURED: bool = false;
 
-#[cfg(not(feature = "insecure"))]
-const SECURED: bool = true;
+//#[cfg(not(feature = "insecure"))]
+//const SECURED: bool = true;
 
 #[derive(Clone, Debug)]
 pub struct Session {
