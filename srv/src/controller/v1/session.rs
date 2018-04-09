@@ -103,7 +103,7 @@ fn get_session_report(
     // Down convert from full Project structs to ProjectStripped structs to save memory and bandwidth.
     let projects = projects
         .drain(..)
-        .map(move |p| p.into())
+        .map(Into::into)
         .collect::<Vec<ProjectStripped>>();
 
     let students = student::get_all_by_session(&conn, sess.id)
