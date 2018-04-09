@@ -12,7 +12,7 @@
       <div class="form-group row">
         <label class="col-sm-2 col-form-label" for="metadata-supervisor-name">Project supervisor</label>
         <div class="input-group col-sm-10">
-          <div v-if="!allowAuthorChanges" class="input-group-addon">(Read-only)</div>
+          <div v-if="!allowAuthorChanges" class="input-group-addon rd-only-label">(Read-only)</div>
           <input v-model="project.supervisor_name" type="text" class="form-control" id="metadata-supervisor-name"
                  :readonly="!allowAuthorChanges"/>
         </div>
@@ -20,7 +20,7 @@
       <div class="form-group row">
         <label class="col-sm-2 col-form-label" for="metadata-supervisor-email">Supervisor email</label>
         <div class="input-group col-sm-10">
-          <div v-if="!allowAuthorChanges" class="input-group-addon">(Read-only)</div>
+          <div v-if="!allowAuthorChanges" class="input-group-addon rd-only-label">(Read-only)</div>
           <input v-model="project.supervisor_email" type="text" class="form-control" id="metadata-supervisor-email"
                  :readonly="!allowAuthorChanges"/>
         </div>
@@ -28,11 +28,11 @@
       <div class="form-group row">
         <label class="col-sm-2 col-form-label">Additional staff</label>
         <div class="input-group col-sm-4">
-          <div class="input-group-addon" id="metadata-additional-name-label">Name</div>
+          <div class="input-group-addon rd-only-label" id="metadata-additional-name-label">Name</div>
           <input v-model="additional_name" type="text" class="form-control" aria-labelledby="metadata-additional-name-label"/>
         </div>
         <div class="input-group col-sm-4">
-          <div class="input-group-addon" id="metadata-additional-email-label">Email</div>
+          <div class="input-group-addon rd-only-label" id="metadata-additional-email-label">Email</div>
           <input v-model="additional_email" type="email" class="form-control" aria-labelledby="metadata-additional-email-label"/>
         </div>
         <div class="col-sm-2">
@@ -189,5 +189,9 @@ export default Vue.extend({
   .markdown-footnote {
     margin-top: 1rem;
     margin-bottom: 0;
+  }
+
+  .rd-only-label {
+    margin-top: 1rem;
   }
 </style>
