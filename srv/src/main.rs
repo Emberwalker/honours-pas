@@ -14,7 +14,7 @@ use regex::Regex;
 use std::cmp;
 
 static CONF_LOC_ENV: &'static str = "HONOURS_PAS_CONF";
-static DEFAULT_CONF_LOC: &'static str = "/var/run/pas_backend.json";
+static DEFAULT_CONF_LOC: &'static str = "/opt/hpas/conf/config.toml";
 
 // From https://docs.rs/console/0.6.1/src/console/utils.rs.html#12
 lazy_static! {

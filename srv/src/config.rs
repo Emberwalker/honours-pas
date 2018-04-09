@@ -105,7 +105,10 @@ impl<'a> fmt::Display for ConfigError {
 
 pub fn load_config(location: &str) -> Result<Config, ConfigError> {
     info!("Loading configuration from {}", location);
-    let mut f = File::open(location)?;
+    let mut f = match File::open(location) {
+        Err(e) => panic!("Unable to load config file {}: {}", location, e),
+        Ok(f) => f,
+    };
     let mut contents = String::new();
     f.read_to_string(&mut contents)?;
     Ok(toml::from_str(&contents[..])?)
