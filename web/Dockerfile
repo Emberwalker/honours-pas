@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y curl apt-transport-https && \
 COPY . /opt/hpas_build
 WORKDIR /opt/hpas_build
 RUN yarn install && yarn run build
+ENTRYPOINT [ "/bin/sh" ]
+CMD [ "/opt/hpas_build/docker/build_entry.sh" ]
 
 FROM nginx:stable-alpine
 COPY --from=build /opt/hpas_build/dist /usr/share/nginx/html
