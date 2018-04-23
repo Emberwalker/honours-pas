@@ -47,6 +47,7 @@ extern crate rocket_contrib;
 use authn::AuthnBackend;
 use rocket::config::{Config, Environment, LoggingLevel};
 use std::sync::Arc;
+use std::{thread, time as std_time};
 
 #[macro_use]
 mod util;
@@ -107,8 +108,15 @@ fn get_conf(conf_loc: &str) -> config::Config {
 fn run_migrations(conf: &config::Config) {
     debug!("Using configuration: {:?}", conf);
     info!("Running database migrations (if needed)...");
-    if let Err(e) = migrate::run_pending_migrations(conf) {
-        panic!("Error running DB migrations: {}", e);
+    let mut okay = false;
+    let sleep_time = std_time::Duration::new(10, 0);
+    while !okay {
+        if let Err(e) = migrate::run_pending_migrations(conf) {
+            warn!("Unable to connect to database server, retrying in 10s: {}", e);
+            thread::sleep(sleep_time);
+        } else {
+            okay = true;
+        }
     }
     info!("Database migrations check completed.");
 }
